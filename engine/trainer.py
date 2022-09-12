@@ -1,10 +1,10 @@
-from dataloader.base import *
-from models import *
-from torch.nn.parallel import DistributedDataParallel as DDP
-from engine.logger import Log
 import torch.utils.data as data
-from torchvision import transforms, datasets
+from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
+
+from dataloader.base import *
+from engine.logger import Log
+from models import *
 
 
 class BaseTrainer:
@@ -19,7 +19,7 @@ class BaseTrainer:
 
         self.metrics = MetricLogger()
         self.result = {'train': dict(), 'test': dict()}
-        self.logger = Log(args)
+        self.logger = None
 
         self.rank = 0
         self.world_size = 0
@@ -53,7 +53,7 @@ class BaseTrainer:
             images, labels = next(loader)
             images, labels = to_device(self.args.devices[0], images, labels)
             self.train_step(images, labels)
-            if cur_step % self.args.print_every == 0 and cur_step != 0:
+            if cur_step % self.args.print_every == 0 and cur_step != 0 and self.rank == 0:
                 self.logger.step_logging(cur_step, self.args.warmup_steps, -1, -1, self.metrics, loader.metric)
 
             if cur_step >= self.args.warmup_steps:
@@ -108,6 +108,7 @@ class BaseTrainer:
         return
 
     def train_model(self, rank, world_size):
+        self.logger = Log(self.args)
         dist.init_process_group("gloo", rank=rank, world_size=world_size)
         self.rank = rank
         self._init_dataset()
@@ -189,7 +190,6 @@ class BaseTrainer:
         self.optimizer.load_state_dict(ckpt['optimizer_state_dict'])
 
         return ckpt['epoch'], ckpt['best_acc']
-
 
     # def record_lip(self, images, labels, outputs):
     #     perturbation = self.lip.attack(images, labels)

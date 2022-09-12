@@ -7,13 +7,19 @@ import datetime
 class Log:
     def __init__(self, args):
         self.args = args
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger()
+        self.path = os.path.join(args.model_dir, 'logger_' + str(args.exp_id))
+        self.log_args = ~os.path.exists(self.path)
+
         logging.basicConfig(
             format='[%(asctime)s] - %(message)s',
             datefmt='%Y/%m/%d %H:%M:%S',
             level=logging.INFO,
-            filename=os.path.join(args.model_dir, 'logger_' + str(args.exp_id)))
-        self.logger.info(args)
+            filename=self.path)
+        if self.log_args:
+            self.logger.info(args)
+        else:
+            print('\n====================RESUME TRAINING=======================\n')
 
     def step_logging(self, step, batch_num, epoch, epoch_num, metrics, time_metrics=None):
         space_fmt = ':' + str(len(str(batch_num))) + 'd'
