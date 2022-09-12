@@ -69,7 +69,7 @@ class BaseTrainer:
         start = time.time()
         self.model.module.eval()
         for images, labels in self.test_loader:
-            images, labels = to_device(self.args.devices[0], images, labels)
+            images, labels = images.to(self.rank), labels.to(self.rank)
             pred = self.model.module(images)
             top1, top5 = accuracy(pred, labels)
             self.metrics.update(top1=(top1, len(images)))
