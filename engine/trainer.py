@@ -24,25 +24,19 @@ class BaseTrainer:
         self.rank = 0
         self.world_size = 0
 
-    def save_result(self, path, name=None):
-        if not name:
-            res_path = os.path.join(path, 'result')
-        else:
-            res_path = os.path.join(path, 'result_{}'.format(name))
-        np.save(res_path, self.result)
+    def train_step(self, images, labels):
+        images, labels = images.to(self.rank), labels.to(self.rank)
+        outputs = self.model(images)
+        loss = self.loss_function(outputs, labels)
 
-    def record_result(self, epoch, mode='train'):
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        self.lr_scheduler.step()
 
-        epoch_result = {}
-        for k, v in self.metrics.meters.items():
-            epoch_result[k] = v.to_dict()
-        self.result[mode][epoch] = epoch_result
-        self.metrics.reset()
-        return
-
-    @property
-    def trained_ratio(self):
-        return self.lr_scheduler.last_epoch / self.args.total_step
+        top1, top5 = accuracy(outputs, labels)
+        self.metrics.update(top1=(top1, len(images)), top5=(top5, len(images)),
+                            loss=(loss, len(images)), lr=(self.get_lr(), 1))
 
     def warmup(self):
         if self.args.warmup_steps == 0:
@@ -65,38 +59,6 @@ class BaseTrainer:
 
         return
 
-    def validate_epoch(self):
-        start = time.time()
-        self.model.eval()
-        for images, labels in self.test_loader:
-            images, labels = images.to(self.rank), labels.to(self.rank)
-            pred = self.model(images)
-            top1, top5 = accuracy(pred, labels)
-            self.metrics.update(top1=(top1, len(images)))
-            # if self.args.record_lip:
-            #     self.record_lip(images, labels, pred)
-        self.logger.val_logging(self.metrics, time.time() - start)
-
-        self.model.train()
-        return self.metrics.meters['top1'].global_avg
-
-    def get_lr(self):
-        return self.optimizer.param_groups[0]['lr']
-
-    def train_step(self, images, labels):
-        images, labels = images.to(self.rank), labels.to(self.rank)
-        outputs = self.model(images)
-        loss = self.loss_function(outputs, labels)
-
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-        self.lr_scheduler.step()
-
-        top1, top5 = accuracy(outputs, labels)
-        self.metrics.update(top1=(top1, len(images)), top5=(top5, len(images)),
-                            loss=(loss, len(images)), lr=(self.get_lr(), 1))
-
     def train_epoch(self, epoch):
         time_metric = MetricLogger()
         cur_time = time.time()
@@ -115,6 +77,21 @@ class BaseTrainer:
         self.logger.train_logging(epoch, self.args.num_epoch, self.metrics, time_metric)
 
         return
+
+    def validate_epoch(self):
+        start = time.time()
+        self.model.eval()
+        for images, labels in self.test_loader:
+            images, labels = images.to(self.rank), labels.to(self.rank)
+            pred = self.model(images)
+            top1, top5 = accuracy(pred, labels)
+            self.metrics.update(top1=(top1, len(images)))
+            # if self.args.record_lip:
+            #     self.record_lip(images, labels, pred)
+        self.logger.val_logging(self.metrics, time.time() - start)
+
+        self.model.train()
+        return self.metrics.meters['top1'].global_avg
 
     def train_model(self, rank, world_size):
         self.logger = Log(self.args, rank)
@@ -199,6 +176,28 @@ class BaseTrainer:
 
         return ckpt['epoch'], ckpt['best_acc']
 
+    def save_result(self, path, name=None):
+        if not name:
+            res_path = os.path.join(path, 'result')
+        else:
+            res_path = os.path.join(path, 'result_{}'.format(name))
+        np.save(res_path, self.result)
+
+    def record_result(self, epoch, mode='train'):
+
+        epoch_result = {}
+        for k, v in self.metrics.meters.items():
+            epoch_result[k] = v.to_dict()
+        self.result[mode][epoch] = epoch_result
+        self.metrics.reset()
+        return
+
+    @property
+    def trained_ratio(self):
+        return self.lr_scheduler.last_epoch / self.args.total_step
+
+    def get_lr(self):
+        return self.optimizer.param_groups[0]['lr']
     # def record_lip(self, images, labels, outputs):
     #     perturbation = self.lip.attack(images, labels)
     #     local_lip = (self.model(images + perturbation) - outputs)

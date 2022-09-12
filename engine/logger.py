@@ -76,8 +76,6 @@ class Log:
         if self.rank != 0:
             return
         msg = '\t'.join(['VAL INF:', '{meters}', '{time:.4f}']).format(meters=metrics, time=total_time)
-        if self.rank == 0:
-            self.logger.val_logging(self.metrics)
         self.logger.info(msg)
         print(msg)
         return msg
