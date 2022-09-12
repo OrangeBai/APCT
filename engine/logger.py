@@ -5,23 +5,26 @@ import datetime
 
 
 class Log:
-    def __init__(self, args):
+    def __init__(self, args, rank):
         self.args = args
         self.logger = logging.getLogger()
         self.path = os.path.join(args.model_dir, 'logger_' + str(args.exp_id))
-        self.log_args = ~os.path.exists(self.path)
+        self.log_args = not os.path.exists(self.path)
+        self.rank = rank
 
         logging.basicConfig(
             format='[%(asctime)s] - %(message)s',
             datefmt='%Y/%m/%d %H:%M:%S',
             level=logging.INFO,
             filename=self.path)
-        if self.log_args:
+        if self.log_args and rank==0:
             self.logger.info(args)
         else:
             print('\n====================RESUME TRAINING=======================\n')
 
     def step_logging(self, step, batch_num, epoch, epoch_num, metrics, time_metrics=None):
+        if self.rank != 0:
+            return
         space_fmt = ':' + str(len(str(batch_num))) + 'd'
 
         log_msg = '\t'.join(['Epoch: [{epoch}/{epoch_num}]',
@@ -57,6 +60,9 @@ class Log:
         @param time_metrics:
         @return:
         """
+        if self.rank != 0:
+            return
+
         self.logger.info('Epoch: [{epoch}/{epoch_num}] training finished'.format(epoch=epoch, epoch_num=epoch_num))
         log_msg = '\t'.join(['TRN INF:', '{meters}\t'])
         msg = log_msg.format(meters=str(metrics))
@@ -67,10 +73,15 @@ class Log:
         return
 
     def val_logging(self, metrics):
+        if self.rank != 0:
+            return
+
         msg = '\t'.join(['VAL INF:', '{meters}']).format(meters=metrics)
         self.logger.info(msg)
         print(msg)
         return msg
 
     def info(self, msg):
+        if self.rank != 0:
+            return
         self.logger.info(msg)
