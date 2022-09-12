@@ -75,7 +75,8 @@ class BaseTrainer:
             self.metrics.update(top1=(top1, len(images)))
             # if self.args.record_lip:
             #     self.record_lip(images, labels, pred)
-        self.logger.val_logging(self.metrics) + '\ttime:{0:.4f}'.format(time.time() - start)
+        self.logger.val_logging(self.metrics, time.time() - start)
+
         self.model.train()
         return self.metrics.meters['top1'].global_avg
 
@@ -97,13 +98,21 @@ class BaseTrainer:
                             loss=(loss, len(images)), lr=(self.get_lr(), 1))
 
     def train_epoch(self, epoch):
+        time_metric = MetricLogger()
+        cur_time = time.time()
         for step, (images, labels) in enumerate(self.train_loader):
+            data_time = time.time() - cur_time
+
             images, labels = images.to(self.rank), labels.to(self.rank)
             self.train_step(images, labels)
             if step % self.args.print_every == 0 and step != 0:
                 self.logger.step_logging(step, self.args.epoch_step, epoch, self.args.num_epoch,
-                                         self.metrics)
-        self.logger.train_logging(epoch, self.args.num_epoch, self.metrics)
+                                         self.metrics, time_metric)
+
+            iter_time = time.time() - cur_time
+            cur_time = time.time()
+            time_metric.update(iter_time=(iter_time, 1), data_time=(data_time, 1))
+        self.logger.train_logging(epoch, self.args.num_epoch, self.metrics, time_metric)
 
         return
 
