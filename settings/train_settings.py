@@ -166,9 +166,10 @@ class ArgParser:
         args, _ = self.parser.parse_known_args(self.args)
         exp_name = '_'.join([str(args.net), str(args.exp_id)])
         path = os.path.join(MODEL_PATH, args.dir, exp_name)
-        if train and not args.resume:
-            if os.path.exists(path):
+        if os.path.exists(path):
+            if not args.resume:
                 shutil.rmtree(path)
+        else:
             os.makedirs(path)
         self.parser.add_argument('--model_dir', default=path, type=str, help='model directory')
         return self.parser
