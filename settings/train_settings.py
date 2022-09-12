@@ -36,6 +36,8 @@ class ArgParser:
         self.parser.add_argument('--num_epoch', default=200, type=int)
         self.parser.add_argument('--batch_size', default=128, type=int)
 
+        # DDP
+        self.parser.add_argument('--world_size', default=1, type=int)
         # model settings
         self.parser.add_argument('--data_bn', type=int, default=1)
         self.parser.add_argument('--batch_norm', default=1, type=int)

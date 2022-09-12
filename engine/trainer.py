@@ -115,10 +115,10 @@ class BaseTrainer:
         self.model.to(rank)
         self.model = DDP(self.model, device_ids=[rank], output_device=rank)
 
-        best_acc = 0
-        start_epoch = 0
         if self.args.resume:
-            start_epoch = self.load_ckpt('best')
+            start_epoch, best_acc = self.load_ckpt('best')
+        else:
+            start_epoch, best_acc = 0, 0
 
         # self.warmup()
 
@@ -178,10 +178,11 @@ class BaseTrainer:
             ckpt_path = os.path.join(self.args.model_dir, 'ckpt.pth')
         else:
             ckpt_path = os.path.join(self.args.model_dir, 'ckpt_{}.pth'.format(name))
-        print('Loading CKPT from {0}'.format(ckpt_path))
+        print('Trying to load CKPT from {0}'.format(ckpt_path))
         try:
             ckpt = torch.load(ckpt_path)
-        except FileNotFoundError('No Check point fount at {0}'.format(ckpt_path)):
+        except FileNotFoundError:
+            print('CKPT not found, start from Epoch 0')
             return 0, 0
         self.model.load_state_dict(ckpt['model_state_dict'])
         self.optimizer.load_state_dict(ckpt['optimizer_state_dict'])
