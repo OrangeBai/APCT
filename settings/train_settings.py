@@ -171,6 +171,7 @@ class ArgParser:
         if os.path.exists(path):
             if not args.resume:
                 shutil.rmtree(path)
+                os.makedirs(path)
         else:
             os.makedirs(path)
         self.parser.add_argument('--model_dir', default=path, type=str, help='model directory')

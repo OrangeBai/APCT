@@ -67,16 +67,16 @@ class BaseTrainer:
 
     def validate_epoch(self):
         start = time.time()
-        self.model.module.eval()
+        self.model.eval()
         for images, labels in self.test_loader:
             images, labels = images.to(self.rank), labels.to(self.rank)
-            pred = self.model.module(images)
+            pred = self.model(images)
             top1, top5 = accuracy(pred, labels)
             self.metrics.update(top1=(top1, len(images)))
             # if self.args.record_lip:
             #     self.record_lip(images, labels, pred)
         self.logger.val_logging(self.metrics) + '\ttime:{0:.4f}'.format(time.time() - start)
-        self.model.module.train()
+        self.model.train()
         return self.metrics.meters['top1'].global_avg
 
     def get_lr(self):
@@ -127,7 +127,6 @@ class BaseTrainer:
             self.train_epoch(epoch)
             self.record_result(epoch)
 
-            self.record_result(epoch)
             acc = self.validate_epoch()
             if acc > best_acc:
                 best_acc = acc
