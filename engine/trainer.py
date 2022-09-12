@@ -128,10 +128,10 @@ class BaseTrainer:
             self.record_result(epoch)
 
             self.record_result(epoch)
-            if rank == 0:
-                acc = self.validate_epoch()
-                if acc > best_acc:
-                    best_acc = acc
+            acc = self.validate_epoch()
+            if acc > best_acc:
+                best_acc = acc
+                if rank == 0:
                     self.save_ckpt(epoch, best_acc, 'best')
 
             self.model.train()
