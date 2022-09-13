@@ -54,6 +54,8 @@ def set_mean_sed(args):
             mean, std = dataloader.cifar.CIAFR100_MEAN_STD
         elif args.dataset.lower() == 'mnist':
             mean, std = dataloader.MNIST.MNIST_MEAN_STD
+        elif args.dataset.lower() == 'imagenet':
+            mean, std = dataloader.imagenet.IMAGENET_MEAN_STD
         else:
             raise NameError()
     return mean, std

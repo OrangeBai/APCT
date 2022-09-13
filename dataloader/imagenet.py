@@ -1,8 +1,12 @@
-from config import *
 import os
+
 import torch.utils.data as data
-from torchvision.transforms import *
 from torchvision.datasets import ImageFolder
+from torchvision.transforms import *
+
+from config import *
+
+IMAGENET_MEAN_STD = [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)]
 
 
 def get_loaders(args):
@@ -33,7 +37,6 @@ def get_loaders(args):
         pin_memory=True,
     )
     return train_loader, test_loader
-
 
 # class ValLoader(datasets.Dataset):
 #
