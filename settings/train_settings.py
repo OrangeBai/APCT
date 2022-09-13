@@ -198,7 +198,7 @@ class ArgParser:
 
     def set_files(self):
         args, _ = self.parser.parse_known_args(self.args)
-        if args.dataset.lower() == 'imagenet':
+        if args.dataset.lower() == '..':
             self.parser.add_argument('--yaml_files', default='default', type=str)
 
             return os.listdir(os.path.join(os.getcwd(), self.get_args().yaml_files))
