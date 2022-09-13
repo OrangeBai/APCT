@@ -129,6 +129,7 @@ class BaseTrainer:
         train_sampler = DistributedSampler(train_dataset)
         test_sampler = DistributedSampler(test_dataset)
         self.train_loader = data.DataLoader(
+            shuffle=(train_sampler is None),
             dataset=train_dataset,
             batch_size=self.args.batch_size,
             sampler=train_sampler
@@ -136,7 +137,7 @@ class BaseTrainer:
         self.test_loader = data.DataLoader(
             dataset=test_dataset,
             batch_size=self.args.batch_size,
-            sampler=test_sampler
+            sampler=None
         )
         self.args.epoch_step = len(self.train_loader)
         self.args.total_step = self.args.num_epoch * self.args.epoch_step

@@ -26,7 +26,7 @@ def get_dataset(args):
 
 
 def get_loaders(args):
-    train_dataset, test_dataset = get_dataset()
+    train_dataset, test_dataset = get_dataset(args)
     train_loader = data.DataLoader(
         dataset=train_dataset,
         batch_size=args.batch_size,
