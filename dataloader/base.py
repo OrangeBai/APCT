@@ -5,14 +5,13 @@ import time
 from core.utils import MetricLogger
 
 
-
 def set_data_set(args):
     if 'mnist' in args.dataset.lower():
         train_set, test_set = dataloader.MNIST.get_dataset(args)
     elif 'cifar' in args.dataset.lower():
         train_set, test_set = dataloader.cifar.get_data_set(args)
-    # elif 'imagenet' in args.dataset.lower():
-    #     train_loader, test_loader = dataloader.imagenet.get_loaders(args)
+    elif 'imagenet' in args.dataset.lower():
+        train_set, test_set = dataloader.imagenet.get_dataset(args)
     else:
         raise NameError()
     return train_set, test_set
