@@ -1,6 +1,5 @@
 from models.blocks import *
 from models.base_model import BaseModel
-
 cfgs = {
     'vgg11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M', 4096, 4096, None],
     'vgg13': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M', 4096, 4096, None],
@@ -42,11 +41,9 @@ class VGG(BaseModel):
                 layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
                 num_pooling += 1
                 if num_pooling == 5:
-                    if model_type == 'mini':
-                        layers += [nn.AdaptiveAvgPool2d((1, 1))]
-                    else:
-                        layers += [nn.AdaptiveAvgPool2d((7, 7))]
+                    layers += [nn.AdaptiveAvgPool2d((7, 7))]
                     layers += [nn.Flatten()]
+                    pre_filters = pre_filters * 7 * 7
             else:
                 if num_pooling < 5:
                     layers += [ConvBlock(pre_filters, layer, kernel_size=(3, 3), padding=1, **self.set_up_kwargs)]
