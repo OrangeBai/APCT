@@ -8,35 +8,37 @@ from config import *
 
 IMAGENET_MEAN_STD = [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)]
 
-def get_dataset(args):
+
+def get_dataset():
     data_dir = os.path.join(DATA_PATH, 'ImageNet')
     train_dir = os.path.join(data_dir, 'train')
     val_dir = os.path.join(data_dir, 'val')
     train_transform = Compose([
         # Resize(args.DATA.img_size),
-        RandomResizedCrop((256, 256)),
+        RandomResizedCrop((224, 224)),
         RandomHorizontalFlip(), ToTensor()])
     val_transform = Compose([
         # Resize(args.DATA.img_size),
-        CenterCrop((256, 256)), transforms.ToTensor()])
+        CenterCrop((224, 224)), transforms.ToTensor()])
     train_dataset = ImageFolder(train_dir, transform=train_transform)
     test_dataset = ImageFolder(val_dir, transform=val_transform)
     return train_dataset, test_dataset
 
 
 def get_loaders(args):
-    train_dataset, test_dataset = get_dataset(args)
+    train_dataset, test_dataset = get_dataset()
     train_loader = data.DataLoader(
         dataset=train_dataset,
         batch_size=args.batch_size,
-        shuffle=False,
+        shuffle=True,
         pin_memory=True,
+        num_workers=8
     )
 
     test_loader = data.DataLoader(
         dataset=test_dataset,
         batch_size=args.batch_size,
-        shuffle=False,
+        shuffle=True,
         pin_memory=True,
     )
     return train_loader, test_loader
