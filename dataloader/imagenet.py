@@ -9,7 +9,7 @@ from config import *
 IMAGENET_MEAN_STD = [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)]
 
 
-def get_dataset():
+def get_dataset(args):
     data_dir = os.path.join(DATA_PATH, 'ImageNet')
     train_dir = os.path.join(data_dir, 'train')
     val_dir = os.path.join(data_dir, 'val')
