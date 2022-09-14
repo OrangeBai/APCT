@@ -1,29 +1,23 @@
-import numpy as np
-import h5py
-import os
-from config import *
-from torchvision.transforms import ToTensor
 import multiprocessing
+import os
+import time
+import warnings
+
+import h5py
+import numpy as np
 from PIL import Image
 from torchvision.datasets.folder import find_classes
+from torchvision.transforms import ToTensor
+
+from config import *
+
+warnings.filterwarnings("error")
+
 image_size = 299
+block_size = 1000
 
 
-def process(iii):
-    idx, (path, label) = iii
-    im = Image.open(path).resize((image_size, image_size))
-    img = (ToTensor()(im).numpy() * 255).astype(np.ubyte)
-    lb = label
-    if idx == 100:
-        return
-    return img, lb
-
-
-if __name__ == '__main__':
-    batch_size = 100000
-    num_cpus = multiprocessing.cpu_count()
-
-    directory = os.path.join(DATA_PATH, 'ImageNet', 'train')
+def retrieve_index_and_path(directory):
     _, class_to_idx = find_classes(directory)
     instances = []
     for target_class in sorted(class_to_idx.keys()):
@@ -36,22 +30,60 @@ if __name__ == '__main__':
                 path = os.path.join(root, fname)
                 item = path, class_index
                 instances.append(item)
+    return instances
 
-    # cats = os.listdir(prefix)
-    # l = list(map(lambda x : os.path.join(prefix, x), os.listdir(prefix)))
 
-    # for idx, (path, label) in enumerate(instances):
-    #     valid.append(idx)
-    instance_with_idx = zip(range(len(instances)), instances)
-    pool = multiprocessing.Pool(num_cpus)
-    c1, c2 = zip(*[i for i in pool.map(process, instance_with_idx) if i is not None])
+def create_h5py(path, name):
+    blocks = [path[i:i + block_size] for i in range(0, len(path), block_size)]
 
-    f = h5py.File(os.path.join(DATA_PATH,'ImageNet', 'h5py.hdf5'))
+    f = h5py.File(os.path.join(DATA_PATH, 'ImageNet', name + '.hdf5'), 'w')
+    f.create_dataset('data', shape=(0, image_size, image_size, 3), maxshape=(len(path), image_size, image_size, 3),
+                     dtype=np.uint8, )
+    f.create_dataset('label', shape=(0,), maxshape=(len(path),), dtype=np.uint8)
+    train_num = 0
+    for block_idx, block in enumerate(blocks):
+        t1 = time.time()
+        instance_with_idx = zip(range(len(block)), block)
+        pool = multiprocessing.Pool(num_cpus)
+        img_batch, label_batch = zip(*[i for i in pool.map(process, instance_with_idx) if i is not None])
+        pool.close()
 
-    dtst = f.create_dataset('train', maxshape=(None, 3, image_size, image_size),dtype=np.uint8)
-    dtst
+        valid = len(img_batch)
 
-# f.close()
+        f['data'].resize(train_num + valid, axis=0)
+        f['label'].resize(train_num + valid, axis=0)
+        f['data'][train_num:train_num + valid] = img_batch
+        f['label'][train_num:train_num + valid] = label_batch
+        train_num += valid
+        time_spent = time.time() - t1
+        eta = time_spent * (len(blocks) - block_idx) / 60
+        print('{0:4d}/{1:4d}: time spent: {2:2f}, eta:{3:2f}'.format(block_idx, len(blocks), time_spent, eta))
+    f.close()
+
+
+def process(input_tuple):
+    idx, (path, label) = input_tuple
+    try:
+        im = Image.open(path).convert('RGB').resize((image_size, image_size))
+        img = (ToTensor()(im).numpy() * 255).astype(np.uint8).transpose(1,2,0)
+        lb = label
+    except Exception as e:
+        print('Find Exception {0} at {1}'.format(e, path))
+        return
+    return img, lb
+
+
+if __name__ == '__main__':
+    num_cpus = multiprocessing.cpu_count()
+
+    train_dir = os.path.join(DATA_PATH, 'ImageNet', 'train')
+    val_dir = os.path.join(DATA_PATH, 'ImageNet', 'val')
+
+    train_path = retrieve_index_and_path(train_dir)
+    val_path = retrieve_index_and_path(val_dir)
+
+    create_h5py(val_path, 'val')
+
     print(1)
 # for syn in l:
 #     files = os.listdir(syn)

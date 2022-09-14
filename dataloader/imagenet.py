@@ -1,7 +1,10 @@
 import os
 
+import torch
+from PIL import Image
+import h5py
 import torch.utils.data as data
-from torchvision.datasets import ImageFolder
+from torch.utils.data import Dataset
 from torchvision.transforms import *
 
 from config import *
@@ -9,10 +12,33 @@ from config import *
 IMAGENET_MEAN_STD = [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)]
 
 
+class H5PYImageNet(Dataset):
+    def __init__(self, file_dir, transform, mode='train'):
+
+        self.dataset = None
+        self.transform = transform
+        if mode == 'train':
+            self.file_path = os.path.join(file_dir, 'train.hdf5')
+        else:
+            self.file_path = os.path.join(file_dir, 'val.hdf5')
+
+        self.f = h5py.File(self.file_path, 'r')
+
+    def __getitem__(self, index: int):
+        sample = self.f['data'][index]
+        sample = torch.Tensor(sample)
+        sample = self.transform(sample)
+        target = self.f['label'][index]
+        return sample, target
+
+    def __len__(self):
+        return len(self.f['label'])
+
+
 def get_dataset(args):
     data_dir = os.path.join(DATA_PATH, 'ImageNet')
-    train_dir = os.path.join(data_dir, 'train')
-    val_dir = os.path.join(data_dir, 'train')
+    # train_dir = os.path.join(data_dir, 'train')
+    # val_dir = os.path.join(data_dir, 'train')
     train_transform = Compose([
         # Resize(args.DATA.img_size),
         RandomResizedCrop((224, 224)),
@@ -20,8 +46,8 @@ def get_dataset(args):
     val_transform = Compose([
         # Resize(args.DATA.img_size),
         CenterCrop((224, 224)), transforms.ToTensor()])
-    train_dataset = ImageFolder(train_dir, transform=train_transform)
-    test_dataset = ImageFolder(val_dir, transform=val_transform)
+    train_dataset = H5PYImageNet(data_dir, mode='val', transform=train_transform)
+    test_dataset = H5PYImageNet(data_dir, mode='val', transform=val_transform)
     return train_dataset, test_dataset
 
 
