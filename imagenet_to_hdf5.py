@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+import random
 import time
 import warnings
 
@@ -38,8 +39,8 @@ def create_h5py(path, name):
 
     f = h5py.File(os.path.join(DATA_PATH, 'ImageNet', name + '.hdf5'), 'w')
     f.create_dataset('data', shape=(0, image_size, image_size, 3), maxshape=(len(path), image_size, image_size, 3),
-                     dtype=np.uint8, )
-    f.create_dataset('label', shape=(0,), maxshape=(len(path),), dtype=np.uint8)
+                     dtype=np.uint8, chunks=True, compression='gzip')
+    f.create_dataset('label', shape=(0,), maxshape=(len(path),), dtype=np.uint8, chunks=True, compression='gzip')
     train_num = 0
     for block_idx, block in enumerate(blocks):
         t1 = time.time()
@@ -81,6 +82,9 @@ if __name__ == '__main__':
 
     train_path = retrieve_index_and_path(train_dir)
     val_path = retrieve_index_and_path(val_dir)
+
+    random.shuffle(train_path)
+    random.shuffle(val_path)
 
     create_h5py(val_path, 'val')
 
