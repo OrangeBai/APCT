@@ -62,7 +62,6 @@ def get_dataset(args):
 
     train_dataset = H5PYImageNet(data_dir, 'val', transform=train_transform)
     test_dataset = H5PYImageNet(data_dir, 'val', transform=val_transform)
-    train_dataset.shuffle()
     return train_dataset, test_dataset
 
 

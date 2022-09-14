@@ -66,7 +66,7 @@ class BaseTrainer:
             data_time = time.time() - cur_time
 
             images, labels = images.to(self.rank), labels.to(self.rank)
-            self.train_step(images, labels)
+            # self.train_step(images, labels)
             if step % self.args.print_every == 0 and step != 0:
                 self.logger.step_logging(step, self.args.epoch_step, epoch, self.args.num_epoch,
                                          self.metrics, time_metric)
