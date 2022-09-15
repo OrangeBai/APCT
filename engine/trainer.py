@@ -23,6 +23,7 @@ class BaseTrainer:
         self.optimizer, self.lr_scheduler = None, None
         self.loss_function = init_loss(self.args)
 
+        self.time_metric = MetricLogger()
         self.metrics = MetricLogger()
         self.result = {'train': dict(), 'test': dict()}
         self.logger = Log(self.args)
@@ -73,7 +74,6 @@ class BaseTrainer:
         return
 
     def train_epoch(self, epoch):
-        time_metric = MetricLogger()
         cur_time = time.time()
         for step, (images, labels) in enumerate(self.train_loader):
             data_time = time.time() - cur_time
@@ -82,14 +82,15 @@ class BaseTrainer:
             self.train_step(images, labels)
             if step % self.args.print_every == 0 and step != 0 and self.rank == 0:
                 self.logger.step_logging(step, self.args.epoch_step, epoch, self.args.num_epoch,
-                                         self.metrics, time_metric)
+                                         self.metrics, self.time_metric)
 
             iter_time = time.time() - cur_time
             cur_time = time.time()
-            time_metric.update(iter_time=(iter_time, 1), data_time=(data_time, 1))
+            self.time_metric.update(iter_time=(iter_time, 1), data_time=(data_time, 1))
+            self.time_metric.all_reduce()
             self.metrics.all_reduce()
-        self.logger.train_logging(epoch, self.args.num_epoch, self.metrics, time_metric)
-
+        self.logger.train_logging(epoch, self.args.num_epoch, self.metrics, self.time_metric)
+        self.time_metric.reset()
         return
 
     def validate_epoch(self):
