@@ -43,11 +43,11 @@ def init_scheduler(args, optimizer):
         lr_scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=args.gamma)
     elif args.lr_scheduler == 'linear':
         diff = args.lr - args.lr_e
+        # LinearLR(optimizer, start_factor=args.lr, end_factor=args.lr_e, total_iters=args.num_steps)
+        # def lambda_rule(step):
+        #     return (args.lr - (step / args.total_step) * diff) / args.lr
 
-        def lambda_rule(step):
-            return (args.lr - (step / args.total_step) * diff) / args.lr
-
-        lr_scheduler = LambdaLR(optimizer, lr_lambda=lambda_rule)
+        lr_scheduler = LinearLR(optimizer, start_factor=args.lr, end_factor=args.lr_e, total_iters=args.total_step)
 
     elif args.lr_scheduler == 'exp':
         gamma = math.pow(args.lr_e / args.lr, 1 / args.total_step)

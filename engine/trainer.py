@@ -13,6 +13,11 @@ class BaseTrainer:
         self.model = build_model(args)
 
         self.mean, self.std = set_mean_sed(args)
+        train_dataset, test_dataset = set_data_set(self.args)
+
+        self.args.epoch_step = len(train_dataset) / (args.batch_size * args.world_size)
+        self.args.total_step = math.ceil(self.args.num_epoch * self.args.epoch_step)
+
         self.train_loader, self.test_loader = None, None
         self.optimizer, self.lr_scheduler = None, None
         self.loss_function = init_loss(self.args)
@@ -52,7 +57,7 @@ class BaseTrainer:
         for cur_step in range(self.args.warmup_steps):
             images, labels = next(loader)
             images, labels = to_device(self.args.devices[0], images, labels)
-            self.train_step(images, labels)
+            # self.train_step(images, labels)
             if cur_step % self.args.print_every == 0 and cur_step != 0 and self.rank == 0:
                 self.logger.step_logging(cur_step, self.args.warmup_steps, -1, -1, self.metrics, loader.metric)
 
@@ -143,8 +148,6 @@ class BaseTrainer:
             batch_size=self.args.batch_size,
             sampler=test_sampler
         )
-        self.args.epoch_step = len(self.train_loader)
-        self.args.total_step = self.args.num_epoch * self.args.epoch_step
         return
 
     def save_ckpt(self, cur_epoch, best_acc=0, name=None):
