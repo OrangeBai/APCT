@@ -7,6 +7,7 @@ from engine.logger import Log
 from models import *
 
 
+# DDP version
 class BaseTrainer:
     def __init__(self, args):
         self.args = args
