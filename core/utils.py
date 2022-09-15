@@ -1,12 +1,24 @@
+from collections import defaultdict, deque
+
 import numpy as np
-import math
 import torch
 import torch.distributed as dist
-from torch.optim.lr_scheduler import *
-
 import torch.nn as nn
+from torch.optim.lr_scheduler import *
+from torch.optim.lr_scheduler import _LRScheduler
 
-from collections import defaultdict, deque
+
+class LLR(_LRScheduler):
+    def __init__(self, optimizer, lr_st, lr_ed, steps, last_epoch=-1, verbose=False):
+        self.lr_st = lr_st
+        self.lr_ed = lr_ed
+        self.steps = steps
+        self.diff = lr_st - lr_ed
+        super(LLR, self).__init__(optimizer, last_epoch, verbose)
+
+    def get_lr(self):
+        return [self.lr_st * (self.lr_st - (self.last_epoch / self.steps) * self.diff) / self.lr_st
+                for group in self.optimizer.param_groups]
 
 
 def warmup_scheduler(args, optimizer):
@@ -42,12 +54,12 @@ def init_scheduler(args, optimizer):
         milestones = [milestone * args.total_step for milestone in args.milestones]
         lr_scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=args.gamma)
     elif args.lr_scheduler == 'linear':
-        diff = args.lr - args.lr_e
-        # LinearLR(optimizer, start_factor=args.lr, end_factor=args.lr_e, total_iters=args.num_steps)
+        # diff = args.lr - args.lr_e
+        # LinearLR(optimizer, start_factor=args.lr, end_factor=args.lr_e, total_iters=args.num_)
         # def lambda_rule(step):
         #     return (args.lr - (step / args.total_step) * diff) / args.lr
 
-        lr_scheduler = LinearLR(optimizer, start_factor=args.lr, end_factor=args.lr_e, total_iters=args.total_step)
+        lr_scheduler = LLR(optimizer, lr_st=args.lr, lr_ed=args.lr_e, steps=args.total_step)
 
     elif args.lr_scheduler == 'exp':
         gamma = math.pow(args.lr_e / args.lr, 1 / args.total_step)
@@ -249,6 +261,7 @@ class MetricLogger:
             return self.meters[k]
         else:
             raise AttributeError("'{}' object has no attribute '{}'".format(type(self).__name__, k))
+
     # def __getattr__(self, attr):
     #     if attr in self.meters:
     #         return self.meters[attr]
