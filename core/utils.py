@@ -247,6 +247,7 @@ class MetricLogger:
                 v = v.item()
             assert isinstance(v, (float, int))
             self.meters[k].update(v, n)
+        self.all_reduce()
 
     def retrieve_meters(self, k):
         if k in self.meters.keys():

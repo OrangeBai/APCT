@@ -11,7 +11,6 @@ class Log:
         self.path = os.path.join(args.model_dir, 'logger_' + str(args.exp_id))
         self.log_args = not os.path.exists(self.path)
 
-
         logging.basicConfig(
             format='[%(asctime)s] - %(message)s',
             datefmt='%Y/%m/%d %H:%M:%S',

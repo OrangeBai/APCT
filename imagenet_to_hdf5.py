@@ -86,7 +86,7 @@ if __name__ == '__main__':
     random.shuffle(train_path)
     random.shuffle(val_path)
 
-    # create_h5py(train_path, 'train')
+    create_h5py(train_path, 'train')
     create_h5py(val_path, 'val')
 
     print(1)
