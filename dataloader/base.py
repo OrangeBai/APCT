@@ -84,7 +84,7 @@ class InfiniteLoader:
             try:
                 obj = next(self.data_loader)
 
-                self.metric.synchronize_between_processes()
+                self.metric.all_reduce()
                 return obj
             except StopIteration:
                 self.data_loader = iter(self.iterable)

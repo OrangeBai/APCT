@@ -169,18 +169,11 @@ class SmoothedValue(object):
         self.total = 0.0
         self.count = 0
 
-    def synchronize_between_processes(self):
-        """
-        Warning: does not synchronize the deque!
-        """
-        if not is_dist_avail_and_initialized():
-            return
-        t = torch.tensor([self.count, self.total], dtype=torch.float64)
-        dist.barrier()
-        dist.all_reduce(t)
-        t = t.tolist()
-        self.count = int(t[0])
-        self.total = t[1]
+    def all_reduce(self):
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        total = torch.tensor([self.total, self.count], dtype=torch.float32, device=device)
+        dist.all_reduce(total, dist.ReduceOp.SUM, async_op=False)
+        self.total, self.count = total.tolist()
 
     @property
     def median(self):
@@ -254,7 +247,6 @@ class MetricLogger:
                 v = v.item()
             assert isinstance(v, (float, int))
             self.meters[k].update(v, n)
-        self.synchronize_between_processes()
 
     def retrieve_meters(self, k):
         if k in self.meters.keys():
@@ -281,10 +273,10 @@ class MetricLogger:
                 )
         return self.delimiter.join(loss_str)
 
-    def synchronize_between_processes(self):
+    def all_reduce(self):
         #  TODO check out how to use multi-process
         for meter in self.meters.values():
-            meter.synchronize_between_processes()
+            meter.all_reduce()
 
 
 def to_device(device_id=None, *args):

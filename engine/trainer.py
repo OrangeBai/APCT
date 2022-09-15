@@ -49,6 +49,7 @@ class BaseTrainer:
             loss=(loss, len(images)),
             lr=(self.get_lr(), 1)
         )
+        self.metrics.all_reduce()
 
     def warmup(self):
         if self.args.warmup_steps == 0:
@@ -86,6 +87,7 @@ class BaseTrainer:
             iter_time = time.time() - cur_time
             cur_time = time.time()
             time_metric.update(iter_time=(iter_time, 1), data_time=(data_time, 1))
+            self.metrics.all_reduce()
         self.logger.train_logging(epoch, self.args.num_epoch, self.metrics, time_metric)
 
         return
@@ -98,6 +100,7 @@ class BaseTrainer:
             pred = self.model(images)
             top1, top5 = accuracy(pred, labels)
             self.metrics.update(top1=(top1, len(images)))
+            self.metrics.all_reduce()
             # if self.args.record_lip:
             #     self.record_lip(images, labels, pred)
         self.logger.val_logging(self.metrics, time.time() - start)
