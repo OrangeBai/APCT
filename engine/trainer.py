@@ -35,8 +35,11 @@ class BaseTrainer:
         self.lr_scheduler.step()
 
         top1, top5 = accuracy(outputs, labels)
-        self.metrics.update(top1=(top1, len(images)), top5=(top5, len(images)),
-                            loss=(loss, len(images)), lr=(self.get_lr(), 1))
+        self.metrics.update(
+            top1=(top1, len(images)), top5=(top5, len(images)),
+            loss=(loss, len(images)),
+            lr=(self.get_lr(), 1)
+        )
 
     def warmup(self):
         if self.args.warmup_steps == 0:
@@ -143,7 +146,6 @@ class BaseTrainer:
 
         self.optimizer = init_optimizer(self.args, self.model)
         self.lr_scheduler = init_scheduler(self.args, self.optimizer)
-
         return
 
     def save_ckpt(self, cur_epoch, best_acc=0, name=None):

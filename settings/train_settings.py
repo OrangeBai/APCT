@@ -80,7 +80,10 @@ class ArgParser:
         return self.parser
 
     def get_args(self):
-        return self.parser.parse_known_args(self.args)[0]
+        args = self.parser.parse_known_args(self.args)[0]
+        if args.lr == 0:
+            args.lr += 1e-5
+        return args
 
     def resume(self):
         args, _ = self.parser.parse_known_args(self.args)
@@ -94,7 +97,7 @@ class ArgParser:
             self.parser.add_argument('--gamma', default=0.2, type=float)
             self.parser.add_argument('--milestones', default=[0.3, 0.6, 0.8], nargs='+', type=float)  # for milestone
         elif args.lr_scheduler in ['exp', 'linear']:
-            self.parser.add_argument('--base_lr', default=0.0001 * args.lr, type=float)  # for linear
+            self.parser.add_argument('--lr_e', default=0.0001 * args.lr, type=float)  # for linear
         elif args.lr_scheduler == 'cyclic':
             self.parser.add_argument('--base_lr', default=0.0001 * args.lr)
             self.parser.add_argument('--up_ratio', default=1 / 3)

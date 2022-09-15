@@ -26,15 +26,15 @@ def init_scheduler(args, optimizer):
             args.gamma: scale factor
             the learning rate is scaled by gamma when iteration reaches each milestone
     Linear:
-            args.base_lr: desired learning rate at the end of training
-            the learning rate decreases linearly from lr to base_lr
+            args.lr_e: desired learning rate at the end of training
+            the learning rate decreases linearly from lr to lr_e
     Exp:
-            args.base_lr: desired learning rate at the end of training
-            the learning rate decreases exponentially from lr to base_lr
+            args.lr_e: desired learning rate at the end of training
+            the learning rate decreases exponentially from lr to lr_e
     Cyclic:
             args.up_ratio: ratio of training steps in the increasing half of a cycle
             args.down_ratio: ratio of training steps in the decreasing half of a cycle
-            args.base_lr: Initial learning rate which is the lower boundary in the cycle for each parameter group.
+            args.lr_e: Initial learning rate which is the lower boundary in the cycle for each parameter group.
     Static:
             the learning rate remains unchanged during the training
     """
@@ -42,7 +42,7 @@ def init_scheduler(args, optimizer):
         milestones = [milestone * args.total_step for milestone in args.milestones]
         lr_scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=args.gamma)
     elif args.lr_scheduler == 'linear':
-        diff = args.lr - args.base_lr
+        diff = args.lr - args.lr_e
 
         def lambda_rule(step):
             return (args.lr - (step / args.total_step) * diff) / args.lr
@@ -50,12 +50,12 @@ def init_scheduler(args, optimizer):
         lr_scheduler = LambdaLR(optimizer, lr_lambda=lambda_rule)
 
     elif args.lr_scheduler == 'exp':
-        gamma = math.pow(args.base_lr / args.lr, 1 / args.total_step)
+        gamma = math.pow(args.lr_e / args.lr, 1 / args.total_step)
         lr_scheduler = ExponentialLR(optimizer, gamma)
     elif args.lr_scheduler == 'cyclic':
         up = int(args.total_step * args.up_ratio)
         down = int(args.total_step * args.down_ratio)
-        lr_scheduler = CyclicLR(optimizer, base_lr=args.base_lr, max_lr=args.lr,
+        lr_scheduler = CyclicLR(optimizer, base_lr=args.lr_e, max_lr=args.lr,
                                 step_size_up=up, step_size_down=down, mode='triangular2', cycle_momentum=False)
     elif args.lr_scheduler == 'static':
         def lambda_rule(t):
@@ -81,10 +81,10 @@ def init_optimizer(args, model):
             args.weight_decay: weight decay (L2 penalty) (default: 5e-4)
     """
     if args.optimizer == 'SGD':
-        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr + 1e-8, momentum=args.momentum,
                                     weight_decay=args.weight_decay)
     elif args.optimizer == 'Adam':
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, betas=(args.beta_1, args.beta_2),
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr + 1e-8, betas=(args.beta_1, args.beta_2),
                                      weight_decay=args.weight_decay)
     else:
         raise NameError('Optimizer {0} not found'.format(args.lr_scheduler))
