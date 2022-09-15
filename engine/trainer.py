@@ -67,7 +67,7 @@ class BaseTrainer:
 
             images, labels = images.to(self.rank), labels.to(self.rank)
             self.train_step(images, labels)
-            if step % self.args.print_every == 0 and step != 0:
+            if step % self.args.print_every == 0 and step != 0 and self.rank == 0:
                 self.logger.step_logging(step, self.args.epoch_step, epoch, self.args.num_epoch,
                                          self.metrics, time_metric)
 
@@ -119,7 +119,6 @@ class BaseTrainer:
                 if rank == 0:
                     self.save_ckpt(epoch, best_acc, 'best')
 
-            self.model.train()
         self.save_result(self.args.model_dir)
         if rank == 0:
             self.save_ckpt(self.args.num_epoch, best_acc)

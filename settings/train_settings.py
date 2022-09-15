@@ -31,8 +31,9 @@ class ArgParser:
         self.files = self.set_files()
 
     def _init_parser(self):
-        self.parser.add_argument('--resume', default=1, type=int)
+        self.parser.add_argument('--resume', default=0, type=int)
         # step-wise or epoch-wise
+        self.parser.add_argument('--start_epoch', default=0, type=int)
         self.parser.add_argument('--num_epoch', default=200, type=int)
         self.parser.add_argument('--batch_size', default=128, type=int)
 
@@ -133,15 +134,17 @@ class ArgParser:
     def dataset(self):
         args, _ = self.parser.parse_known_args(self.args)
         if args.dataset.lower() == 'mnist':
-            self.parser.add_argument('--num_cls', default=10)
+            self.parser.add_argument('--num_cls', default=10, type=int)
         elif args.dataset.lower() == 'cifar10':
-            self.parser.add_argument('--num_cls', default=10)
+            self.parser.add_argument('--num_cls', default=10, type=int)
             self.parser.set_defaults(model_type='mini')
         elif args.dataset.lower() == 'cifar100':
-            self.parser.add_argument('--num_cls', default=100)
+            self.parser.add_argument('--num_cls', default=100, type=int)
             self.parser.set_defaults(model_type='mini')
         elif args.dataset.lower() == 'imagenet':
-            self.parser.add_argument('--num_cls', default=1000)
+            self.parser.add_argument('--num_cls', default=1000, type=int)
+            self.parser.add_argument('--data_size', default=256, type=int)
+            self.parser.add_argument('--crop_size', default=224, type=int)
             self.parser.set_defaults(model_type='net')
         return
 
