@@ -1,13 +1,9 @@
 import os
 import random
 
-from torch.utils.data.sampler import Sampler, RandomSampler
-import torch
-from PIL import Image
 import h5py
 import torch.utils.data as data
 from torch.utils.data import Dataset
-from torchvision.datasets import ImageFolder
 from torchvision.transforms import *
 
 from config import *
@@ -51,12 +47,15 @@ def get_dataset(args):
     val_dir = os.path.join(data_dir, 'train')
     train_transform = Compose([
         ToTensor(),
-        # Resize(args.DATA.img_size),
-        RandomResizedCrop((224, 224)),
-        RandomHorizontalFlip()])
-    val_transform = Compose([ToTensor(),
-        # Resize(args.DATA.img_size),
-        CenterCrop((224, 224))])
+        Resize((args.data_size, args.data_size)),
+        CenterCrop((args.crop_size, args.crop_size)),
+        RandomHorizontalFlip()
+    ])
+    val_transform = Compose([
+        ToTensor(),
+        Resize((args.data_size, args.data_size)),
+        CenterCrop((args.crop_size, args.crop_size))
+    ])
     # train_dataset = ImageFolder(val_dir, transform=train_transform)
     # test_dataset = ImageFolder(val_dir, transform=val_transform)
 
