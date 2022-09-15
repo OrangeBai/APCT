@@ -25,7 +25,7 @@ class BaseTrainer:
 
         self.metrics = MetricLogger()
         self.result = {'train': dict(), 'test': dict()}
-        self.logger = None
+        self.logger = Log(self.args)
 
         self.rank = 0
         self.world_size = 0
@@ -109,7 +109,6 @@ class BaseTrainer:
         return self.metrics.meters['top1'].global_avg
 
     def train_model(self, rank, world_size):
-        self.logger = Log(self.args, rank)
         dist.init_process_group("gloo", rank=rank, world_size=world_size)
         self.rank = rank
         self._init_dataset()
