@@ -24,6 +24,9 @@ class BaseTrainer:
         self.rank = 0
         self.world_size = 0
 
+        self.optimizer = init_optimizer(self.args, self.model)
+        self.lr_scheduler = init_scheduler(self.args, self.optimizer)
+
     def train_step(self, images, labels):
         images, labels = images.to(self.rank), labels.to(self.rank)
         outputs = self.model(images)
@@ -131,7 +134,6 @@ class BaseTrainer:
         train_sampler = DistributedSampler(train_dataset, shuffle=False)
         test_sampler = DistributedSampler(test_dataset, shuffle=False)
         self.train_loader = data.DataLoader(
-            shuffle=False,
             dataset=train_dataset,
             batch_size=self.args.batch_size,
             sampler=train_sampler
@@ -143,9 +145,6 @@ class BaseTrainer:
         )
         self.args.epoch_step = len(self.train_loader)
         self.args.total_step = self.args.num_epoch * self.args.epoch_step
-
-        self.optimizer = init_optimizer(self.args, self.model)
-        self.lr_scheduler = init_scheduler(self.args, self.optimizer)
         return
 
     def save_ckpt(self, cur_epoch, best_acc=0, name=None):
