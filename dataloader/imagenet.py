@@ -21,9 +21,9 @@ class H5PYImageNet(Dataset):
         self.dataset = None
         self.transform = transform
         if mode == 'train':
-            self.file_path = os.path.join(file_dir, 'train.hdf5')
+            self.file_path = os.path.join(file_dir, 'train2.hdf5')
         else:
-            self.file_path = os.path.join(file_dir, 'val.hdf5')
+            self.file_path = os.path.join(file_dir, 'val2.hdf5')
 
         self.f = h5py.File(self.file_path, 'r')
         self.data = self.f['data']

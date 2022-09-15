@@ -66,7 +66,7 @@ class BaseTrainer:
             data_time = time.time() - cur_time
 
             images, labels = images.to(self.rank), labels.to(self.rank)
-            self.train_step(images, labels)
+            # self.train_step(images, labels)
             if step % self.args.print_every == 0 and step != 0:
                 self.logger.step_logging(step, self.args.epoch_step, epoch, self.args.num_epoch,
                                          self.metrics, time_metric)
@@ -126,18 +126,18 @@ class BaseTrainer:
 
     def _init_dataset(self):
         train_dataset, test_dataset = set_data_set(self.args)
-        train_sampler = DistributedSampler(train_dataset)
-        test_sampler = DistributedSampler(test_dataset)
+        train_sampler = DistributedSampler(train_dataset, shuffle=False)
+        test_sampler = DistributedSampler(test_dataset, shuffle=False)
         self.train_loader = data.DataLoader(
             shuffle=False,
             dataset=train_dataset,
             batch_size=self.args.batch_size,
-            # sampler=train_sampler
+            sampler=train_sampler
         )
         self.test_loader = data.DataLoader(
             dataset=test_dataset,
             batch_size=self.args.batch_size,
-            # sampler=None
+            sampler=test_sampler
         )
         self.args.epoch_step = len(self.train_loader)
         self.args.total_step = self.args.num_epoch * self.args.epoch_step
