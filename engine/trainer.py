@@ -15,6 +15,7 @@ class BaseTrainer(Log):
         self.rank = None
         super().__init__(args)
 
+
     def train_step(self, images, labels):
         images, labels = images.to(self.rank), labels.to(self.rank)
         outputs = self.model(images)
