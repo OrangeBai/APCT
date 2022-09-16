@@ -43,26 +43,26 @@ class BaseTrainer:
         )
         self.metrics.all_reduce()
 
-    def warmup(self):
-        if self.args.warmup_steps == 0:
-            return
-        loader = InfiniteLoader(self.train_loader)
-        self.lr_scheduler = warmup_scheduler(self.args, self.optimizer)
-        for cur_step in range(self.args.warmup_steps):
-            images, labels = next(loader)
-            images, labels = to_device(self.args.devices[0], images, labels)
-            # self.train_step(images, labels)
-            if cur_step % self.args.print_every == 0 and cur_step != 0 and self.rank == 0:
-                self.logger.step_logging(cur_step, self.args.warmup_steps, -1, -1, self.metrics, loader.metric)
-
-            if cur_step >= self.args.warmup_steps:
-                break
-        self.logger.train_logging(-1, self.args.num_epoch, self.metrics, loader.metric)
-        self.validate_epoch()
-        self.optimizer = init_optimizer(self.args, self.model)
-        self.lr_scheduler = init_scheduler(self.args, self.optimizer)
-
-        return
+    # def warmup(self):
+    #     if self.args.warmup_steps == 0:
+    #         return
+    #     loader = InfiniteLoader(self.train_loader)
+    #     self.lr_scheduler = warmup_scheduler(self.args, self.optimizer)
+    #     for cur_step in range(self.args.warmup_steps):
+    #         images, labels = next(loader)
+    #         images, labels = to_device(self.args.devices[0], images, labels)
+    #         # self.train_step(images, labels)
+    #         if cur_step % self.args.print_every == 0 and cur_step != 0 and self.rank == 0:
+    #             self.logger.step_logging(cur_step, self.args.warmup_steps, -1, -1, self.metrics, loader.metric)
+    #
+    #         if cur_step >= self.args.warmup_steps:
+    #             break
+    #     self.logger.train_logging(-1, self.args.num_epoch, self.metrics, loader.metric)
+    #     self.validate_epoch()
+    #     self.optimizer = init_optimizer(self.args, self.model)
+    #     self.lr_scheduler = init_scheduler(self.args, self.optimizer)
+    #
+    #     return
 
     def train_epoch(self, epoch):
         cur_time = time.time()

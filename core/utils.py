@@ -172,7 +172,7 @@ class SmoothedValue(object):
     def all_reduce(self):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         total = torch.tensor([self.total, self.count], dtype=torch.float32, device=device)
-        dist.all_reduce(total, dist.ReduceOp.SUM, async_op=False)
+        dist.reduce(total, dst=0, op=dist.ReduceOp.SUM, async_op=False)
         self.total, self.count = total.tolist()
 
     @property
@@ -276,6 +276,7 @@ class MetricLogger:
 
     def all_reduce(self):
         #  TODO check out how to use multi-process
+        dist.barrier()
         for meter in self.meters.values():
             meter.all_reduce()
 
