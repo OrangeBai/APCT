@@ -25,7 +25,7 @@ class BaseTrainer:
         self.result = {'train': dict(), 'test': dict()}
         self.logger = Log(self.args)
         if self.rank == 0:
-            self.logger.log_args()
+            self.logger.hello_logger()
 
     def train_step(self, images, labels):
         images, labels = images.to(self.rank), labels.to(self.rank)

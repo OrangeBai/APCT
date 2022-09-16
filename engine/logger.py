@@ -17,7 +17,7 @@ class Log:
             level=logging.INFO,
             filename=self.path)
 
-    def log_args(self):
+    def hello_logger(self):
         if self.log_args:
             self.logger.info(self.args)
         else:
