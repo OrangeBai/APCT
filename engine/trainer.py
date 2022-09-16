@@ -8,12 +8,22 @@ from models import *
 
 
 # DDP version
-class BaseTrainer(Log):
-    def __init__(self, args):
+class BaseTrainer:
+    def __init__(self, args, rank=-1):
         self.args = args
+        self.rank = rank
+        self._init_dataset()
+
         self.model = build_model(args)
-        self.rank = None
-        super().__init__(args)
+        self.model.cuda(rank)
+        self.model = DDP(self.model, device_ids=[rank], output_device=rank)
+
+        self._init_functions()
+
+        self.time_metric = MetricLogger()
+        self.metrics = MetricLogger()
+        self.result = {'train': dict(), 'test': dict()}
+        self.logger = Log(self.args)
 
     def train_step(self, images, labels):
         images, labels = images.to(self.rank), labels.to(self.rank)
@@ -90,14 +100,7 @@ class BaseTrainer(Log):
         self.model.train()
         return self.metrics.meters['top1'].global_avg
 
-    def train_model(self, rank, world_size):
-        dist.init_process_group("gloo", rank=rank, world_size=world_size)
-        self.rank = rank
-        self._init_dataset()
-
-        self.model.to(rank)
-        self.model = DDP(self.model, device_ids=[rank], output_device=rank)
-
+    def train_model(self):
         if self.args.resume:
             start_epoch, best_acc = self.load_ckpt('best')
         else:
@@ -112,11 +115,11 @@ class BaseTrainer(Log):
             acc = self.validate_epoch()
             if acc > best_acc:
                 best_acc = acc
-                if rank == 0:
+                if self.rank == 0:
                     self.save_ckpt(epoch, best_acc, 'best')
 
         self.save_result(self.args.model_dir)
-        if rank == 0:
+        if self.rank == 0:
             self.save_ckpt(self.args.num_epoch, best_acc)
 
     def _init_dataset(self):
@@ -136,18 +139,6 @@ class BaseTrainer(Log):
 
         self.args.epoch_step = len(self.train_loader)
         self.args.total_step = math.ceil(self.args.num_epoch * self.args.epoch_step)
-
-        self.optimizer = init_optimizer(self.args, self.model)
-        self.lr_scheduler = init_scheduler(self.args, self.optimizer)
-
-        self.loss_function = init_loss(self.args)
-        self.time_metric = MetricLogger()
-        self.metrics = MetricLogger()
-        self.result = {'train': dict(), 'test': dict()}
-        self.logger = Log(self.args)
-
-        self.rank = 0
-        self.world_size = 0
         return
 
     def save_ckpt(self, cur_epoch, best_acc=0, name=None):
@@ -209,3 +200,9 @@ class BaseTrainer(Log):
     #     lip_l2 = (local_lip.norm(p=2, dim=1) / perturbation.norm(p=2, dim=(1, 2, 3))).mean()
     #     self.update_metric(lip_li=(lip_li, len(images)), lip_l2=(lip_l2, len(images)))
     #     return
+
+    def _init_functions(self):
+        self.optimizer = init_optimizer(self.args, self.model)
+        self.lr_scheduler = init_scheduler(self.args, self.optimizer)
+
+        self.loss_function = init_loss(self.args)
