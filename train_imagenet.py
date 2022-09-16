@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     argv = ['--dataset', 'imagenet', '--lr_scheduler', 'linear', '--lr', '0.4', '--lr_e', '0.04',
             '--batch_size', '128', '--crop_size', '224',
-            '--num_epoch', '1']
+            '--num_epoch', '5', '--resume']
     args = ArgParser(True, argv).get_args()
 
     mp.spawn(train,

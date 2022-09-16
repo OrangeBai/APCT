@@ -169,8 +169,8 @@ class BaseTrainer:
         except FileNotFoundError:
             print('CKPT not found, start from Epoch 0')
             return 0, 0
-        self.model.load_state_dict(ckpt['model_state_dict'])
-        self.optimizer.load_state_dict(ckpt['optimizer_state_dict'])
+        map_location = {'cuda:%d' % 0: 'cuda:%d' % self.rank}
+        self.model.load_state_dict(torch.load(ckpt_path, map_location=map_location))
 
         return ckpt['epoch'], ckpt['best_acc']
 
