@@ -132,6 +132,7 @@ class BaseTrainer:
             dataset=train_dataset,
             batch_size=self.args.batch_size,
             sampler=self.train_sampler
+
         )
         self.test_loader = data.DataLoader(
             dataset=test_dataset,
