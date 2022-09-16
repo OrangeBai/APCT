@@ -4,6 +4,7 @@ import random
 import h5py
 import torch.utils.data as data
 from torch.utils.data import Dataset
+from torchvision.datasets import ImageFolder
 from torchvision.transforms import *
 
 from config import *
@@ -56,11 +57,11 @@ def get_dataset(args):
         Resize((args.data_size, args.data_size)),
         CenterCrop((args.crop_size, args.crop_size))
     ])
-    # train_dataset = ImageFolder(val_dir, transform=train_transform)
-    # test_dataset = ImageFolder(val_dir, transform=val_transform)
+    train_dataset = ImageFolder(train_dir, transform=train_transform)
+    test_dataset = ImageFolder(val_dir, transform=val_transform)
 
-    train_dataset = H5PYImageNet(data_dir, 'train', transform=train_transform)
-    test_dataset = H5PYImageNet(data_dir, 'val', transform=val_transform)
+    # train_dataset = H5PYImageNet(data_dir, 'train', transform=train_transform)
+    # test_dataset = H5PYImageNet(data_dir, 'val', transform=val_transform)
     return train_dataset, test_dataset
 
 
