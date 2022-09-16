@@ -8,31 +8,12 @@ from models import *
 
 
 # DDP version
-class BaseTrainer:
+class BaseTrainer(Log):
     def __init__(self, args):
         self.args = args
         self.model = build_model(args)
-
-        self.mean, self.std = set_mean_sed(args)
-        train_dataset, test_dataset = set_data_set(self.args)
-
-        self.args.epoch_step = len(train_dataset) / (args.batch_size * args.world_size)
-        self.args.total_step = math.ceil(self.args.num_epoch * self.args.epoch_step)
-
-        self.train_loader, self.test_loader = None, None
-        self.optimizer, self.lr_scheduler = None, None
-        self.loss_function = init_loss(self.args)
-
-        self.time_metric = MetricLogger()
-        self.metrics = MetricLogger()
-        self.result = {'train': dict(), 'test': dict()}
-        self.logger = Log(self.args)
-
-        self.rank = 0
-        self.world_size = 0
-
-        self.optimizer = init_optimizer(self.args, self.model)
-        self.lr_scheduler = init_scheduler(self.args, self.optimizer)
+        self.rank = None
+        super().__init__(args)
 
     def train_step(self, images, labels):
         images, labels = images.to(self.rank), labels.to(self.rank)
@@ -140,18 +121,33 @@ class BaseTrainer:
 
     def _init_dataset(self):
         train_dataset, test_dataset = set_data_set(self.args)
-        train_sampler = DistributedSampler(train_dataset, shuffle=False)
-        test_sampler = DistributedSampler(test_dataset, shuffle=False)
+        self.train_sampler = DistributedSampler(train_dataset, shuffle=False)
+        self.test_sampler = DistributedSampler(test_dataset, shuffle=False)
         self.train_loader = data.DataLoader(
             dataset=train_dataset,
             batch_size=self.args.batch_size,
-            sampler=train_sampler
+            sampler=self.train_sampler
         )
         self.test_loader = data.DataLoader(
             dataset=test_dataset,
             batch_size=self.args.batch_size,
-            sampler=test_sampler
+            sampler=self.test_sampler
         )
+
+        self.args.epoch_step = len(self.train_loader)
+        self.args.total_step = math.ceil(self.args.num_epoch * self.args.epoch_step)
+
+        self.optimizer = init_optimizer(self.args, self.model)
+        self.lr_scheduler = init_scheduler(self.args, self.optimizer)
+
+        self.loss_function = init_loss(self.args)
+        self.time_metric = MetricLogger()
+        self.metrics = MetricLogger()
+        self.result = {'train': dict(), 'test': dict()}
+        self.logger = Log(self.args)
+
+        self.rank = 0
+        self.world_size = 0
         return
 
     def save_ckpt(self, cur_epoch, best_acc=0, name=None):
