@@ -16,8 +16,10 @@ class Log:
             datefmt='%Y/%m/%d %H:%M:%S',
             level=logging.INFO,
             filename=self.path)
+
+    def log_args(self):
         if self.log_args:
-            self.logger.info(args)
+            self.logger.info(self.args)
         else:
             print('\n====================RESUME TRAINING=======================\n')
 

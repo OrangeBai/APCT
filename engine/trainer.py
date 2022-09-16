@@ -24,6 +24,8 @@ class BaseTrainer:
         self.metrics = MetricLogger()
         self.result = {'train': dict(), 'test': dict()}
         self.logger = Log(self.args)
+        if self.rank == 0:
+            self.logger.log_args()
 
     def train_step(self, images, labels):
         images, labels = images.to(self.rank), labels.to(self.rank)
@@ -193,6 +195,7 @@ class BaseTrainer:
 
     def get_lr(self):
         return self.optimizer.param_groups[0]['lr']
+
     # def record_lip(self, images, labels, outputs):
     #     perturbation = self.lip.attack(images, labels)
     #     local_lip = (self.model(images + perturbation) - outputs)
