@@ -1,4 +1,3 @@
-dataset: 'imagenet'
 lr_scheduler: 'linear'
 lr: 0.4
 lr_e: 0.04
