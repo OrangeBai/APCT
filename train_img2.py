@@ -5,13 +5,18 @@ from settings.train_settings import *
 
 if __name__ == '__main__':
     env_dict = {key: os.environ[key] for key in ('MASTER_ADDR', 'MASTER_PORT', 'WORLD_SIZE', 'LOCAL_WORLD_SIZE')}
+    print(os.environ)
     dist.init_process_group("nccl")
 
     rank = dist.get_rank()
     argv = ['--dataset', 'imagenet', '--lr_scheduler', 'linear', '--lr', '0', '--lr_e', '0.4',
             '--batch_size', '128', '--data_size', '160', '--crop_size', '128',
             '--num_epoch', '1']
-    args = ArgParser(False, argv).get_args()
+    if os.environ['RANK'] == 0:
+        args = ArgParser(True, argv).get_args()
+    else:
+        args = ArgParser(False, argv).get_args()
+    local_rank = os.environ['LOCAL_RANK']
     trainer = BaseTrainer(args, rank)
     trainer.train_model()
 
