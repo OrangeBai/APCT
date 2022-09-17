@@ -7,3 +7,5 @@ data_size: 160
 crop_size: 128
 start_epoch: 1
 num_epoch: 6
+resume: 1
+resume_name: epoch_001
