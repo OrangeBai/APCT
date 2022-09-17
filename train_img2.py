@@ -1,21 +1,17 @@
-from settings.train_settings import *
-from engine.trainer import BaseTrainer
-import torch.multiprocessing as mp
 import torch.distributed as dist
-from engine.ddp_train import train
-os.environ['MASTER_ADDR'] = 'localhost'
-os.environ['MASTER_PORT'] = '12355'
+
+from engine.trainer import BaseTrainer
+from settings.train_settings import *
 
 if __name__ == '__main__':
-    dist.init_process_group("nccl", init_method='tcp://127.0.0.1:3987')
+    env_dict = {key: os.environ[key] for key in ('MASTER_ADDR', 'MASTER_PORT', 'WORLD_SIZE', 'LOCAL_WORLD_SIZE')}
+    dist.init_process_group("nccl")
+
     rank = dist.get_rank()
     argv = ['--dataset', 'imagenet', '--lr_scheduler', 'linear', '--lr', '0', '--lr_e', '0.4',
             '--batch_size', '128', '--data_size', '160', '--crop_size', '128',
             '--num_epoch', '1']
-    if rank == 0:
-        args = ArgParser(True, argv).get_args()
-    else:
-        args = ArgParser(False, argv).get_args()
+    args = ArgParser(False, argv).get_args()
     trainer = BaseTrainer(args, rank)
     trainer.train_model()
 
