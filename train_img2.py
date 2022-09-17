@@ -7,7 +7,7 @@ os.environ['MASTER_ADDR'] = 'localhost'
 os.environ['MASTER_PORT'] = '12355'
 
 if __name__ == '__main__':
-    dist.init_process_group("nccl")
+    dist.init_process_group("nccl", init_method='tcp://127.0.0.1:3987')
     rank = dist.get_rank()
     argv = ['--dataset', 'imagenet', '--lr_scheduler', 'linear', '--lr', '0', '--lr_e', '0.4',
             '--batch_size', '128', '--data_size', '160', '--crop_size', '128',
