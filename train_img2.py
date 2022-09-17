@@ -12,10 +12,15 @@ if __name__ == '__main__':
     argv = ['--dataset', 'imagenet', '--lr_scheduler', 'linear', '--lr', '0', '--lr_e', '0.4',
             '--batch_size', '128', '--data_size', '160', '--crop_size', '128',
             '--num_epoch', '1']
+
     if os.environ['RANK'] == 0:
-        args = ArgParser(True, argv).get_args()
-    else:
-        args = ArgParser(False, argv).get_args()
+        arg_parser = ArgParser(True, argv)
+
+    dist.barrier()
+    args_parser = ArgParser(False, argv).load()
+
+    args = args_parser.get_args()
+
     local_rank = os.environ['LOCAL_RANK']
     trainer = BaseTrainer(args, rank)
     trainer.train_model()

@@ -7,11 +7,10 @@ import torch
 import yaml
 
 from config import *
-from dataloader.base import *
 
 
 class ArgParser:
-    def __init__(self, train=False, argv=None):
+    def __init__(self, remove=False, argv=None):
 
         self.parser = argparse.ArgumentParser()
         self.unknown_args = []
@@ -20,15 +19,15 @@ class ArgParser:
         else:
             self.args = sys.argv[1:] + argv
         self._init_parser()
-        self.model_dir(train)
+        self.model_dir(remove)
         self.devices()
-        if train:
+        if remove:
             self.save()
         else:
             path = os.path.join(self.get_args().model_dir, 'args.yaml')
             self.modify_parser(path)
 
-        self.files = self.set_files()
+        # self.files = self.set_files()
 
     def _init_parser(self):
         self.parser.add_argument('--resume', default=0, type=int)
@@ -165,19 +164,18 @@ class ArgParser:
             self.parser.add_argument('--devices', default=[d for d in args.cuda if d < device_num])
         return self.parser
 
-    def model_dir(self, train):
+    def model_dir(self, remove):
         """
         set up the name of experiment: dataset_net_exp_id
-        @param train:
+        @param remove: remove original directory
         @return:
         """
         args, _ = self.parser.parse_known_args(self.args)
         exp_name = '_'.join([str(args.net), str(args.exp_id)])
         path = os.path.join(MODEL_PATH, args.dir, exp_name)
-        if os.path.exists(path):
-            if not args.resume:
-                shutil.rmtree(path)
-                os.makedirs(path)
+        if os.path.exists(path) and remove:
+            shutil.rmtree(path)
+            os.makedirs(path)
         else:
             os.makedirs(path)
         self.parser.add_argument('--model_dir', default=path, type=str, help='model directory')
@@ -202,15 +200,21 @@ class ArgParser:
             yaml.dump(args_dict, f)
         return
 
-    def set_files(self):
+    def load(self):
         args, _ = self.parser.parse_known_args(self.args)
-        if args.dataset.lower() == '..':
-            self.parser.add_argument('--yaml_files', default='default', type=str)
+        json_file = os.path.join(args.model_dir, 'args.yaml')
+        self.modify_parser(json_file)
+        return
 
-            return os.listdir(os.path.join(os.getcwd(), self.get_args().yaml_files))
-        else:
-            args, _ = self.parser.parse_known_args(self.args)
-            return [os.path.join(args.model_dir, 'args.yaml')]
+    # def set_files(self):
+    #     args, _ = self.parser.parse_known_args(self.args)
+    #     if args.dataset.lower() == '..':
+    #         self.parser.add_argument('--yaml_files', default='default', type=str)
+    #
+    #         return os.listdir(os.path.join(os.getcwd(), self.get_args().yaml_files))
+    #     else:
+    #         args, _ = self.parser.parse_known_args(self.args)
+    #         return [os.path.join(args.model_dir, 'args.yaml')]
 
     def train_mode(self):
         args, _ = self.parser.parse_known_args(self.args)
