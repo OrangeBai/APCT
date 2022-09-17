@@ -1,7 +1,8 @@
-import os
-import logging
-import torch
 import datetime
+import logging
+import os
+
+import torch
 
 
 class Log:
@@ -64,13 +65,13 @@ class Log:
         log_msg = '\t'.join(['TRN INF:', '{meters}\t'])
         msg = log_msg.format(meters=str(metrics))
         if time_metrics is not None:
-            msg += 'time: {time:.4f}'.format(time=time_metrics.meters['iter_time'].total)
+            msg += 'time: {time:.4f}'.format(time=time_metrics.meters['iter_time'].total / 60)
         self.logger.info(msg)
         print(msg)
         return
 
     def val_logging(self, metrics, total_time):
-        msg = '\t'.join(['VAL INF:', '{meters}', '{time:.4f}']).format(meters=metrics, time=total_time)
+        msg = '\t'.join(['VAL INF:', '{meters}', 'time: {time:.4f}']).format(meters=metrics, time=total_time / 60)
         self.logger.info(msg)
         print(msg)
         return msg

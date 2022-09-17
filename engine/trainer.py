@@ -104,7 +104,7 @@ class BaseTrainer:
 
     def train_model(self):
         if self.args.resume:
-            start_epoch, best_acc = self.load_ckpt('best')
+            start_epoch, best_acc = self.load_ckpt(self.args.resume_name)
         else:
             start_epoch, best_acc = 0, 0
 
@@ -118,11 +118,11 @@ class BaseTrainer:
             if acc > best_acc:
                 best_acc = acc
                 if self.rank == 0:
-                    self.save_ckpt(epoch, best_acc, 'best')
+                    self.save_ckpt(epoch + 1, best_acc, 'best')
 
-        self.save_result(self.args.model_dir)
         if self.rank == 0:
-            self.save_ckpt(self.args.num_epoch, best_acc)
+            self.save_result(self.args.model_dir, 'epoch_{}'.format(str(self.args.num_epoch).zfill(3)))
+            self.save_ckpt(self.args.num_epoch, best_acc, 'epoch_{0}'.format(self.args.num_epoch))
 
     def _init_dataset(self):
         train_dataset, test_dataset = set_data_set(self.args)
@@ -146,7 +146,7 @@ class BaseTrainer:
 
     def save_ckpt(self, cur_epoch, best_acc=0, name=None):
         ckpt = {
-            'epoch': cur_epoch + 1,
+            'epoch': cur_epoch,
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'best_acc': best_acc

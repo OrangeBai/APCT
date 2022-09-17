@@ -27,7 +27,7 @@ class ArgParser:
             path = os.path.join(self.get_args().model_dir, 'args.yaml')
             self.modify_parser(path)
 
-        # self.files = self.set_files()
+        self.file_setting()
 
     def _init_parser(self):
         self.parser.add_argument('--resume', default=0, type=int)
@@ -58,7 +58,7 @@ class ArgParser:
         self.parser.add_argument('--num_workers', default=1, type=int)
         self.parser.add_argument('--print_every', default=100, type=int)
 
-        #
+        # for model pruning
         self.parser.add_argument('--config', default=None)
 
         # dataset and experiments
@@ -70,6 +70,9 @@ class ArgParser:
         # for debugging
         self.parser.add_argument('--mode', default='client')
         self.parser.add_argument('--port', default=52162)
+
+        # additional settings from yml file
+        self.parser.add_argument('--yml_file', default=None)
 
         self.lr_scheduler()
         self.optimizer()
@@ -87,7 +90,7 @@ class ArgParser:
     def resume(self):
         args, _ = self.parser.parse_known_args(self.args)
         if args.resume:
-            self.parser.add_argument('--resume_name', default=None)
+            self.parser.add_argument('--resume_name', default='best')
         return
 
     def lr_scheduler(self):
@@ -191,6 +194,8 @@ class ArgParser:
         for key, val in args_dict.items():
             if key not in vars(cur_args).keys():
                 self.parser.add_argument('--' + key, default=val, type=type(val))
+            else:
+                self.args += ['--' + key, str(val)]
         return
 
     def save(self):
@@ -207,15 +212,11 @@ class ArgParser:
         self.modify_parser(json_file)
         return
 
-    # def set_files(self):
-    #     args, _ = self.parser.parse_known_args(self.args)
-    #     if args.dataset.lower() == '..':
-    #         self.parser.add_argument('--yaml_files', default='default', type=str)
-    #
-    #         return os.listdir(os.path.join(os.getcwd(), self.get_args().yaml_files))
-    #     else:
-    #         args, _ = self.parser.parse_known_args(self.args)
-    #         return [os.path.join(args.model_dir, 'args.yaml')]
+    def file_setting(self):
+        args, _ = self.parser.parse_known_args(self.args)
+        if args.yml_file is not None:
+            self.modify_parser(args.yml_file)
+        return
 
     def train_mode(self):
         args, _ = self.parser.parse_known_args(self.args)
