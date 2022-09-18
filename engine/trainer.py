@@ -15,6 +15,10 @@ class BaseTrainer:
         self._init_dataset()
 
         self.model = build_model(args)
+        if self.args.resume:
+            self.start_epoch, self.best_acc = self.load_ckpt(self.args.resume_name)
+        else:
+            self.start_epoch, self.best_acc = 0, 0
         self.model.cuda(rank)
         self.model = DDP(self.model, device_ids=[rank], output_device=rank)
 
@@ -104,20 +108,16 @@ class BaseTrainer:
         return self.metrics.meters['top1'].global_avg
 
     def train_model(self):
-        if self.args.resume:
-            start_epoch, best_acc = self.load_ckpt(self.args.resume_name)
-        else:
-            start_epoch, best_acc = 0, 0
 
         # self.warmup()
 
-        for epoch in range(start_epoch, self.args.num_epoch):
+        for epoch in range(self.start_epoch, self.args.num_epoch):
             self.train_epoch(epoch)
             self.record_result(epoch)
 
             acc = self.validate_epoch()
             if acc > best_acc:
-                best_acc = acc
+                self.best_acc = acc
                 if self.rank == 0:
                     self.save_ckpt(epoch + 1, best_acc, 'best')
 
@@ -148,7 +148,7 @@ class BaseTrainer:
     def save_ckpt(self, cur_epoch, best_acc=0, name=None):
         ckpt = {
             'epoch': cur_epoch,
-            'model_state_dict': self.model.state_dict(),
+            'model_state_dict': self.model.module.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'best_acc': best_acc
         }
@@ -171,7 +171,8 @@ class BaseTrainer:
             print('CKPT not found, start from Epoch 0')
             return 0, 0
         map_location = {'cuda:%d' % 0: 'cuda:%d' % self.rank}
-        self.model.load_state_dict(torch.load(ckpt_path, map_location=map_location))
+        ckpt = torch.load(ckpt_path, map_location=map_location)
+        self.model.load_state_dict(ckpt['model_state_dict'])
 
         return ckpt['epoch'], ckpt['best_acc']
 
