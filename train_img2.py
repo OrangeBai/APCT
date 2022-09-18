@@ -9,6 +9,6 @@ os.environ['MASTER_PORT'] = '12355'
 if __name__ == '__main__':
     args = ArgParser(True).get_args()
 
-    dist.init_process_group('nccl')
+    dist.init_process_group('gloo')
     trainer = BaseTrainer(args, rank=args.local_rank)
     trainer.train_model()
