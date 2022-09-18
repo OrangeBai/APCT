@@ -67,6 +67,7 @@ class ArgParser:
         self.parser.add_argument('--dir', default='', type=str)
         # gpu settings
         self.parser.add_argument('--cuda', default=[0], type=list)
+        self.parser.add_argument("--local_rank", type=int)
         # for debugging
         self.parser.add_argument('--mode', default='client')
         self.parser.add_argument('--port', default=52162)
