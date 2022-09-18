@@ -196,8 +196,7 @@ class ArgParser:
         args, _ = self.parser.parse_known_args(self.args)
         if args.local_rank != 0 or args.node_rank != 0:
             return
-        exp_name = '_'.join([str(args.net), str(args.exp_id)])
-        path = os.path.join(MODEL_PATH, args.dir, exp_name)
+        path = args.model_dir
         if os.path.exists(path):
             if args.resume:
                 pass
