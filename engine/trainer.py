@@ -15,9 +15,6 @@ class BaseTrainer:
         self._init_dataset()
 
         self.model = build_model(args)
-        self.start_epoch, self.best_acc = self.resume()
-        dist.barrier()
-
         self.model.cuda(rank)
         self.model = DDP(self.model, device_ids=[rank], output_device=rank)
 
@@ -29,6 +26,9 @@ class BaseTrainer:
         self.logger = Log(self.args)
         if self.rank == 0:
             self.logger.hello_logger()
+
+        self.start_epoch, self.best_acc = self.resume()
+        dist.barrier()
 
     def train_step(self, images, labels):
         images, labels = images.to(self.rank), labels.to(self.rank)
@@ -172,7 +172,7 @@ class BaseTrainer:
             self.logger.info('CKPT not found, start from Epoch 0')
             print('CKPT not found, start from Epoch 0')
             return 0, 0
-        self.model.load_state_dict(ckpt['model_state_dict'])
+        self.model.module.load_state_dict(ckpt['model_state_dict'])
         self.logger.info('Loading Finished')
         print('Loading Finished')
         if self.args.resume_name == 'best':
