@@ -254,7 +254,7 @@ class BasicBlock(nn.Module):
         return self.act2(self.residual_function(x) + self.shortcut(x))
 
 
-class BottleNeck(nn.Module):
+class Bottleneck(nn.Module):
     """Residual block for resnet over 50 layers
     """
     expansion = 4
@@ -268,16 +268,16 @@ class BottleNeck(nn.Module):
             nn.Conv2d(out_channels, out_channels, stride=stride, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             set_activation(act),
-            nn.Conv2d(out_channels, out_channels * BottleNeck.expansion, kernel_size=1, bias=False),
-            nn.BatchNorm2d(out_channels * BottleNeck.expansion),
+            nn.Conv2d(out_channels, out_channels * Bottleneck.expansion, kernel_size=1, bias=False),
+            nn.BatchNorm2d(out_channels * Bottleneck.expansion),
         )
 
         self.shortcut = nn.Sequential()
 
-        if stride != 1 or in_channels != out_channels * BottleNeck.expansion:
+        if stride != 1 or in_channels != out_channels * Bottleneck.expansion:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels * BottleNeck.expansion, stride=stride, kernel_size=1, bias=False),
-                nn.BatchNorm2d(out_channels * BottleNeck.expansion)
+                nn.Conv2d(in_channels, out_channels * Bottleneck.expansion, stride=stride, kernel_size=1, bias=False),
+                nn.BatchNorm2d(out_channels * Bottleneck.expansion)
             )
         self.act2 = set_activation(act)
 

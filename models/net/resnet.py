@@ -10,10 +10,8 @@ class ResNet(nn.Module):
 
         if args.net == 'resnet18':
             self.set_up(BasicBlock, [2, 2, 2, 2], args.num_cls)
-        elif args.net == 'resnet34':
-            self.set_up(BasicBlock, [3, 4, 6, 3], args.num_cls)
         elif args.net == 'resnet50':
-            self.set_up(BasicBlock, [3, 4, 14, 3], args.num_cls)
+            self.set_up(Bottleneck, [3, 4, 6, 3], args.num_cls)
         elif args.net == 'resnet101':
             self.set_up(BasicBlock, [3, 4, 23, 3], args.num_cls)
         elif args.net == 'resnet152':
