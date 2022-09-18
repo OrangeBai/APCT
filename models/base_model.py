@@ -49,12 +49,12 @@ def build_model(args):
         model_file_name = "models." + args.model_type
         modules = importlib.import_module(model_file_name)
         model = modules.__dict__['DNN'](args)
-    elif args.model_type=='mini':
+    elif args.model_type == 'mini':
         model_file_name = "models." + "mini"
         modules = importlib.import_module(model_file_name)
         model = modules.set_model(args)
     elif args.model_type == 'net':
-        model_file_name = "models." + "mini"
+        model_file_name = "models." + "net"
         modules = importlib.import_module(model_file_name)
         model = modules.set_model(args)
     else:

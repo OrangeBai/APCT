@@ -25,7 +25,6 @@ class ArgParser:
         self.rewrite()
 
         self.attack()
-        self.devices()
         self.save()
 
         # path = os.path.join(self.get_args().model_dir, 'args.yaml')
@@ -162,24 +161,8 @@ class ArgParser:
             self.parser.set_defaults(model_type='mini')
         elif args.dataset.lower() == 'imagenet':
             self.parser.add_argument('--num_cls', default=1000, type=int)
-            self.parser.add_argument('--data_size', default=256, type=int)
-            self.parser.add_argument('--crop_size', default=224, type=int)
             self.parser.set_defaults(model_type='net')
         return
-
-    def devices(self):
-        """
-            Check devices, notice that this function should be called separately for train and test
-            to avoid conflicts caused by different device difference
-        @return:
-        """
-        args, _ = self.parser.parse_known_args(self.args)
-        device_num = torch.cuda.device_count()
-        if device_num == 0:
-            self.parser.add_argument('--devices', default=[None])
-        else:
-            self.parser.add_argument('--devices', default=[d for d in args.cuda if d < device_num])
-        return self.parser
 
     def model_dir(self):
         """
