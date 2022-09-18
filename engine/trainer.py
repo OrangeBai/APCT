@@ -37,7 +37,7 @@ class BaseTrainer:
 
     def train_step(self, images, labels):
         images, labels = images.to(self.rank), labels.to(self.rank)
-        images = self.attack(images)
+        images = self.attack(images, labels)
         outputs = self.model(images)
         loss = self.loss_function(outputs, labels)
 
