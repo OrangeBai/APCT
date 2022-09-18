@@ -82,7 +82,8 @@ class BaseTrainer:
             self.time_metric.update(iter_time=(iter_time, 1), data_time=(data_time, 1))
             self.time_metric.all_reduce()
             self.metrics.all_reduce()
-        self.logger.train_logging(epoch, self.args.num_epoch, self.metrics, self.time_metric)
+        if self.rank == 0:
+            self.logger.train_logging(epoch, self.args.num_epoch, self.metrics, self.time_metric)
         self.time_metric.reset()
         return
 
@@ -122,7 +123,7 @@ class BaseTrainer:
 
         if self.rank == 0:
             self.save_result(self.args.model_dir, 'epoch_{}'.format(str(self.args.num_epoch).zfill(3)))
-            self.save_ckpt(self.args.num_epoch, best_acc, 'epoch_{0}'.format(self.args.num_epoch))
+            self.save_ckpt(self.args.num_epoch, best_acc, 'epoch_{}'.format(str(self.args.num_epoch).zfill(3)))
 
     def _init_dataset(self):
         train_dataset, test_dataset = set_data_set(self.args)
@@ -141,7 +142,7 @@ class BaseTrainer:
         )
 
         self.args.epoch_step = len(self.train_loader)
-        self.args.total_step = math.ceil(self.args.num_epoch * self.args.epoch_step)
+        self.args.total_step = self.args.num_epoch * self.args.epoch_step
         return
 
     def save_ckpt(self, cur_epoch, best_acc=0, name=None):

@@ -71,6 +71,7 @@ class ArgParser:
         self.parser.add_argument('--mode', default='client')
         self.parser.add_argument('--port', default=52162)
 
+        self.resume()
         self.lr_scheduler()
         self.optimizer()
         self.model_type()
