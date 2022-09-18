@@ -7,20 +7,9 @@ os.environ['MASTER_ADDR'] = 'localhost'
 os.environ['MASTER_PORT'] = '12355'
 
 if __name__ == '__main__':
-    if os.environ['RANK'] == 0:
-        args = ArgParser(True).get_args()
-    else:
-        args = ArgParser(False).get_args()
+    args = ArgParser(True).get_args()
 
-    local_rank = int(os.environ["LOCAL_RANK"])
-    rank = local_rank + args.node_rank * args.nnodes
-    store = 'file://' + os.path.join(args.model_dir, 'share')
-    print(store)
-    print(local_rank)
-    print(store)
-    print(rank)
     # dist.init_process_group("nvcc", init_method=store, rank=rank, world_size=args.nnodes * args.nproc_per_node)
-    dist.init_process_group('gloo', init_method="tcp://localhost:12355")
-    print(os.environ)
-    trainer = BaseTrainer(args, local_rank)
+    dist.init_process_group('gloo', init_method='tcp://127.0.0.1:28765', rank=args.rank, world_size=args.world_size)
+    trainer = BaseTrainer(args, rank=args.rank)
     trainer.train_model()

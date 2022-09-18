@@ -22,8 +22,7 @@ class ArgParser:
 
         self._init_parser()
         self.model_dir()
-        if self.train:
-            self.rewrite()
+        self.rewrite()
 
         self.devices()
         self.save()
@@ -70,9 +69,6 @@ class ArgParser:
         # gpu settings
         self.parser.add_argument('--cuda', default=[0], type=list)
         self.parser.add_argument('--local_rank', type=int, default=0)
-        self.parser.add_argument('--node_rank', type=int, default=0)
-        self.parser.add_argument('--nnodes', type=int, default=1)
-        self.parser.add_argument('--nproc_per_node', type=int, default=1)
         # for debugging
         self.parser.add_argument('--mode', default='client')
         self.parser.add_argument('--port', default=52162)
@@ -184,6 +180,8 @@ class ArgParser:
 
     def rewrite(self):
         args, _ = self.parser.parse_known_args(self.args)
+        if args.rank != 0:
+            return
         exp_name = '_'.join([str(args.net), str(args.exp_id)])
         path = os.path.join(MODEL_PATH, args.dir, exp_name)
         if os.path.exists(path):
