@@ -166,7 +166,6 @@ class ArgParser:
             self.parser.set_defaults(model_type='net')
         return
 
-
     def model_dir(self):
         """
         set up the name of experiment: dataset_net_exp_id
@@ -199,7 +198,8 @@ class ArgParser:
             args_dict = yaml.load(file, Loader=yaml.FullLoader)
 
         for key, val in args_dict.items():
-            self.args += ['--' + key, str(val)]
+            if '--' + key not in self.args:
+                self.args += ['--' + key, str(val)]
         return
 
     def save(self):
