@@ -122,9 +122,9 @@ class BaseTrainer:
 
         if self.rank == 0:
             if self.args.save_name == '':
-                self.args.save_name = str(self.args.num_epoch).zfill(3)
-            self.save_result(self.args.model_dir, 'epoch_{}'.format(self.args.save_name))
-            self.save_ckpt(self.args.num_epoch, self.best_acc, 'epoch_{}'.format(self.args.save_name))
+                self.args.save_name = 'epoch_{}'.format(str(self.args.num_epoch).zfill(3))
+            self.save_result(self.args.model_dir, self.args.save_name)
+            self.save_ckpt(self.args.num_epoch, self.best_acc, self.args.save_name)
 
     def _init_dataset(self):
         train_dataset, test_dataset = set_data_set(self.args)
