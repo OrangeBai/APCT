@@ -147,7 +147,7 @@ class ArgParser:
             self.parser.add_argument('--alpha', default=2/255, type=float)
             self.parser.add_argument('--eps', default=4/255, type=float)
         elif args.attack.lower() == 'noise':
-            self.parser.add_argument('--sigma', default=0.12)
+            self.parser.add_argument('--sigma', default=0.12, type=float)
         return
 
     def dataset(self):
