@@ -20,7 +20,7 @@ if __name__ == '__main__':
     print(store)
     print(rank)
     # dist.init_process_group("nvcc", init_method=store, rank=rank, world_size=args.nnodes * args.nproc_per_node)
-    dist.init_process_group('nccl', init_method="tcp://localhost:12355")
+    dist.init_process_group('gloo', init_method="tcp://localhost:12355")
     print(os.environ)
     trainer = BaseTrainer(args, local_rank)
     trainer.train_model()
