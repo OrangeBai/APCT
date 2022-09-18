@@ -8,9 +8,9 @@ os.environ['MASTER_PORT'] = '12355'
 
 if __name__ == '__main__':
 
-    args = ArgParser().get_args()
+    args = ArgParser(None, os.environ['RANK']).get_args()
     local_rank = int(os.environ["LOCAL_RANK"])
-    dist.init_process_group("gloo", rank=local_rank, world_size=args.world_size)
+    dist.init_process_group("gloo")
     print(os.environ)
     trainer = BaseTrainer(args, local_rank)
     trainer.train_model()
