@@ -180,7 +180,7 @@ class ArgParser:
 
     def rewrite(self):
         args, _ = self.parser.parse_known_args(self.args)
-        if args.rank != 0:
+        if args.local_rank != 0:
             return
         exp_name = '_'.join([str(args.net), str(args.exp_id)])
         path = os.path.join(MODEL_PATH, args.dir, exp_name)
