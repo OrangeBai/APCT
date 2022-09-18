@@ -7,8 +7,10 @@ os.environ['MASTER_ADDR'] = 'localhost'
 os.environ['MASTER_PORT'] = '12355'
 
 if __name__ == '__main__':
-
-    args = ArgParser(None, os.environ['RANK']).get_args()
+    if os.environ['RANK'] == 0:
+        args = ArgParser(True).get_args()
+    else:
+        args = ArgParser(False).get_args()
     local_rank = int(os.environ["LOCAL_RANK"])
     dist.init_process_group("gloo")
     print(os.environ)
