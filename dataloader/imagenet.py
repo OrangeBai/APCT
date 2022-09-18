@@ -60,7 +60,7 @@ def get_dataset(args):
     # train_dataset = ImageFolder(train_dir, transform=train_transform)
     # test_dataset = ImageFolder(val_dir, transform=val_transform)
 
-    train_dataset = H5PYImageNet(data_dir, 'val', transform=train_transform)
+    train_dataset = H5PYImageNet(data_dir, 'train', transform=train_transform)
     test_dataset = H5PYImageNet(data_dir, 'val', transform=val_transform)
     return train_dataset, test_dataset
 
