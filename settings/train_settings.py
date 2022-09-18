@@ -24,6 +24,7 @@ class ArgParser:
         self.model_dir()
         self.rewrite()
 
+        self.attack()
         self.devices()
         self.save()
 
@@ -62,6 +63,8 @@ class ArgParser:
         # for model pruning
         self.parser.add_argument('--config', default=None)
 
+        # for adv training
+        self.parser.add_argument('--attack', default='vanilla', type=str)
         # dataset and experiments
         self.parser.add_argument('--dataset', default='cifar10', type=str)
         self.parser.add_argument('--exp_id', default=0, type=str)
@@ -132,9 +135,19 @@ class ArgParser:
             self.parser.add_argument('--input_size', default=784, type=int)
             self.parser.add_argument('--width', default=1000, type=int)
             self.parser.add_argument('--depth', default=9, type=int)
-        elif 'cxfy' in args.net.lower():
-            self.parser.set_defaults(model_type='net')
-            self.parser.add_argument('--shape', default='large', type=str)
+        return
+
+    def attack(self):
+        args, _ = self.parser.parse_known_args(self.args)
+        if args.attack.lower() == 'fgsm':
+            self.parser.add_argument('--ord', default='inf')
+            self.parser.add_argument('--eps', default=4/255, type=float)
+        elif args.attack.lower() == 'pgd':
+            self.parser.add_argument('--ord', default='inf')
+            self.parser.add_argument('--alpha', default=2/255, type=float)
+            self.parser.add_argument('--eps', default=4/255, type=float)
+        elif args.attack.lower() == 'noise':
+            self.parser.add_argument('--sigma', default=0.12)
         return
 
     def dataset(self):
@@ -175,7 +188,7 @@ class ArgParser:
         """
         args, _ = self.parser.parse_known_args(self.args)
         exp_name = '_'.join([str(args.net), str(args.exp_id)])
-        path = os.path.join(MODEL_PATH, args.dir, exp_name)
+        path = os.path.join(MODEL_PATH, args.dir, args.dataset, exp_name)
         self.parser.add_argument('--model_dir', default=path, type=str, help='model directory')
         return self.parser
 
@@ -242,11 +255,6 @@ class ArgParser:
         self.parser.add_argument('--lip_loss', default=0.00, type=float)
 
         # Adversarial Training
-        self.parser.add_argument('--ord', default='inf', type=str)
-        self.parser.add_argument('--attack', default='Noise', type=str)
-        self.parser.add_argument('--sigma', default=0.05, type=float)
-        self.parser.add_argument('--alpha', default=2 / 255, type=float)
-        self.parser.add_argument('--eps', default=8 / 255, type=float)
 
         # Prune Training
         self.parser.add_argument('--conv_dn_rate', default=0.95, type=float)

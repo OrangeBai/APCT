@@ -49,13 +49,16 @@ def build_model(args):
         model_file_name = "models." + args.model_type
         modules = importlib.import_module(model_file_name)
         model = modules.__dict__['DNN'](args)
-    else:
-        model_file_name = "models." + "net"
+    elif args.model_type=='mini':
+        model_file_name = "models." + "mini"
         modules = importlib.import_module(model_file_name)
         model = modules.set_model(args)
-        # for name, cls in modules.__dict__.items():
-        #     if name.lower() in args.net.lower():
-        #         model = cls
+    elif args.model_type == 'net':
+        model_file_name = "models." + "mini"
+        modules = importlib.import_module(model_file_name)
+        model = modules.set_model(args)
+    else:
+        raise NameError
 
     if model is None:
         print("In %s.py, there should be a subclass of BaseModel with class name that matches %s in lowercase." % (

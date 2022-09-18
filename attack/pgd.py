@@ -2,8 +2,8 @@ from attack.base import *
 
 
 class PGD(Attack):
-    def __init__(self, model, device, *args, **kwargs):
-        super(PGD, self).__init__(model, device, *args, **kwargs)
+    def __init__(self, model, args, **kwargs):
+        super(PGD, self).__init__(model, args, **kwargs)
         self.random_start = True
         self.eps = kwargs['eps'] if 'eps' in kwargs.keys() else 8 / 255
         self.alpha = kwargs['alpha'] if 'alpha' in kwargs.keys() else 2 / 255
