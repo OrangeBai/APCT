@@ -1,7 +1,6 @@
 import torch.utils.data as data
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
-
 from attack import *
 from dataloader.base import *
 from engine.logger import Log
@@ -38,8 +37,9 @@ class BaseTrainer:
     def train_step(self, images, labels):
         images, labels = images.to(self.rank), labels.to(self.rank)
         images = self.attack(images, labels)
-        outputs = self.model(images)
-        loss = self.loss_function(outputs, labels)
+        with torch.cuda.amp.autocast(dtype=torch.float16):
+            outputs = self.model(images)
+            loss = self.loss_function(outputs, labels)
 
         self.optimizer.zero_grad()
         loss.backward()
