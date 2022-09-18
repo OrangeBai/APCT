@@ -1,5 +1,6 @@
 from settings.train_settings import *
 from engine.trainer import BaseTrainer
+from engine.adv_trainer import AdvTrainer
 import torch.multiprocessing as mp
 import torch.distributed as dist
 
@@ -12,7 +13,7 @@ if __name__ == '__main__':
 
     world_size = args.world_size
 
-    trainer = BaseTrainer(args)
+    trainer = AdvTrainer(args)
     # trainer.train_model(0, 1)
     mp.spawn(trainer.train_model,
              args=(world_size,),

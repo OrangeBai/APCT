@@ -232,7 +232,6 @@ class ArgParser:
         self.parser.add_argument('--dn_rate', default=0.90, type=float)
 
         # Certifiable training
-        self.parser.add_argument('--noise_sigma', default=0.1, type=float)
         self.parser.add_argument('--eta_fixed', default=0, type=float)
         self.parser.add_argument('--eta_float', default=0, type=float)
         self.parser.add_argument('--noise_type', default='noise', type=str)
@@ -244,7 +243,8 @@ class ArgParser:
 
         # Adversarial Training
         self.parser.add_argument('--ord', default='inf', type=str)
-        self.parser.add_argument('--attack', default='FGSM', type=str)
+        self.parser.add_argument('--attack', default='Noise', type=str)
+        self.parser.add_argument('--sigma', default=0.05, type=float)
         self.parser.add_argument('--alpha', default=2 / 255, type=float)
         self.parser.add_argument('--eps', default=8 / 255, type=float)
 

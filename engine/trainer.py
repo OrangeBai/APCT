@@ -2,6 +2,7 @@ import torch.utils.data as data
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
 
+from attack import *
 from dataloader.base import *
 from engine.logger import Log
 from models import *
@@ -16,6 +17,10 @@ class BaseTrainer:
 
         self.model = build_model(args)
         self.model.cuda(rank)
+
+        self.attack = set_attack(self.model, self.args)
+
+        self.attack = DDP(self.attack, device_ids=[rank], output_device=rank)
         self.model = DDP(self.model, device_ids=[rank], output_device=rank)
 
         self._init_functions()
@@ -32,6 +37,7 @@ class BaseTrainer:
 
     def train_step(self, images, labels):
         images, labels = images.to(self.rank), labels.to(self.rank)
+        images = self.attack(images)
         outputs = self.model(images)
         loss = self.loss_function(outputs, labels)
 
