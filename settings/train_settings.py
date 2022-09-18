@@ -57,7 +57,7 @@ class ArgParser:
         # training settings
         self.parser.add_argument('--num_workers', default=1, type=int)
         self.parser.add_argument('--print_every', default=100, type=int)
-
+        self.parser.add_argument('--save_name', default='', type=str)
         # for model pruning
         self.parser.add_argument('--config', default=None)
 
