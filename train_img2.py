@@ -15,7 +15,12 @@ if __name__ == '__main__':
     local_rank = int(os.environ["LOCAL_RANK"])
     rank = local_rank + args.node_rank * args.nnodes
     store = 'file://' + os.path.join(args.model_dir, 'share')
-    dist.init_process_group("gloo", store=store, rank=rank, world_size=args.nnodes * args.nproc_per_node)
+    print(store)
+    print(local_rank)
+    print(store)
+    print(rank)
+    # dist.init_process_group("nvcc", init_method=store, rank=rank, world_size=args.nnodes * args.nproc_per_node)
+    dist.init_process_group('nccl', init_method="tcp://localhost:12355")
     print(os.environ)
     trainer = BaseTrainer(args, local_rank)
     trainer.train_model()
