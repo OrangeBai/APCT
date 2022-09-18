@@ -10,24 +10,24 @@ from config import *
 
 
 class ArgParser:
-    def __init__(self, remove=False, argv=None):
+    def __init__(self, argv=None):
 
         self.parser = argparse.ArgumentParser()
         self.unknown_args = []
+
         if argv is None:
             self.args = sys.argv[1:]
         else:
             self.args = sys.argv[1:] + argv
-        self._init_parser()
-        self.model_dir(remove)
-        self.devices()
-        if remove:
-            self.save()
-        else:
-            path = os.path.join(self.get_args().model_dir, 'args.yaml')
-            self.modify_parser(path)
-
         self.file_setting()
+
+        self._init_parser()
+        self.model_dir()
+        self.devices()
+        self.save()
+
+        # path = os.path.join(self.get_args().model_dir, 'args.yaml')
+        # self.modify_parser(path)
 
     def _init_parser(self):
         self.parser.add_argument('--resume', default=0, type=int)
@@ -70,9 +70,6 @@ class ArgParser:
         # for debugging
         self.parser.add_argument('--mode', default='client')
         self.parser.add_argument('--port', default=52162)
-
-        # additional settings from yml file
-        self.parser.add_argument('--yml_file', default=None)
 
         self.lr_scheduler()
         self.optimizer()
@@ -167,17 +164,18 @@ class ArgParser:
             self.parser.add_argument('--devices', default=[d for d in args.cuda if d < device_num])
         return self.parser
 
-    def model_dir(self, remove):
+    def model_dir(self):
         """
         set up the name of experiment: dataset_net_exp_id
-        @param remove: remove original directory
         @return:
         """
         args, _ = self.parser.parse_known_args(self.args)
         exp_name = '_'.join([str(args.net), str(args.exp_id)])
         path = os.path.join(MODEL_PATH, args.dir, exp_name)
         if os.path.exists(path):
-            if remove:
+            if args.resume:
+                pass
+            else:
                 shutil.rmtree(path)
                 os.makedirs(path)
         else:
@@ -192,10 +190,7 @@ class ArgParser:
             args_dict = yaml.load(file, Loader=yaml.FullLoader)
 
         for key, val in args_dict.items():
-            if key not in vars(cur_args).keys():
-                self.parser.add_argument('--' + key, default=val, type=type(val))
-            else:
-                self.args += ['--' + key, str(val)]
+            self.args += ['--' + key, str(val)]
         return
 
     def save(self):
@@ -213,6 +208,7 @@ class ArgParser:
         return
 
     def file_setting(self):
+        self.parser.add_argument('--yml_file', default=None, type=str)
         args, _ = self.parser.parse_known_args(self.args)
         if args.yml_file is not None:
             self.modify_parser(args.yml_file)

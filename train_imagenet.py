@@ -8,7 +8,7 @@ os.environ['MASTER_PORT'] = '12355'
 
 if __name__ == '__main__':
 
-    args = ArgParser(True).get_args()
+    args = ArgParser().get_args()
 
     mp.spawn(train,
              args=(args,),
