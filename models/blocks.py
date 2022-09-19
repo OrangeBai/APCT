@@ -1,4 +1,3 @@
-import torch
 from torch.nn import functional as F
 
 from core.utils import *
@@ -8,13 +7,13 @@ def set_activation(activation):
     if activation is None:
         return nn.Identity()
     elif activation.lower() == 'relu':
-        return nn.ReLU(inplace=False)
+        return nn.ReLU(inplace=True)
     elif activation.lower() == 'prelu':
         return nn.PReLU()
     elif activation.lower() == 'gelu':
         return nn.GELU()
     elif activation.lower() == 'leakyrelu':
-        return nn.LeakyReLU(0.1)
+        return nn.LeakyReLU(0.1, inplace=True)
 
 
 def set_bn(batch_norm, dim, channel):
@@ -45,7 +44,8 @@ class LinearBlock(nn.Module):
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=(3, 3), padding=1, stride=1, *args, **kwargs):
         super().__init__()
-        self.Conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=padding, stride=stride)
+        self.Conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size,
+                              padding=padding, stride=stride, bias=False)
         self.BN = set_bn(kwargs['batch_norm'], 2, out_channels)
         self.Act = set_activation(kwargs['activation'])
 
@@ -192,6 +192,7 @@ class DualNet(nn.Module):
                 return x * (1 + ratio) * mask - x.detach() * mask.detach() * ratio
             else:
                 return x * (1 + ratio) * mask
+
     @staticmethod
     def compute_pre_act(module, x):
         if type(module) == ConvBlock:
@@ -226,16 +227,13 @@ class BasicBlock(nn.Module):
     # to distinct
     expansion = 1
 
-    def __init__(self, in_channels, out_channels, stride=1, act='ReLU', *args, **kwargs):
+    def __init__(self, in_channels, out_channels, stride=1, **kwargs):
         super().__init__()
-
         # residual function
         self.residual_function = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            set_activation(act),
-            nn.Conv2d(out_channels, out_channels * BasicBlock.expansion, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels * BasicBlock.expansion)
+            ConvBlock(in_channels, out_channels, kernel_size=(3, 3), stride=stride, bias=False, **kwargs),
+            ConvBlock(out_channels, out_channels * BasicBlock.expansion, stride=stride, bias=False,
+                      batch_norm=kwargs['batch_norm'], activation=None),
         )
 
         # shortcut
@@ -245,41 +243,37 @@ class BasicBlock(nn.Module):
         # use 1*1 convolution to match the dimension
         if stride != 1 or in_channels != BasicBlock.expansion * out_channels:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels * BasicBlock.expansion, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(out_channels * BasicBlock.expansion)
+                ConvBlock(in_channels, out_channels * BasicBlock.expansion, kernel_size=(1, 1),
+                          bias=False, batch_norm=kwargs['batch_norm'], activation=None),
             )
-        self.act2 = set_activation(act)
+        self.act = set_activation(kwargs['activation'])
 
     def forward(self, x):
-        return self.act2(self.residual_function(x) + self.shortcut(x))
+        return self.act(self.residual_function(x) + self.shortcut(x))
 
 
-class Bottleneck(nn.Module):
+class BottleNeck(nn.Module):
     """Residual block for resnet over 50 layers
     """
     expansion = 4
 
-    def __init__(self, in_channels, out_channels, stride=1, act='ReLU', *args, **kwargs):
+    def __init__(self, in_channels, out_channels, stride=1, **kwargs):
         super().__init__()
         self.residual_function = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            set_activation(act),
-            nn.Conv2d(out_channels, out_channels, stride=stride, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            set_activation(act),
-            nn.Conv2d(out_channels, out_channels * Bottleneck.expansion, kernel_size=1, bias=False),
-            nn.BatchNorm2d(out_channels * Bottleneck.expansion),
+            ConvBlock(in_channels, out_channels, kernel_size=(1, 1), **kwargs),
+            ConvBlock(in_channels, out_channels, stride=stride, kernel_size=(3, 3), **kwargs),
+            ConvBlock(in_channels, out_channels * BottleNeck.expansion, kernel_size=(1, 1),
+                      batch_norm=kwargs['batch_norm'], activation=None),
         )
 
         self.shortcut = nn.Sequential()
 
-        if stride != 1 or in_channels != out_channels * Bottleneck.expansion:
+        if stride != 1 or in_channels != out_channels * BottleNeck.expansion:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels * Bottleneck.expansion, stride=stride, kernel_size=1, bias=False),
-                nn.BatchNorm2d(out_channels * Bottleneck.expansion)
+                ConvBlock(in_channels, out_channels * BottleNeck.expansion, stride=stride, kernel_size=1,
+                          batch_norm=kwargs['batch_norm'], activation=None)
             )
-        self.act2 = set_activation(act)
+        self.act = kwargs['activation']
 
     def forward(self, x):
-        return self.act2(self.residual_function(x) + self.shortcut(x))
+        return self.act(self.residual_function(x) + self.shortcut(x))
