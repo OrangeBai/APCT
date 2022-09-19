@@ -72,7 +72,7 @@ def get_loaders(args):
         batch_size=args.batch_size,
         shuffle=True,
         pin_memory=True,
-        num_workers=8,
+        num_workers=4,
         prefetch_factor=4
     )
 
