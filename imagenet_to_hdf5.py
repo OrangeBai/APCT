@@ -66,7 +66,8 @@ def process(input_tuple):
     idx, (path, label) = input_tuple
     try:
         im = Image.open(path).convert('RGB').resize((image_size, image_size))
-        img = (ToTensor()(im).numpy() * 255).astype(np.uint8).transpose(1, 2, 0)
+        # img = (ToTensor()(im).numpy() * 255).astype(np.uint8).transpose(1, 2, 0)
+        img = ToTensor()(im).cuda()
         lb = label
     except Exception as e:
         print('Find Exception {0} at {1}'.format(e, path))
