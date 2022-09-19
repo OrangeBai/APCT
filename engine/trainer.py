@@ -95,7 +95,7 @@ class BaseTrainer:
         if self.rank == 0:
             self.logger.train_logging(epoch, self.args.num_epoch, self.metrics, self.time_metric)
         self.time_metric.reset()
-        
+        return
 
     def validate_epoch(self):
         start = time.time()

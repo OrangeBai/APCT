@@ -72,8 +72,8 @@ def get_loaders(args):
         batch_size=args.batch_size,
         shuffle=True,
         pin_memory=True,
-        num_workers=4,
-        prefetch_factor=4
+        num_workers=16,
+        prefetch_factor=8
     )
 
     test_loader = data.DataLoader(
