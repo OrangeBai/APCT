@@ -69,8 +69,7 @@ def process(input_tuple):
 
     try:
         im = Image.open(path).convert('RGB').resize((image_size, image_size))
-        # img = (ToTensor()(im).numpy() * 255).astype(np.uint8).transpose(1, 2, 0)
-        img = ToTensor()(im).cuda()
+        img = (ToTensor()(im).numpy() * 255).astype(np.uint8).transpose(1, 2, 0)
         lb = label
     except Exception as e:
         print('Find Exception {0} at {1}'.format(e, path))
@@ -98,8 +97,6 @@ def clean_dataset(path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', default='clean', choices=['clean', 'h5py'])
-    args = ArgParser(True).get_args()
-    model = VGG16(args).cuda()
     args = parser.parse_args()
 
     num_cpus = multiprocessing.cpu_count()
