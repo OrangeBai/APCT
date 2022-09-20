@@ -44,8 +44,8 @@ class H5PYImageNet(Dataset):
 
 def get_dataset(args):
     data_dir = os.path.join(DATA_PATH, 'ImageNet')
-    train_dir = os.path.join(data_dir, 'train')
-    val_dir = os.path.join(data_dir, 'train')
+    train_dir = os.path.join(data_dir, 'val')
+    val_dir = os.path.join(data_dir, 'val')
     train_transform = Compose([
         ToTensor(),
         Resize((args.data_size, args.data_size)),

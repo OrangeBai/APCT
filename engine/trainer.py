@@ -1,6 +1,7 @@
 import torch.utils.data as data
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
+from torch.cuda.amp import GradScaler
 from attack import *
 from dataloader.base import *
 from engine.logger import Log
@@ -16,7 +17,7 @@ class BaseTrainer:
 
         self.model = build_model(args)
         self.model.cuda(rank)
-
+        self.scaler = GradScaler()
         self.attack = set_attack(self.model, self.args)
 
         self.attack = DDP(self.attack, device_ids=[rank], output_device=rank)
@@ -35,16 +36,21 @@ class BaseTrainer:
         dist.barrier()
 
     def train_step(self, images, labels):
+        self.optimizer.zero_grad()
         #images, labels = images.to(self.rank), labels.to(self.rank)
         images = self.attack(images, labels)
         with torch.cuda.amp.autocast(dtype=torch.float16):
             outputs = self.model(images)
             loss = self.loss_function(outputs, labels)
 
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-        self.lr_scheduler.step()
+        self.scaler.scale(loss).backward()
+        self.scaler.step(self.optimizer)
+        scale = self.scaler.get_scale()
+        self.scaler.update()
+        # loss.backward()
+        # self.optimizer.step()
+        if not scale > self.scaler.get_scale():
+            self.lr_scheduler.step()
 
         top1, top5 = accuracy(outputs, labels)
         self.metrics.update(
@@ -79,7 +85,8 @@ class BaseTrainer:
         cur_time = time.time()
         for step, (images, labels) in enumerate(self.train_loader):
             data_time = time.time() - cur_time
-
+            if step > 2:
+                return
             images, labels = images.to(self.rank,non_blocking=True), labels.to(self.rank,non_blocking=True)
             self.train_step(images, labels)
             if step % self.args.print_every == 0 and step != 0 and self.rank == 0:
@@ -101,8 +108,12 @@ class BaseTrainer:
         start = time.time()
         self.model.eval()
         for images, labels in self.test_loader:
-            images, labels = images.to(self.rank), labels.to(self.rank)
-            pred = self.model(images)
+            images, labels = images.to(self.rank,non_blocking=True), labels.to(self.rank,non_blocking=True)
+            #with torch.no_grad():
+            #print(images.shape)
+            with torch.cuda.amp.autocast(dtype=torch.float16):
+        
+                pred = self.model(images)
             top1, top5 = accuracy(pred, labels)
             self.metrics.update(top1=(top1, len(images)))
             self.metrics.all_reduce()

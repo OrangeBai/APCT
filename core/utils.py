@@ -116,7 +116,6 @@ def accuracy(output, target, top_k=(1, 5)):
     @param top_k: Object to be computed
     @return: accuracy (in percentage, not decimal)
     """
-
     with torch.no_grad():
         maxk = max(top_k)
         batch_size = target.size(0)
