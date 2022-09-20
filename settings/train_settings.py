@@ -161,8 +161,7 @@ class ArgParser:
             self.parser.set_defaults(model_type='mini')
         elif args.dataset.lower() == 'imagenet':
             self.parser.add_argument('--num_cls', default=1000, type=int)
-            self.parser.add_argument('--data_size', default=256, type=int)
-            self.parser.add_argument('--crop_size', default=224, type=int)
+            self.parser.add_argument('--phase_path', default='./imagenet_cfg/phase_default.yml', type=str)
             self.parser.set_defaults(model_type='net')
         return
 

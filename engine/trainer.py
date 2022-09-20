@@ -1,7 +1,9 @@
 import torch.utils.data as data
+import yaml
+from torch.cuda.amp import GradScaler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
-from torch.cuda.amp import GradScaler
+
 from attack import *
 from dataloader.base import *
 from engine.logger import Log
@@ -13,7 +15,6 @@ class BaseTrainer:
     def __init__(self, args, rank=-1):
         self.args = args
         self.rank = rank
-        self._init_dataset()
 
         self.model = build_model(args)
         self.model.cuda(rank)
@@ -23,8 +24,6 @@ class BaseTrainer:
         self.attack = DDP(self.attack, device_ids=[rank], output_device=rank)
         self.model = DDP(self.model, device_ids=[rank], output_device=rank)
 
-        self._init_functions()
-
         self.time_metric = MetricLogger()
         self.metrics = MetricLogger()
         self.result = {'train': dict(), 'test': dict()}
@@ -32,12 +31,14 @@ class BaseTrainer:
         if self.rank == 0:
             self.logger.hello_logger()
 
+        self.reset_lr_dt(0)
+
         self.start_epoch, self.best_acc = self.resume()
         dist.barrier()
 
     def train_step(self, images, labels):
         self.optimizer.zero_grad()
-        #images, labels = images.to(self.rank), labels.to(self.rank)
+        # images, labels = images.to(self.rank), labels.to(self.rank)
         images = self.attack(images, labels)
         with torch.cuda.amp.autocast(dtype=torch.float16):
             outputs = self.model(images)
@@ -85,8 +86,9 @@ class BaseTrainer:
         cur_time = time.time()
         for step, (images, labels) in enumerate(self.train_loader):
             data_time = time.time() - cur_time
-            images, labels = images.to(self.rank,non_blocking=True), labels.to(self.rank,non_blocking=True)
-
+            images, labels = images.to(self.rank, non_blocking=True), labels.to(self.rank, non_blocking=True)
+            if step >= 11:
+                return
             self.train_step(images, labels)
             if step % self.args.print_every == 0 and step != 0 and self.rank == 0:
                 self.logger.step_logging(step, self.args.epoch_step, epoch, self.args.num_epoch,
@@ -107,11 +109,10 @@ class BaseTrainer:
         start = time.time()
         self.model.eval()
         for images, labels in self.test_loader:
-            images, labels = images.to(self.rank,non_blocking=True), labels.to(self.rank,non_blocking=True)
-            #with torch.no_grad():
-            #print(images.shape)
+            images, labels = images.to(self.rank, non_blocking=True), labels.to(self.rank, non_blocking=True)
+            # with torch.no_grad():
+            # print(images.shape)
             with torch.cuda.amp.autocast(dtype=torch.float16):
-        
                 pred = self.model(images)
             top1, top5 = accuracy(pred, labels)
             self.metrics.update(top1=(top1, len(images)))
@@ -128,14 +129,15 @@ class BaseTrainer:
         # self.warmup()
 
         for epoch in range(self.start_epoch, self.args.num_epoch):
+            self.reset_lr_dt(epoch)
             self.train_epoch(epoch)
             self.record_result(epoch)
 
-            acc = self.validate_epoch()
-            if acc > self.best_acc:
-                self.best_acc = acc
-                if self.rank == 0:
-                    self.save_ckpt(epoch + 1, self.best_acc, 'best')
+            # acc = self.validate_epoch()
+            # if acc > self.best_acc:
+            #     self.best_acc = acc
+            #     if self.rank == 0:
+            #         self.save_ckpt(epoch + 1, self.best_acc, 'best')
 
         if self.rank == 0:
             if self.args.save_name == '':
@@ -233,3 +235,47 @@ class BaseTrainer:
         self.lr_scheduler = init_scheduler(self.args, self.optimizer)
 
         self.loss_function = init_loss(self.args)
+
+    def reset_lr_dt(self, epoch):
+        if self.args.dataset != 'imagenet':
+            if epoch == 0:
+                self._init_dataset()
+                self._init_functions()
+            else:
+                return
+
+        if epoch == 0:
+
+            with open(self.args.phase_path, 'r') as f:
+                self.args.phase_file = yaml.load(f, Loader=yaml.FullLoader)
+            cur_p, cur_file = check_phase(self.args.phase_file, epoch)
+            for k, v in cur_file.items():
+                setattr(self.args, k, v)
+            self.logger.info('Switching to  {0}, with info {1}'.format(cur_p, cur_file))
+            print('Switching to  {0}, with info {1}'.format(cur_p, cur_file))
+            self._init_dataset()
+            self._init_functions()
+        else:
+            cur_p, cur_file = check_phase(self.args.phase_file, epoch)
+            pre_p, pre_file = check_phase(self.args.phase_file, epoch - 1)
+            if pre_p == cur_p:
+                return
+            self.logger.info('Switching to  {0}, with info {1}'.format(cur_p, cur_file))
+            print('Switching to  {0}, with info {1}'.format(cur_p, cur_file))
+            if pre_file['data_size'] != cur_file['data_size']:
+                self.args.data_size = cur_file['data_size']
+                self.args.crop_size = cur_file['crop_size']
+                self.args.batch_size = cur_file['batch_size']
+                self._init_dataset()
+                self.logger.info('Dataset Initialized')
+                print('Dataset Initialized')
+
+            if cur_p != pre_p:
+                self.args.lr_scheduler = cur_file['lr_scheduler']
+                self.args.lr = cur_file['lr']
+                self.args.lr_e = cur_file['lr_e']
+                self.args.total_step = (cur_file['end_epoch'] - cur_file['start_epoch']) * len(self.train_loader)
+                self._init_functions()
+                self.logger.info('Optimizer Initialized')
+                print('Optimizer Initialized')
+        return

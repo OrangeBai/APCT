@@ -50,6 +50,8 @@ def init_scheduler(args, optimizer):
     Static:
             the learning rate remains unchanged during the training
     """
+    if args.lr == 0:
+        args.lr += 1e-6
     if args.lr_scheduler == 'milestones':
         milestones = [milestone * args.total_step for milestone in args.milestones]
         lr_scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=args.gamma)
@@ -328,6 +330,13 @@ def set_lb_ub(activation):
         return (0, 0.2), (0.2, 0.5), (0, 0.2)
 
 
+def check_phase(phase_file, epoch):
+    for p, v in phase_file.items():
+        if epoch in range(v['start_epoch'], v['end_epoch']):
+            return p, v
+    raise ValueError('Phase file not matching training')
+
+
 class ImageNetScheduler():
     def __init__(self, optimizer, phases):
         self.optimizer = optimizer
@@ -381,8 +390,10 @@ class ImageNetScheduler():
 
 
 def listify(p=None, q=None):
-    if p is None: p=[]
-    elif not isinstance(p, Iterable): p=[p]
-    n = q if type(q)==int else 1 if q is None else len(q)
-    if len(p)==1: p = p * n
+    if p is None:
+        p = []
+    elif not isinstance(p, Iterable):
+        p = [p]
+    n = q if type(q) == int else 1 if q is None else len(q)
+    if len(p) == 1: p = p * n
     return p

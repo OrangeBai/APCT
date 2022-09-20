@@ -1,4 +1,5 @@
 dataset: imagenet
+phase_file:
 lr_scheduler: 'linear'
 lr: 0.
 lr_e: 0.1

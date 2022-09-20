@@ -43,20 +43,25 @@ class H5PYImageNet(Dataset):
 
 
 def get_dataset(args):
-    data_dir = os.path.join(DATA_PATH, 'ImageNet')
+    resize_path = os.path.join(DATA_PATH, 'ImageNet-sz', str(args.data_size))
+    resize_exist = os.path.exists(resize_path)
+    if resize_exist:
+        data_dir = resize_path
+    else:
+        data_dir = os.path.join(DATA_PATH, 'ImageNet')
     train_dir = os.path.join(data_dir, 'val')
     val_dir = os.path.join(data_dir, 'val')
-    train_transform = Compose([
-        ToTensor(),
-        Resize((args.data_size, args.data_size)),
-        CenterCrop((args.crop_size, args.crop_size)),
-        RandomHorizontalFlip()
-    ])
-    val_transform = Compose([
-        ToTensor(),
-        Resize((args.data_size, args.data_size)),
-        CenterCrop((args.crop_size, args.crop_size))
-    ])
+    if resize_exist:
+        train_composed = [ToTensor(), Resize((args.data_size, args.data_size)),
+                          CenterCrop((args.crop_size, args.crop_size)), RandomHorizontalFlip()]
+        val_composed = [ToTensor(), Resize((args.data_size, args.data_size)),
+                        CenterCrop((args.crop_size, args.crop_size))]
+    else:
+        train_composed = [ToTensor(), CenterCrop((args.crop_size, args.crop_size)), RandomHorizontalFlip()]
+        val_composed = [ToTensor(), CenterCrop((args.crop_size, args.crop_size))]
+    train_transform = Compose(train_composed)
+    val_transform = Compose(val_composed)
+
     train_dataset = ImageFolder(train_dir, transform=train_transform)
     test_dataset = ImageFolder(val_dir, transform=val_transform)
 
