@@ -1,235 +1,172 @@
 import torch.utils.data as data
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data.distributed import DistributedSampler
-from torch.cuda.amp import GradScaler
 from attack import *
 from dataloader.base import *
 from engine.logger import Log
 from models import *
-
+import pytorch_lightning as pl
+from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 
 # DDP version
-class BaseTrainer:
-    def __init__(self, args, rank=-1):
+class PLModel(pl.LightningModule):
+    def __init__(self, args):
         self.args = args
-        self.rank = rank
-        self._init_dataset()
-
+        #self._init_dataset()
         self.model = build_model(args)
-        self.model.cuda(rank)
-        self.scaler = GradScaler()
         self.attack = set_attack(self.model, self.args)
-
-        self.attack = DDP(self.attack, device_ids=[rank], output_device=rank)
-        self.model = DDP(self.model, device_ids=[rank], output_device=rank)
-
-        self._init_functions()
-
-        self.time_metric = MetricLogger()
-        self.metrics = MetricLogger()
-        self.result = {'train': dict(), 'test': dict()}
-        self.logger = Log(self.args)
-        if self.rank == 0:
-            self.logger.hello_logger()
-
-        self.start_epoch, self.best_acc = self.resume()
-        dist.barrier()
-
-    def train_step(self, images, labels):
-        self.optimizer.zero_grad()
-        #images, labels = images.to(self.rank), labels.to(self.rank)
-        images = self.attack(images, labels)
-        with torch.cuda.amp.autocast(dtype=torch.float16):
-            outputs = self.model(images)
-            loss = self.loss_function(outputs, labels)
-
-        self.scaler.scale(loss).backward()
-        self.scaler.step(self.optimizer)
-        scale = self.scaler.get_scale()
-        self.scaler.update()
-        # loss.backward()
-        # self.optimizer.step()
-        if not scale > self.scaler.get_scale():
-            self.lr_scheduler.step()
-
-        top1, top5 = accuracy(outputs, labels)
-        self.metrics.update(
-            top1=(top1, len(images)), top5=(top5, len(images)),
-            loss=(loss, len(images)),
-            lr=(self.get_lr(), 1)
-        )
-        self.metrics.all_reduce()
-
-    # def warmup(self):
-    #     if self.args.warmup_steps == 0:
-    #         return
-    #     loader = InfiniteLoader(self.train_loader)
-    #     self.lr_scheduler = warmup_scheduler(self.args, self.optimizer)
-    #     for cur_step in range(self.args.warmup_steps):
-    #         images, labels = next(loader)
-    #         images, labels = to_device(self.args.devices[0], images, labels)
-    #         # self.train_step(images, labels)
-    #         if cur_step % self.args.print_every == 0 and cur_step != 0 and self.rank == 0:
-    #             self.logger.step_logging(cur_step, self.args.warmup_steps, -1, -1, self.metrics, loader.metric)
-    #
-    #         if cur_step >= self.args.warmup_steps:
-    #             break
-    #     self.logger.train_logging(-1, self.args.num_epoch, self.metrics, loader.metric)
-    #     self.validate_epoch()
-    #     self.optimizer = init_optimizer(self.args, self.model)
-    #     self.lr_scheduler = init_scheduler(self.args, self.optimizer)
-    #
-    #     return
-
-    def train_epoch(self, epoch):
-        cur_time = time.time()
-        for step, (images, labels) in enumerate(self.train_loader):
-            data_time = time.time() - cur_time
-            images, labels = images.to(self.rank,non_blocking=True), labels.to(self.rank,non_blocking=True)
-
-            self.train_step(images, labels)
-            if step % self.args.print_every == 0 and step != 0 and self.rank == 0:
-                self.logger.step_logging(step, self.args.epoch_step, epoch, self.args.num_epoch,
-                                         self.metrics, self.time_metric)
-
-            iter_time = time.time() - cur_time
-
-            self.time_metric.update(iter_time=(iter_time, 1), data_time=(data_time, 1))
-            self.time_metric.all_reduce()
-            self.metrics.all_reduce()
-            cur_time = time.time()
-        if self.rank == 0:
-            self.logger.train_logging(epoch, self.args.num_epoch, self.metrics, self.time_metric)
-        self.time_metric.reset()
-        return
-
-    def validate_epoch(self):
-        start = time.time()
-        self.model.eval()
-        for images, labels in self.test_loader:
-            images, labels = images.to(self.rank,non_blocking=True), labels.to(self.rank,non_blocking=True)
-            #with torch.no_grad():
-            #print(images.shape)
-            with torch.cuda.amp.autocast(dtype=torch.float16):
+        self.loss_function = torch.nn.CrossEntropyLoss()
+        #self.start_epoch, self.best_acc = self.resume()
         
-                pred = self.model(images)
-            top1, top5 = accuracy(pred, labels)
-            self.metrics.update(top1=(top1, len(images)))
-            self.metrics.all_reduce()
-            # if self.args.record_lip:
-            #     self.record_lip(images, labels, pred)
-        self.logger.val_logging(self.metrics, time.time() - start)
-
-        self.model.train()
-        return self.metrics.meters['top1'].global_avg
-
-    def train_model(self):
-
-        # self.warmup()
-
-        for epoch in range(self.start_epoch, self.args.num_epoch):
-            self.train_epoch(epoch)
-            self.record_result(epoch)
-
-            acc = self.validate_epoch()
-            if acc > self.best_acc:
-                self.best_acc = acc
-                if self.rank == 0:
-                    self.save_ckpt(epoch + 1, self.best_acc, 'best')
-
-        if self.rank == 0:
-            if self.args.save_name == '':
-                self.args.save_name = 'epoch_{}'.format(str(self.args.num_epoch).zfill(3))
-            self.save_result(self.args.model_dir, self.args.save_name)
-            self.save_ckpt(self.args.num_epoch, self.best_acc, self.args.save_name)
-
-    def _init_dataset(self):
-        train_dataset, test_dataset = set_data_set(self.args)
-        self.train_sampler = DistributedSampler(train_dataset, shuffle=False)
-        self.test_sampler = DistributedSampler(test_dataset, shuffle=False)
-        self.train_loader = data.DataLoader(
-            dataset=train_dataset,
-            batch_size=self.args.batch_size,
-            sampler=self.train_sampler
-
-        )
-        self.test_loader = data.DataLoader(
-            dataset=test_dataset,
-            batch_size=self.args.batch_size,
-            sampler=self.test_sampler
-        )
-
-        self.args.epoch_step = len(self.train_loader)
-        self.args.total_step = self.args.num_epoch * self.args.epoch_step
-        return
-
-    def save_ckpt(self, cur_epoch, best_acc=0, name=None):
-        ckpt = {
-            'epoch': cur_epoch,
-            'model_state_dict': self.model.module.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'best_acc': best_acc
-        }
-        if not name:
-            ckpt_path = os.path.join(self.args.model_dir, 'ckpt.pth')
+    def configure_optimizer(self,):
+        """
+        Initialize optimizer:
+            SGD: Implements stochastic gradient descent (optionally with momentum).
+                args.momentum: momentum factor (default: 0.9)
+                args.weight_decay: weight decay (L2 penalty) (default: 5e-4)
+            Adam: Implements Adam algorithm.
+                args.beta_1, beta_2:
+                    coefficients used for computing running averages of gradient and its square, default (0.9, 0.99)
+                args.eps: term added to the denominator to improve numerical stability (default: 1e-8)
+                args.weight_decay: weight decay (L2 penalty) (default: 5e-4)
+        """
+        args=self.args
+        if args.optimizer == 'SGD':
+            optimizer = torch.optim.SGD(self.model.parameters(), lr=args.lr + 1e-8, momentum=args.momentum,
+                                        weight_decay=args.weight_decay)
+        elif args.optimizer == 'Adam':
+            optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr + 1e-8, betas=(args.beta_1, args.beta_2),
+                                        weight_decay=args.weight_decay)
         else:
-            ckpt_path = os.path.join(self.args.model_dir, 'ckpt_{}.pth'.format(name))
-        torch.save(ckpt, ckpt_path)
-        return
+            raise NameError('Optimizer {} not found'.format(args.lr_scheduler))
 
-    def resume(self):
-        if not self.args.resume:
-            return 0, 0
-        ckpt_path = os.path.join(self.args.model_dir, 'ckpt_{}.pth'.format(self.args.resume_name))
-        self.logger.info('Trying to load CKPT from {0}'.format(ckpt_path))
-        print('Trying to load CKPT from {0}'.format(ckpt_path))
+        if args.lr_scheduler == 'milestones':
+            milestones = [milestone * args.total_step for milestone in args.milestones]
+            lr_scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=args.gamma)
+        elif args.lr_scheduler == 'linear':
+            # diff = args.lr - args.lr_e
+            # LinearLR(optimizer, start_factor=args.lr, end_factor=args.lr_e, total_iters=args.num_)
+            # def lambda_rule(step):
+            #     return (args.lr - (step / args.total_step) * diff) / args.lr
+
+            lr_scheduler = LLR(optimizer, lr_st=args.lr, lr_ed=args.lr_e, steps=args.total_step)
+
+        elif args.lr_scheduler == 'exp':
+            gamma = math.pow(args.lr_e / args.lr, 1 / args.total_step)
+            lr_scheduler = ExponentialLR(optimizer, gamma)
+        elif args.lr_scheduler == 'cyclic':
+            up = int(args.total_step * args.up_ratio)
+            down = int(args.total_step * args.down_ratio)
+            lr_scheduler = CyclicLR(optimizer, base_lr=args.lr_e, max_lr=args.lr,
+                                    step_size_up=up, step_size_down=down, mode='triangular2', cycle_momentum=False)
+        elif args.lr_scheduler == 'static':
+            def lambda_rule(t):
+                return 1.0
+
+            lr_scheduler = LambdaLR(optimizer, lr_lambda=lambda_rule)
+        # TODO ImageNet scheduler
+        else:
+            raise NameError('Scheduler {0} not found'.format(args.lr_scheduler))
+        return [optimizer],[lr_scheduler]
+    def train_step(self, batch,batch_idx):
+        images, labels = batch[0], batch[1]
+        images = self.attack(images, labels)
+        outputs = self.model(images)
+        loss = self.loss_function(outputs, labels)
+        top1, top5 = accuracy(outputs, labels)
+        self.log('loss', loss,prog_bar=True)
+        self.log('top1', top1,prog_bar=True)
+        self.log('top5', top5,prog_bar=True)
+        return loss
+    def on_train_epoch(self):
+        #set new scheduler
+        
+        self.attack.update_epoch()
+    def validation_step(self, batch,batch_idx):
+        images, labels = batch[0], batch[1]
+        pred = self.model(images)
+        top1, top5 = accuracy(pred, labels)
+        self.log('val_top1', top1,prog_bar=True)
+        loss = self.loss_function(outputs, labels)
+        self.log('val_loss', loss,prog_bar=True)
+        return loss
+        
+class DataModule(pl.LightningDataModule):
+    def __init__(self, args):
+        super().__init__()
+        self.args = args
+    def prepare_data(self):
+        root=self.args.data_path
+        if 'mnist' in args.dataset.lower():
+            dataset =torchvision.datasets.MNIST(root, train = True, transform=None, target_transform = None, download= True)        
+            #split the dataset into train and test
+            tr,va,=int(len(dataset)*0.8), int(len(dataset)*0.1)
+            te=len(dataset)-tr -va
+            self.train_set, self.val_set,self.test_set= torch.utils.data.random_split(dataset, [tr,va,te])
+            
+        elif "cifar" in args.dataset.lower():
+            dataset=torchvision.datasets.CIFAR100(root, train= True, transform= None, target_transform = None, download = True)
+            tr,va,=int(len(dataset)*0.8), int(len(dataset)*0.1)
+            te=len(dataset)-tr -va
+            self.train_set,self.val_set,self.test_set= torch.utils.data.random_split(dataset, [tr,va,te])
+            
+        elif 'imagenet' in args.dataset.lower():
+            self.train_set=torchvision.datasets.ImageNet(root, 'train')
+            self.val_set=torchvision.datasets.ImageNet(root, 'val')
+            self.test_set=torchvision.datasets.ImageNet(root, 'test')
+        else:
+            raise NameError()
+    def setup(self, stage=None):
+        if stage == 'fit' or stage is None:
+            self.train_loader = data.DataLoader(
+                dataset=self.train_dataset,
+                batch_size=self.args.batch_size,
+                shuffle=True,
+                num_workers=self.args.workers,
+                pin_memory=True,
+                drop_last=True,
+                prefetch_factor=4,
+                persistent_workers=True)
+            self.val_loader = data.DataLoader(
+                dataset=self.test_dataset,
+                batch_size=self.args.batch_size,
+                shuffle=True,
+                num_workers=self.args.workers,
+                pin_memory=True,
+                drop_last=True,
+                prefetch_factor=4,
+                persistent_workers=True)
+        if stage == 'test' or stage is None:
+            pass
+    def train_dataloader(self):
         try:
-            ckpt = torch.load(ckpt_path)
-        except FileNotFoundError:
-            self.logger.info('CKPT not found, start from Epoch 0')
-            print('CKPT not found, start from Epoch 0')
-            return 0, 0
-        self.model.module.load_state_dict(ckpt['model_state_dict'])
-        self.logger.info('Loading Finished')
-        print('Loading Finished')
-        if self.args.resume_name == 'best':
-            return ckpt['epoch'], ckpt['best_acc']
-        else:
-            return 0, ckpt['best_acc']
+            return self.train_loader
+        except:
+            self.setup('fit')
+        finally:
+            return self.train_loader
+    def val_dataloader(self):
+        try:
+            return self.val_loader
+        except:
+            self.setup('fit')
+        finally:
+            return self.val_loader
+def run(args):
+    callbacks=[
+        ModelCheckpoint(metric="val_top1",mode="max",save_top_k=1,data_path=args.data_path),
+        LearningRateMonitor(logging_interval='step'),
+        EarlyStopping(monitor="val_top1",mode="max",patience=10),
+    ]
+    logtool=None
+    trainer=pl.Trainer(devices="auto",
+    precision="auto",
+    accelerator="auto",
+    strategy="ddp",
+    callbacks=callbacks,
+    max_epochs=args.epochs,
+    )
 
-    def save_result(self, path, name=None):
-        if not name:
-            res_path = os.path.join(path, 'result')
-        else:
-            res_path = os.path.join(path, 'result_{}'.format(name))
-        np.save(res_path, self.result)
-
-    def record_result(self, epoch, mode='train'):
-
-        epoch_result = {}
-        for k, v in self.metrics.meters.items():
-            epoch_result[k] = v.to_dict()
-        self.result[mode][epoch] = epoch_result
-        self.metrics.reset()
-        return
-
-    @property
-    def trained_ratio(self):
-        return self.lr_scheduler.last_epoch / self.args.total_step
-
-    def get_lr(self):
-        return self.optimizer.param_groups[0]['lr']
-
-    # def record_lip(self, images, labels, outputs):
-    #     perturbation = self.lip.attack(images, labels)
-    #     local_lip = (self.model(images + perturbation) - outputs)
-    #     lip_li = (local_lip.norm(p=float('inf'), dim=1) / perturbation.norm(p=float('inf'), dim=(1, 2, 3))).mean()
-    #     lip_l2 = (local_lip.norm(p=2, dim=1) / perturbation.norm(p=2, dim=(1, 2, 3))).mean()
-    #     self.update_metric(lip_li=(lip_li, len(images)), lip_l2=(lip_l2, len(images)))
-    #     return
-
-    def _init_functions(self):
-        self.optimizer = init_optimizer(self.args, self.model)
-        self.lr_scheduler = init_scheduler(self.args, self.optimizer)
-
-        self.loss_function = init_loss(self.args)
+  
+    model=PLModel(args)
+    datamodule=DataModule(args)
+    trainer.fit(model,datamodule=datamodule)
