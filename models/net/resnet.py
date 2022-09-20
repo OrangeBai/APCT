@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-import torch
-import torch.nn as nn
-=======
 from models.base_model import BaseModel
 from models.blocks import *
->>>>>>> 767a23c41ce1b67652c216bdb20506f679c9497d
+
 
 class BasicBlock(nn.Module):
     """Basic Block for resnet 18 and resnet 34
@@ -70,22 +66,6 @@ class BottleNeck(nn.Module):
     def forward(self, x):
         return nn.ReLU(inplace=True)(self.residual_function(x) + self.shortcut(x))
 
-<<<<<<< HEAD
-class ResNet(nn.Module):
-
-    def __init__(self, block, num_block, num_classes=100):
-        super().__init__()
-
-        self.in_channels = 64
-
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True))
-        #we use a different inputsize than the original paper
-        #so conv2_x's stride is 1
-        self.conv2_x = self._make_layer(block, 64, num_block[0], 1)
-=======
 class Resnet(BaseModel):
     def __init__(self, block, num_block, args):
         super().__init__(args)
@@ -96,20 +76,13 @@ class Resnet(BaseModel):
             ConvBlock(3, 64, kernel_size=(3,3), **self.set_up_kwargs))
 
         self.conv2_x = self._make_layer(block, 64, num_block[0], 2)
->>>>>>> 767a23c41ce1b67652c216bdb20506f679c9497d
         self.conv3_x = self._make_layer(block, 128, num_block[1], 2)
         self.conv4_x = self._make_layer(block, 256, num_block[2], 2)
         self.conv5_x = self._make_layer(block, 512, num_block[3], 2)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-<<<<<<< HEAD
-        self.fc = nn.Linear(512 * block.expansion, num_classes)
-
-    def _make_layer(self, block, out_channels, num_blocks, stride):
-=======
         self.fc = nn.Linear(512 * block.expansion, self.num_cls)
 
     def _make_layer(self, block, out_channels, num_blocks, stride, **kwargs):
->>>>>>> 767a23c41ce1b67652c216bdb20506f679c9497d
         """make resnet layers(by layer i didnt mean this 'layer' was the
         same as a neuron netowork layer, ex. conv layer), one layer may
         contain more than one residual block
@@ -144,32 +117,6 @@ class Resnet(BaseModel):
 
         return output
 
-<<<<<<< HEAD
-def resnet18():
-    """ return a ResNet 18 object
-    """
-    return ResNet(BasicBlock, [2, 2, 2, 2])
-
-def resnet34():
-    """ return a ResNet 34 object
-    """
-    return ResNet(BasicBlock, [3, 4, 6, 3])
-
-def resnet50():
-    """ return a ResNet 50 object
-    """
-    return ResNet(BottleNeck, [3, 4, 6, 3])
-
-def resnet101():
-    """ return a ResNet 101 object
-    """
-    return ResNet(BottleNeck, [3, 4, 23, 3])
-
-def resnet152():
-    """ return a ResNet 152 object
-    """
-    return ResNet(BottleNeck, [3, 8, 36, 3])
-=======
 
 class Resnet18(Resnet):
     def __init__(self, args):
@@ -194,4 +141,3 @@ class Resnet101(Resnet):
 class Resnet152(Resnet):
     def __init__(self, args):
         super().__init__(BottleNeck, [3, 8, 36, 3], args)
->>>>>>> 767a23c41ce1b67652c216bdb20506f679c9497d
