@@ -1,7 +1,11 @@
 import torch.utils.data as data
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
+<<<<<<< HEAD
 from torch.cuda.amp import GradScaler
+=======
+
+>>>>>>> 767a23c41ce1b67652c216bdb20506f679c9497d
 from attack import *
 from dataloader.base import *
 from engine.logger import Log
@@ -36,8 +40,12 @@ class BaseTrainer:
         dist.barrier()
 
     def train_step(self, images, labels):
+<<<<<<< HEAD
         self.optimizer.zero_grad()
         #images, labels = images.to(self.rank), labels.to(self.rank)
+=======
+        # images, labels = images.to(self.rank), labels.to(self.rank)
+>>>>>>> 767a23c41ce1b67652c216bdb20506f679c9497d
         images = self.attack(images, labels)
         with torch.cuda.amp.autocast(dtype=torch.float16):
             outputs = self.model(images)
@@ -85,16 +93,21 @@ class BaseTrainer:
         cur_time = time.time()
         for step, (images, labels) in enumerate(self.train_loader):
             data_time = time.time() - cur_time
+<<<<<<< HEAD
             if step > 2:
                 return
             images, labels = images.to(self.rank,non_blocking=True), labels.to(self.rank,non_blocking=True)
+=======
+
+            images, labels = images.to(self.rank, non_blocking=True), labels.to(self.rank, non_blocking=True)
+>>>>>>> 767a23c41ce1b67652c216bdb20506f679c9497d
             self.train_step(images, labels)
             if step % self.args.print_every == 0 and step != 0 and self.rank == 0:
                 self.logger.step_logging(step, self.args.epoch_step, epoch, self.args.num_epoch,
                                          self.metrics, self.time_metric)
 
             iter_time = time.time() - cur_time
-            
+
             self.time_metric.update(iter_time=(iter_time, 1), data_time=(data_time, 1))
             self.time_metric.all_reduce()
             self.metrics.all_reduce()

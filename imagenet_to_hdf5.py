@@ -1,3 +1,5 @@
+from models.net.vgg import VGG16
+from settings.train_settings import *
 import multiprocessing
 import os
 import random
@@ -64,6 +66,7 @@ def create_h5py(path, name):
 
 def process(input_tuple):
     idx, (path, label) = input_tuple
+
     try:
         im = Image.open(path).convert('RGB').resize((image_size, image_size))
         img = (ToTensor()(im).numpy() * 255).astype(np.uint8).transpose(1, 2, 0)
