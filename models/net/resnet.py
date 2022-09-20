@@ -1,28 +1,24 @@
-import torch.nn as nn
+from models.base_model import BaseModel
+from models.blocks import *
 
 
-
-class ResNet(nn.Module):
-
-    def __init__(self, block, num_block, num_classes=100):
-        super().__init__()
-
+class Resnet(BaseModel):
+    def __init__(self, block, num_block, args):
+        super().__init__(args)
+        self.num_cls = args.num_cls
         self.in_channels = 64
 
         self.conv1 = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True))
-        # we use a different inputsize than the original paper
-        # so conv2_x's stride is 1
-        self.conv2_x = self._make_layer(block, 64, num_block[0], 1)
+            ConvBlock(3, 64, kernel_size=(3,3), **self.set_up_kwargs))
+
+        self.conv2_x = self._make_layer(block, 64, num_block[0], 2)
         self.conv3_x = self._make_layer(block, 128, num_block[1], 2)
         self.conv4_x = self._make_layer(block, 256, num_block[2], 2)
         self.conv5_x = self._make_layer(block, 512, num_block[3], 2)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(512 * block.expansion, num_classes)
+        self.fc = nn.Linear(512 * block.expansion, self.num_cls)
 
-    def _make_layer(self, block, out_channels, num_blocks, stride):
+    def _make_layer(self, block, out_channels, num_blocks, stride, **kwargs):
         """make resnet layers(by layer i didnt mean this 'layer' was the
         same as a neuron netowork layer, ex. conv layer), one layer may
         contain more than one residual block
@@ -40,7 +36,7 @@ class ResNet(nn.Module):
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
-            layers.append(block(self.in_channels, out_channels, stride))
+            layers.append(block(self.in_channels, out_channels, stride, **self.set_up_kwargs))
             self.in_channels = out_channels * block.expansion
 
         return nn.Sequential(*layers)
@@ -58,31 +54,26 @@ class ResNet(nn.Module):
         return output
 
 
-def resnet18():
-    """ return a ResNet 18 object
-    """
-    return ResNet(BasicBlock, [2, 2, 2, 2])
+class Resnet18(Resnet):
+    def __init__(self, args):
+        super().__init__(BasicBlock, [2, 2, 2, 2], args)
 
 
-def resnet34():
-    """ return a ResNet 34 object
-    """
-    return ResNet(BasicBlock, [3, 4, 6, 3])
+class Resnet34(Resnet):
+    def __init__(self, args):
+        super().__init__(BasicBlock, [3, 4, 6, 3], args)
 
 
-def resnet50():
-    """ return a ResNet 50 object
-    """
-    return ResNet(BottleNeck, [3, 4, 6, 3])
+class Resnet50(Resnet):
+    def __init__(self, args):
+        super().__init__(BottleNeck, [3, 4, 6, 3], args)
 
 
-def resnet101():
-    """ return a ResNet 101 object
-    """
-    return ResNet(BottleNeck, [3, 4, 23, 3])
+class Resnet101(Resnet):
+    def __init__(self, args):
+        super().__init__(BottleNeck, [3, 4, 23, 3], args)
 
 
-def resnet152():
-    """ return a ResNet 152 object
-    """
-    return ResNet(BottleNeck, [3, 8, 36, 3])
+class Resnet152(Resnet):
+    def __init__(self, args):
+        super().__init__(BottleNeck, [3, 8, 36, 3], args)
