@@ -4,8 +4,8 @@ from functools import partial
 from pathlib import Path
 
 from PIL import Image
-num_cpus = multiprocessing.cpu_count()
 
+cpus = multiprocessing.cpu_count() - 2
 
 PATH = Path('/home/orange/Main/Data/ImageNet')
 # DEST = Path('/mnt/ram')
@@ -24,7 +24,6 @@ def resize_img(p, im, fn, sz):
     new_fn = DEST / str(sz) / fn.relative_to(PATH)
     new_fn.parent.mkdir(exist_ok=True)
     im.save(new_fn)
-    pool.map(process, instance_with_idx)
 
 
 def resizes(p, fn):
