@@ -49,7 +49,7 @@ def get_dataset(args):
         data_dir = resize_path
     else:
         data_dir = os.path.join(DATA_PATH, 'ImageNet')
-    train_dir = os.path.join(data_dir, 'val')
+    train_dir = os.path.join(data_dir, 'train')
     val_dir = os.path.join(data_dir, 'val')
     if resize_exist:
         train_composed = [ToTensor(), Resize((args.data_size, args.data_size)),

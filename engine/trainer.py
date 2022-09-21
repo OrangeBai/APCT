@@ -1,3 +1,4 @@
+from tkinter.tix import Tree
 import torch.utils.data as data
 import yaml
 from torch.cuda.amp import GradScaler
@@ -87,8 +88,6 @@ class BaseTrainer:
         for step, (images, labels) in enumerate(self.train_loader):
             data_time = time.time() - cur_time
             images, labels = images.to(self.rank, non_blocking=True), labels.to(self.rank, non_blocking=True)
-            if step >= 11:
-                return
             self.train_step(images, labels)
             if step % self.args.print_every == 0 and step != 0 and self.rank == 0:
                 self.logger.step_logging(step, self.args.epoch_step, epoch, self.args.num_epoch,
@@ -147,8 +146,8 @@ class BaseTrainer:
 
     def _init_dataset(self):
         train_dataset, test_dataset = set_data_set(self.args)
-        self.train_sampler = DistributedSampler(train_dataset, shuffle=False)
-        self.test_sampler = DistributedSampler(test_dataset, shuffle=False)
+        self.train_sampler = DistributedSampler(train_dataset, shuffle=True)
+        self.test_sampler = DistributedSampler(test_dataset, shuffle=True)
         self.train_loader = data.DataLoader(
             dataset=train_dataset,
             batch_size=self.args.batch_size,
@@ -249,11 +248,19 @@ class BaseTrainer:
             with open(self.args.phase_path, 'r') as f:
                 self.args.phase_file = yaml.load(f, Loader=yaml.FullLoader)
             cur_p, cur_file = check_phase(self.args.phase_file, epoch)
-            for k, v in cur_file.items():
-                setattr(self.args, k, v)
-            self.logger.info('Switching to  {0}, with info {1}'.format(cur_p, cur_file))
-            print('Switching to  {0}, with info {1}'.format(cur_p, cur_file))
+
+            self.args.data_size = cur_file['data_size']
+            self.args.crop_size = cur_file['crop_size']
+            self.args.batch_size = cur_file['batch_size']
             self._init_dataset()
+
+            self.args.lr_scheduler = cur_file['lr_scheduler']
+            self.args.lr = cur_file['lr']
+            self.args.lr_e = cur_file['lr_e']
+            self.args.total_step = (cur_file['end_epoch'] - cur_file['start_epoch']) * len(self.train_loader)
+
+            self.logger.info('Switching to  {0}, with info {1}'.format(cur_p, cur_file))
+
             self._init_functions()
         else:
             cur_p, cur_file = check_phase(self.args.phase_file, epoch)
@@ -261,14 +268,12 @@ class BaseTrainer:
             if pre_p == cur_p:
                 return
             self.logger.info('Switching to  {0}, with info {1}'.format(cur_p, cur_file))
-            print('Switching to  {0}, with info {1}'.format(cur_p, cur_file))
             if pre_file['data_size'] != cur_file['data_size']:
                 self.args.data_size = cur_file['data_size']
                 self.args.crop_size = cur_file['crop_size']
                 self.args.batch_size = cur_file['batch_size']
                 self._init_dataset()
                 self.logger.info('Dataset Initialized')
-                print('Dataset Initialized')
 
             if cur_p != pre_p:
                 self.args.lr_scheduler = cur_file['lr_scheduler']
@@ -277,5 +282,4 @@ class BaseTrainer:
                 self.args.total_step = (cur_file['end_epoch'] - cur_file['start_epoch']) * len(self.train_loader)
                 self._init_functions()
                 self.logger.info('Optimizer Initialized')
-                print('Optimizer Initialized')
         return
