@@ -18,10 +18,9 @@ def resize_folder(src_folder, dst_folders, sizes):
     [os.makedirs(dst_folder, exist_ok=True) for dst_folder in dst_folders]
     img_names = os.listdir(src_folder)
     pool = multiprocessing.Pool(num_cpus)
-    for img in img_names:
-        resize_img(img, src_folder, dst_folders, sizes)
-    # resize_img()
-    # pool.map(partial(resize_img, s_folder=src_folder, d_folders=dst_folders, sizes=sizes), img_names)
+    # for img in img_names:
+    #     resize_img(img, src_folder, dst_folders, sizes)
+    pool.map(partial(resize_img, s_folder=src_folder, d_folders=dst_folders, sizes=sizes), img_names)
     return
 
 
