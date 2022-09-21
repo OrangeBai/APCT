@@ -3,12 +3,13 @@ import multiprocessing
 import os
 import time
 from functools import partial
-
+from config import *
 from PIL import Image
 
-SRC = r'/home/orange/Main/Data/ImageNet'
+SRC = os.path.join(DATA_PATH, 'ImageNet')
 # DST = r'/home/orange/Main/Data/ImageNet-sz'
-DST = r'/home/orange/Main/Data/ImageNet-sz'
+DST = os.path.join(DATA_PATH, 'ImageNet-sz')
+# DST = r'/home/orange/Main/Data/ImageNet-sz'
 SIZE = [160, 352]
 
 num_cpus = multiprocessing.cpu_count()
