@@ -4,7 +4,7 @@ phase = {
             'lr_scheduler': 'linear',
             'lr': 0.,
             'lr_e': 0.01,
-            'batch_size': 128,
+            'batch_size': 4,
             'data_size': 160,
             'crop_size': 128,
             'start_epoch': 0,

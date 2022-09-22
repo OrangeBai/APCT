@@ -1,29 +1,35 @@
 from settings.train_settings import *
 
 
-def set_up_testing(argv=None):
-    arg_parser = ArgParser(False, argv)
-    parser = arg_parser.parser
-    args = arg_parser.args
+class TestParser(BaseParser):
+    def __init__(self, argv=None):
+        super(TestParser, self).__init__(argv)
+        self.load()
 
-    parser.add_argument('--test_name', default='test_acc', type=str)
-    test_name = parser.parse_known_args(args)[0].test_name
-    if test_name == 'test_acc':
-        parser = test_acc(parser)
-    elif test_name.lower() == 'ap_lip':
-        parser = ap_lip(parser)
-    elif test_name.lower() == 'td':
-        parser = td(parser)
-    elif test_name.lower() == 'smooth':
-        parser = smoothed_certify(parser)
-    else:
-        raise NameError('test name {0} not found'.format(test_name))
-
-    exp_dir = os.path.join(parser.parse_args().model_dir, 'exp')
-    if not os.path.exists(exp_dir):
-        os.makedirs(exp_dir)
-    parser.add_argument('--exp_dir', default=exp_dir, type=str)
-    return parser.parse_args(args)
+#
+# def set_up_testing(argv=None):
+#     arg_parser = TrainParser(False, argv)
+#     parser = arg_parser.parser
+#     args = arg_parser.args
+#
+#     parser.add_argument('--test_name', default='test_acc', type=str)
+#     test_name = parser.parse_known_args(args)[0].test_name
+#     if test_name == 'test_acc':
+#         parser = test_acc(parser)
+#     elif test_name.lower() == 'ap_lip':
+#         parser = ap_lip(parser)
+#     elif test_name.lower() == 'td':
+#         parser = td(parser)
+#     elif test_name.lower() == 'smooth':
+#         parser = smoothed_certify(parser)
+#     else:
+#         raise NameError('test name {0} not found'.format(test_name))
+#
+#     exp_dir = os.path.join(parser.parse_args().model_dir, 'exp')
+#     if not os.path.exists(exp_dir):
+#         os.makedirs(exp_dir)
+#     parser.add_argument('--exp_dir', default=exp_dir, type=str)
+#     return parser.parse_args(args)
 
 
 def ap_lip(parser):

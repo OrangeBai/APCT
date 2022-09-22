@@ -10,17 +10,13 @@ CIAFR100_MEAN_STD = [(0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)]
 
 def get_loaders(args):
     train_dataset, test_dataset = get_data_set(args)
-    train_sampler = DistributedSampler(train_dataset)
-    test_sampler = DistributedSampler(test_dataset)
     train_loader = data.DataLoader(
         dataset=train_dataset,
         batch_size=args.batch_size,
-        sampler=train_sampler
     )
     test_loader = data.DataLoader(
         dataset=test_dataset,
         batch_size=args.batch_size,
-        sampler=test_sampler
     )
     return train_loader, test_loader
 

@@ -1,4 +1,4 @@
-import argparse
+from settings.base_parser import *
 import os
 import shutil
 import sys
@@ -9,17 +9,10 @@ import yaml
 from config import *
 
 
-class ArgParser:
-    def __init__(self, train, argv=None):
-
-        self.parser = argparse.ArgumentParser()
-        self.unknown_args = []
-        if argv is None:
-            self.args = sys.argv[1:]
-        else:
-            self.args = sys.argv[1:] + argv
+class TrainParser(BaseParser):
+    def __init__(self, argv=None):
+        super(TrainParser, self).__init__(argv)
         self.file_setting()
-
         self._init_parser()
         self.model_dir()
         self.rewrite()
@@ -52,9 +45,7 @@ class ArgParser:
         self.parser.add_argument('--optimizer', default='SGD', choices=['SGD', 'Adam'])
         self.parser.add_argument('--lr', default=0.1, type=float)
         self.parser.add_argument('--warmup', default=2, type=float)
-        # model type
-        self.parser.add_argument('--model_type', default='net', choices=['dnn', 'mini', 'net'])
-        self.parser.add_argument('--net', default='vgg16', type=str)
+
         # training settings
         self.parser.add_argument('--num_workers', default=1, type=int)
         self.parser.add_argument('--print_every', default=100, type=int)
