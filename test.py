@@ -1,5 +1,5 @@
 import torch.cuda
-
+import os
 from settings.test_setting import TestParser
 from models.base_model import build_model
 from dataloader.base import *
@@ -7,16 +7,19 @@ from core.utils import accuracy, MetricLogger
 
 
 if __name__ == '__main__':
-    argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--exp_id', '0']
+    argsv = []
     torch.cuda.device_count()
     args = TestParser(argsv).get_args()
 
-    model = build_model(args)
+    model = build_model(args).to(2)
+    ckpt = torch.load(os.path.join(args.model_dir, 'ckpt_best.pth'),map_location=torch.device(2))
+    model.load_weights(ckpt['model_state_dict'])
+    print(1)
     _, test_loader = set_loader(args)
     model.eval()
     metrics = MetricLogger()
     for images, labels in test_loader:
-        images, labels = images.to(0, non_blocking=True), labels.to(0, non_blocking=True)
+        images, labels = images.to(2, non_blocking=True), labels.to(2, non_blocking=True)
         # with torch.no_grad():
         # print(images.shape)
         pred = model(images)

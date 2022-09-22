@@ -14,7 +14,6 @@ class TrainParser(BaseParser):
         super(TrainParser, self).__init__(argv)
         self.file_setting()
         self._init_parser()
-        self.model_dir()
         self.rewrite()
 
         self.attack()
@@ -56,9 +55,6 @@ class TrainParser(BaseParser):
         # for adv training
         self.parser.add_argument('--attack', default='vanilla', type=str)
         # dataset and experiments
-        self.parser.add_argument('--dataset', default='cifar10', type=str)
-        self.parser.add_argument('--exp_id', default=0, type=str)
-        self.parser.add_argument('--dir', default='', type=str)
         # gpu settings
         self.parser.add_argument('--cuda', default=[0], type=list)
         self.parser.add_argument('--local_rank', type=int, default=0)

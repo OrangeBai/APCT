@@ -43,6 +43,7 @@ class H5PYImageNet(Dataset):
 
 
 def get_dataset(args):
+    mean, std = IMAGENET_MEAN_STD
     resize_path = os.path.join(DATA_PATH, 'ImageNet-sz', str(args.data_size))
     resize_exist = os.path.exists(resize_path)
     if resize_exist:
@@ -52,12 +53,12 @@ def get_dataset(args):
     train_dir = os.path.join(data_dir, 'train')
     val_dir = os.path.join(data_dir, 'val')
     if resize_exist:
-        train_composed = [ToTensor(), Resize((args.data_size, args.data_size)),
+        train_composed = [ToTensor(), Resize((args.data_size, args.data_size)), transforms.Normalize(mean, std), 
                           CenterCrop((args.crop_size, args.crop_size)), RandomHorizontalFlip()]
         val_composed = [ToTensor(), Resize((args.data_size, args.data_size)),
                         CenterCrop((args.crop_size, args.crop_size))]
     else:
-        train_composed = [ToTensor(), CenterCrop((args.crop_size, args.crop_size)), RandomHorizontalFlip()]
+        train_composed = [ToTensor(), CenterCrop((args.crop_size, args.crop_size)), transforms.Normalize(mean, std), RandomHorizontalFlip()]
         val_composed = [ToTensor(), CenterCrop((args.crop_size, args.crop_size))]
     train_transform = Compose(train_composed)
     val_transform = Compose(val_composed)

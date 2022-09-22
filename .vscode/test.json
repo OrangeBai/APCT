@@ -1,0 +1,15 @@
+{
+
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/user/Orange/code/APCT-master/test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["--dataset", "imagenet", "--net", "vgg16", "--exp_id", "noise_015"]
+        }
+    ]
+}

@@ -5,7 +5,8 @@ class TestParser(BaseParser):
     def __init__(self, argv=None):
         super(TestParser, self).__init__(argv)
         self.load()
-
+        self.parser.add_argument('--data_size', default=160)
+        self.parser.add_argument('--crop_size', default=128)
 #
 # def set_up_testing(argv=None):
 #     arg_parser = TrainParser(False, argv)
