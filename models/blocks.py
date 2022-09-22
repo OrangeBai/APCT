@@ -227,7 +227,7 @@ class BasicBlock(nn.Module):
     # to distinct
     expansion = 1
 
-    def __init__(self, in_channels, out_channels, stride=1, **kwargs):
+    def __init__(self, in_channels, out_channels, stride=1, *args, **kwargs):
         super().__init__()
         # residual function
         self.residual_function = nn.Sequential(
@@ -260,9 +260,9 @@ class BottleNeck(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1, **kwargs):
         super().__init__()
         self.residual_function = nn.Sequential(
-            ConvBlock(in_channels, out_channels, kernel_size=(1, 1), **kwargs),
-            ConvBlock(in_channels, out_channels, stride=stride, kernel_size=(3, 3), **kwargs),
-            ConvBlock(in_channels, out_channels * BottleNeck.expansion, kernel_size=(1, 1),
+            ConvBlock(in_channels, out_channels, kernel_size=(1, 1), padding=0, **kwargs),
+            ConvBlock(out_channels, out_channels, stride=stride, kernel_size=(3, 3), padding=1, **kwargs),
+            ConvBlock(out_channels, out_channels * BottleNeck.expansion, kernel_size=(1, 1), padding=0,
                       batch_norm=kwargs['batch_norm'], activation=None),
         )
 
@@ -270,10 +270,10 @@ class BottleNeck(nn.Module):
 
         if stride != 1 or in_channels != out_channels * BottleNeck.expansion:
             self.shortcut = nn.Sequential(
-                ConvBlock(in_channels, out_channels * BottleNeck.expansion, stride=stride, kernel_size=1,
+                ConvBlock(in_channels, out_channels * BottleNeck.expansion, stride=stride, kernel_size=1, padding=0,
                           batch_norm=kwargs['batch_norm'], activation=None)
             )
-        self.act = kwargs['activation']
+        self.act = set_activation(kwargs['activation'])
 
     def forward(self, x):
         return self.act(self.residual_function(x) + self.shortcut(x))
