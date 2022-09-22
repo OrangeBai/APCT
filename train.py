@@ -4,7 +4,7 @@ import torch.multiprocessing as mp
 import torch.distributed as dist
 from engine.ddp_train import train
 os.environ['MASTER_ADDR'] = 'localhost'
-os.environ['MASTER_PORT'] = '12349'
+os.environ['MASTER_PORT'] = '12344'
 
 if __name__ == '__main__':
 

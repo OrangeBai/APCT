@@ -17,6 +17,7 @@ class BaseTrainer:
         self.args = args
         self.rank = rank
 
+        # self.model = resnet50()
         self.model = build_model(args)
         self.model.cuda(rank)
         self.scaler = GradScaler()
