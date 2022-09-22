@@ -10,7 +10,7 @@ SRC = os.path.join(DATA_PATH, 'ImageNet')
 # DST = r'/home/orange/Main/Data/ImageNet-sz'
 DST = os.path.join(DATA_PATH, 'ImageNet-sz')
 # DST = r'/home/orange/Main/Data/ImageNet-sz'
-SIZE = [160, 352]
+SIZE = [280]
 
 num_cpus = multiprocessing.cpu_count()
 

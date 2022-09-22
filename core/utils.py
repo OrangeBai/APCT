@@ -277,9 +277,10 @@ class MetricLogger:
 
     def all_reduce(self):
         #  TODO check out how to use multi-process
-        dist.barrier()
-        for meter in self.meters.values():
-            meter.all_reduce()
+        if dist.is_initialized():
+            dist.barrier()
+            for meter in self.meters.values():
+                meter.all_reduce()
 
 
 def to_device(device_id=None, *args):

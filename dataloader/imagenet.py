@@ -53,13 +53,13 @@ def get_dataset(args):
     train_dir = os.path.join(data_dir, 'train')
     val_dir = os.path.join(data_dir, 'val')
     if resize_exist:
-        train_composed = [ToTensor(), Resize((args.data_size, args.data_size)), transforms.Normalize(mean, std), 
-                          CenterCrop((args.crop_size, args.crop_size)), RandomHorizontalFlip()]
-        val_composed = [ToTensor(), Resize((args.data_size, args.data_size)),
-                        CenterCrop((args.crop_size, args.crop_size))]
+        train_composed = [ToTensor(), RandomResizedCrop((args.crop_size, args.crop_size)),transforms.Normalize(mean, std),  RandomHorizontalFlip()]
+        val_composed = [ToTensor(), RandomResizedCrop((args.crop_size, args.crop_size)),transforms.Normalize(mean, std)]
     else:
-        train_composed = [ToTensor(), CenterCrop((args.crop_size, args.crop_size)), transforms.Normalize(mean, std), RandomHorizontalFlip()]
-        val_composed = [ToTensor(), CenterCrop((args.crop_size, args.crop_size))]
+        train_composed = [ToTensor(), transforms.Resize((args.data_size, args.data_size)),
+                        CenterCrop((args.crop_size, args.crop_size)),transforms.Normalize(mean, std),  RandomHorizontalFlip()]
+        val_composed = [ToTensor(), transforms.Resize((args.data_size, args.data_size)),
+                        CenterCrop((args.crop_size, args.crop_size)),transforms.Normalize(mean, std)]
     train_transform = Compose(train_composed)
     val_transform = Compose(val_composed)
 
@@ -78,8 +78,8 @@ def get_loaders(args):
         batch_size=args.batch_size,
         shuffle=True,
         pin_memory=True,
-        num_workers=16,
-        prefetch_factor=8
+        num_workers=4,
+        prefetch_factor=4
     )
 
     test_loader = data.DataLoader(

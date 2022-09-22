@@ -14,7 +14,6 @@ if __name__ == '__main__':
     model = build_model(args).to(2)
     ckpt = torch.load(os.path.join(args.model_dir, 'ckpt_best.pth'),map_location=torch.device(2))
     model.load_weights(ckpt['model_state_dict'])
-    print(1)
     _, test_loader = set_loader(args)
     model.eval()
     metrics = MetricLogger()
@@ -22,7 +21,8 @@ if __name__ == '__main__':
         images, labels = images.to(2, non_blocking=True), labels.to(2, non_blocking=True)
         # with torch.no_grad():
         # print(images.shape)
-        pred = model(images)
+        with torch.cuda.amp.autocast(dtype=torch.float16):
+            pred = model(images)
 
         top1, top5 = accuracy(pred, labels)
         metrics.update(top1=(top1, len(images)))

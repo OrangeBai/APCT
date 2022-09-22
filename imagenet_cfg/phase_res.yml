@@ -8,38 +8,38 @@
 #   start_epoch: 0
 #   end_epoch: 1
 phase_1:
-  batch_size: 256
+  batch_size: 512
   crop_size: 160
   data_size: 128
   lr: 0.
-  lr_e: 0.2
+  lr_e: 0.4
   lr_scheduler: linear
   start_epoch: 0
   end_epoch: 1
 phase_2:
-  batch_size: 256
+  batch_size: 512
   crop_size: 160
   data_size: 128
-  lr: 0.2
-  lr_e: 0.02
+  lr: 0.4
+  lr_e: 0.04
   lr_scheduler: linear
   start_epoch: 1
   end_epoch: 6
 phase_3:
-  batch_size: 128
+  batch_size: 256
   crop_size: 280
   data_size: 224
-  lr: 0.02
-  lr_e: 0.002
+  lr: 0.04
+  lr_e: 0.004
   lr_scheduler: linear
   start_epoch: 6
   end_epoch: 12
 phase_4:
-  batch_size: 128
+  batch_size: 256
   crop_size: 280
   data_size: 224
-  lr: 0.002
-  lr_e: 0.0002
+  lr: 0.004
+  lr_e: 0.0004
   lr_scheduler: linear
   start_epoch: 12
   end_epoch: 15
