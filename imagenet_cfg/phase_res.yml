@@ -1,36 +1,36 @@
 phase_1:
-  batch_size: 128
+  batch_size: 512
   data_size: 160
   crop_size: 128
   lr: 0.
-  lr_e: 0.2
+  lr_e: 0.5
   lr_scheduler: linear
   start_epoch: 0
-  end_epoch: 1
+  end_epoch: 2
 phase_2:
-  batch_size: 128
+  batch_size: 512
   data_size: 160
   crop_size: 128
-  lr: 0.2
-  lr_e: 0.02
+  lr: 0.5
+  lr_e: 0.05
   lr_scheduler: linear
-  start_epoch: 1
-  end_epoch: 6
-phase_3:
-  batch_size: 128
-  data_size: 256
-  crop_size: 224
-  lr: 0.02
-  lr_e: 0.002
-  lr_scheduler: linear
-  start_epoch: 6
+  start_epoch: 2
   end_epoch: 12
-phase_4:
-  batch_size: 128
+phase_3:
+  batch_size: 256
   data_size: 256
   crop_size: 224
-  lr: 0.002
-  lr_e: 0.0002
+  lr: 0.05
+  lr_e: 0.005
   lr_scheduler: linear
   start_epoch: 12
-  end_epoch: 15
+  end_epoch: 24
+phase_4:
+  batch_size: 256
+  data_size: 256
+  crop_size: 224
+  lr: 0.005
+  lr_e: 0.0001
+  lr_scheduler: linear
+  start_epoch: 24
+  end_epoch: 30

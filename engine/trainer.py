@@ -34,7 +34,6 @@ class BaseTrainer:
             self.logger.hello_logger()
 
         self.reset_lr_dt(0)
-
         self.start_epoch, self.best_acc = self.resume()
         dist.barrier()
 
@@ -131,6 +130,7 @@ class BaseTrainer:
 
         for epoch in range(self.start_epoch, self.args.num_epoch):
             self.reset_lr_dt(epoch)
+            self.train_loader.sampler.seed = epoch
             self.train_epoch(epoch)
             self.record_result(epoch)
 
@@ -153,13 +153,16 @@ class BaseTrainer:
         self.train_loader = data.DataLoader(
             dataset=train_dataset,
             batch_size=self.args.batch_size,
-            sampler=self.train_sampler
-
+            sampler=self.train_sampler,
+            num_workers=4,
+            prefetch_factor=2
         )
         self.test_loader = data.DataLoader(
             dataset=test_dataset,
             batch_size=self.args.batch_size,
-            sampler=self.test_sampler
+            sampler=self.test_sampler,
+            num_workers=4,
+            prefetch_factor=2
         )
 
         self.args.epoch_step = len(self.train_loader)
@@ -195,10 +198,23 @@ class BaseTrainer:
         self.model.module.load_state_dict(ckpt['model_state_dict'])
         self.logger.info('Loading Finished')
         print('Loading Finished')
-        if self.args.resume_name == 'best':
-            return ckpt['epoch'], ckpt['best_acc']
-        else:
-            return 0, ckpt['best_acc']
+        
+        epoch, best_acc = ckpt['epoch'], ckpt['best_acc']
+        _, cur_file = check_phase(self.args.phase_file, epoch)
+        self.args.data_size = cur_file['data_size']
+        self.args.crop_size = cur_file['crop_size']
+        self.args.batch_size = cur_file['batch_size']
+        self._init_dataset()
+
+        self.args.lr_scheduler = cur_file['lr_scheduler']
+        self.args.lr = cur_file['lr']
+        self.args.lr_e = cur_file['lr_e']
+        self.args.total_step = (cur_file['end_epoch'] - cur_file['start_epoch']) * len(self.train_loader)
+        self._init_functions()
+        self.lr_scheduler.last_epoch = (epoch - cur_file['start_epoch']) * len(self.train_loader)
+        return epoch, best_acc
+
+        
 
     def save_result(self, path, name=None):
         if not name:
@@ -238,10 +254,12 @@ class BaseTrainer:
         self.loss_function = init_loss(self.args)
 
     def reset_lr_dt(self, epoch):
+        
         if self.args.dataset != 'imagenet':
             if epoch == 0:
                 self._init_dataset()
                 self._init_functions()
+                self.train_loader.sampler
             else:
                 return
 
