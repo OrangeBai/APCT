@@ -34,6 +34,7 @@ class BaseTrainer:
             self.logger.hello_logger()
 
         self.reset_lr_dt(0)
+
         self.start_epoch, self.best_acc = self.resume()
         dist.barrier()
 
@@ -85,6 +86,7 @@ class BaseTrainer:
 
     def train_epoch(self, epoch):
         cur_time = time.time()
+        self.train_sampler.set_epoch(epoch)
         for step, (images, labels) in enumerate(self.train_loader):
             data_time = time.time() - cur_time
             images, labels = images.to(self.rank, non_blocking=True), labels.to(self.rank, non_blocking=True)
@@ -130,7 +132,6 @@ class BaseTrainer:
 
         for epoch in range(self.start_epoch, self.args.num_epoch):
             self.reset_lr_dt(epoch)
-            self.train_loader.sampler.seed = epoch
             self.train_epoch(epoch)
             self.record_result(epoch)
 
@@ -151,18 +152,19 @@ class BaseTrainer:
         self.train_sampler = DistributedSampler(train_dataset, shuffle=True)
         self.test_sampler = DistributedSampler(test_dataset, shuffle=True)
         self.train_loader = data.DataLoader(
+            pin_memory=True,
             dataset=train_dataset,
             batch_size=self.args.batch_size,
             sampler=self.train_sampler,
-            num_workers=4,
+            num_workers=6,
             prefetch_factor=2
+
         )
         self.test_loader = data.DataLoader(
+            pin_memory=True,
             dataset=test_dataset,
             batch_size=self.args.batch_size,
-            sampler=self.test_sampler,
-            num_workers=4,
-            prefetch_factor=2
+            sampler=self.test_sampler
         )
 
         self.args.epoch_step = len(self.train_loader)
@@ -254,12 +256,10 @@ class BaseTrainer:
         self.loss_function = init_loss(self.args)
 
     def reset_lr_dt(self, epoch):
-        
         if self.args.dataset != 'imagenet':
             if epoch == 0:
                 self._init_dataset()
                 self._init_functions()
-                self.train_loader.sampler
             else:
                 return
 

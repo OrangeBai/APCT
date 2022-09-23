@@ -1,5 +1,5 @@
 phase_1:
-  batch_size: 512
+  batch_size: 256
   data_size: 160
   crop_size: 128
   lr: 0.
@@ -8,7 +8,7 @@ phase_1:
   start_epoch: 0
   end_epoch: 2
 phase_2:
-  batch_size: 512
+  batch_size: 256
   data_size: 160
   crop_size: 128
   lr: 0.5
@@ -17,7 +17,7 @@ phase_2:
   start_epoch: 2
   end_epoch: 12
 phase_3:
-  batch_size: 256
+  batch_size: 128
   data_size: 256
   crop_size: 224
   lr: 0.05
@@ -26,7 +26,7 @@ phase_3:
   start_epoch: 12
   end_epoch: 24
 phase_4:
-  batch_size: 256
+  batch_size: 128
   data_size: 256
   crop_size: 224
   lr: 0.005
