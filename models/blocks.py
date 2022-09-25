@@ -45,7 +45,9 @@ class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=(3, 3), padding=1, stride=1, *args, **kwargs):
         super().__init__()
         self.Conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size,
-                              padding=padding, stride=stride, bias=False)
+                              padding=padding, stride=stride,
+                              # bias=False
+                              )
         self.BN = set_bn(kwargs['batch_norm'], 2, out_channels)
         self.Act = set_activation(kwargs['activation'])
 
@@ -65,156 +67,6 @@ class FloatConv(nn.Module):
         x = self.conv(x)
         x[mask] = 0
         return x
-
-
-class DualNet(nn.Module):
-    def __init__(self, net, args):
-        super().__init__()
-        self.net = net
-        self.eta_dn = args.eta_dn
-        self.dn_rate = args.dn_rate
-        self.gamma = set_gamma(args.activation)
-
-        self.lip_inverse = args.lip_inverse
-        self.lip_layers = args.lip_layers
-        self.block_len = self.count_block_len
-        self.counter = -1
-
-        self.fixed_neurons = []
-        self.handles = []
-
-    @property
-    def count_block_len(self):
-        counter = 0
-        for module in self.net.layers.children():
-            if type(module) in [ConvBlock, LinearBlock]:
-                counter += 1
-        return counter - 1
-
-    def forward(self, x_1, x_2, eta_fixed, eta_float, balance=True):
-        self.counter = -1
-        fixed_neurons = []
-        df = torch.tensor(1, dtype=torch.float).cuda()
-        for i, module in enumerate(self.net.layers.children()):
-            x_1 = self.compute_pre_act(module, x_1)
-            x_2 = self.compute_pre_act(module, x_2)
-            if self.check_block(module) and i != len(self.net.layers) - 1:
-                fixed = self.compute_fix(x_1, x_2)
-                fixed_neurons += [fixed]
-                if self.check_lip():
-                    df += (x_1 * fixed).abs().mean()
-
-                h = self.set_hook(fixed, eta_fixed, eta_float, balance)
-                self.handles += [module.Act.register_forward_pre_hook(h)]
-                x_1 = module.Act(x_1)
-                x_2 = module.Act(x_2)
-            else:
-                fixed_neurons += [None]
-
-        self.fixed_neurons = fixed_neurons
-        self.remove_handles()
-        return x_1, x_2, df
-
-    def check_lip(self):
-        if self.lip_inverse:
-            if self.counter >= self.block_len - self.lip_layers:
-                return 1
-            else:
-                return 0
-
-        else:
-            if self.counter < self.lip_layers:
-                return 1
-            else:
-                return 0
-
-    def mask_forward(self, x, eta_fixed, eta_float):
-        self.counter = -1
-        fixed_neurons = []
-        for i, (fixed, module) in enumerate(zip(self.fixed_neurons, self.net.layers.children())):
-            x = self.compute_pre_act(module, x)
-            if self.check_block(module) and i != len(self.net.layers) - 1:
-                fixed_neurons += [fixed]
-
-                h = self.set_hook(fixed, eta_fixed, eta_float)
-                self.handles += [module.Act.register_forward_pre_hook(h)]
-                x = module.Act(x)
-        self.remove_handles()
-        return x
-
-    def remove_handles(self):
-        for h in self.handles:
-            h.remove()
-        self.handles.clear()
-        return
-
-    def set_hook(self, fixed, eta_fixed, eta_float, balance=True):
-        def forward_pre_hook(m, inputs):
-            x = inputs[0]
-            return self.x_mask(x, eta_fixed, fixed, balance) + self.x_mask(x, eta_float, ~fixed, balance)
-
-        return forward_pre_hook
-
-    def check_block(self, module):
-        if type(module) in [ConvBlock, LinearBlock]:
-            self.counter += 1
-            return 1
-        else:
-            return 0
-
-    def dn_forward(self, x):
-        for i, module in enumerate(self.net.layers.children()):
-            x = self.compute_pre_act(module, x)
-            if type(module) in [ConvBlock, LinearBlock]:
-                p0 = (x < 0).sum(axis=0) > self.dn_rate * len(x)
-                p1 = (x > 0).sum(axis=0) > self.dn_rate * len(x)
-                p_same = torch.all(torch.stack([p0, p1]), dim=0).unsqueeze(dim=0)
-                x = self.x_mask(x, self.eta_dn, p_same) + x * ~p_same
-                x = module.Act(x)
-        return x
-
-    @property
-    def mask_ratio(self):
-        mask_mean = []
-        if len(self.fixed_neurons) == 0:
-            return 0
-        for b_mask in self.fixed_neurons:
-            if b_mask is not None:
-                mask_mean += [to_numpy(b_mask).mean()]
-            return np.array(mask_mean).mean()
-
-    @staticmethod
-    def x_mask(x, ratio, mask, balance=True):
-        if ratio == 0:
-            return x * mask
-        else:
-            if balance:
-                return x * (1 + ratio) * mask - x.detach() * mask.detach() * ratio
-            else:
-                return x * (1 + ratio) * mask
-
-    @staticmethod
-    def compute_pre_act(module, x):
-        if type(module) == ConvBlock:
-            return module.BN(module.Conv(x))
-        elif type(module) == LinearBlock:
-            return module.BN(module.FC(x))
-        else:
-            return module(x)
-
-    def compute_fix(self, x_1, x_2):
-        if len(self.gamma) == 0:
-            return (x_1 - self.gamma[0]) * (x_2 - self.gamma[0]) > 0
-        else:
-            stacked = torch.stack([(x_1 - g) * (x_2 - g) > 0 for g in self.gamma])
-            return torch.all(stacked, dim=0)
-
-    @staticmethod
-    def _batch_norm(layer, x):
-        if type(layer) in [nn.BatchNorm2d, nn.BatchNorm1d]:
-            return F.batch_norm(x, layer.running_mean, layer.running_var, layer.weight, layer.bias)
-        else:
-            return x
 
 
 class BasicBlock(nn.Module):

@@ -5,8 +5,22 @@ class TestParser(BaseParser):
     def __init__(self, argv=None):
         super(TestParser, self).__init__(argv)
         self.load()
-        self.parser.add_argument('--data_size', default=160)
-        self.parser.add_argument('--crop_size', default=128)
+        self.parser.add_argument('--test_name', default='acc', type=str)
+        self.parser.add_argument('--data_size', default=160, type=int)
+        self.parser.add_argument('--crop_size', default=128, type=int)
+        args, _ = self.parser.parse_known_args(self.args)
+        exp_dir = os.path.join(args.model_dir, 'exp')
+        os.makedirs(exp_dir, exist_ok=True)
+        self.parser.add_argument('--exp_dir', default=os.path.join(args.model_dir, 'exp'))
+
+        self._set_up_test()
+
+    def _set_up_test(self):
+        args, _ = self.parser.parse_known_args(self.args)
+        if args.test_name == 'smoothed_certify':
+            self.parser = smoothed_certify(self.parser)
+
+
 #
 # def set_up_testing(argv=None):
 #     arg_parser = TrainParser(False, argv)
@@ -55,11 +69,13 @@ def non_ret(parser):
 
 
 def smoothed_certify(parser):
-    parser.add_argument("--sigma", type=float, help="noise hyperparameter", default=0.1)
+    parser.add_argument("--sigma_2", type=float, help="noise hyperparameter", default=0.1)
     parser.add_argument("--batch", type=int, default=1000, help="batch size")
     parser.add_argument("--N0", type=int, default=100)
+    parser.add_argument('--skip', type=int, default=1)
     parser.add_argument("--N", type=int, default=10000, help="number of samples to use")
     parser.add_argument("--smooth_alpha", type=float, default=0.001, help="failure probability")
+    parser.add_argument('--method', default='SMRAP', type=str)
     return parser
 
 
