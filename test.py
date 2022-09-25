@@ -9,8 +9,7 @@ from exps.smoothed import *
 
 
 if __name__ == '__main__':
-    argsv = ['--dataset', 'cifar10', '--exp_id', 'noise_005', '--model_type', 'mini', '--test_name', 'smoothed_certify',
-             '--method', 'SMRAP', '--N0', '100', '--N', '10000', '--skip', '1', '--sigma_2', '0.10']
+    argsv = ['--dataset', 'cifar10', '--exp_id', 'noise_005', '--model_type', 'mini', '--test_name', 'smoothed_certify']
     torch.cuda.device_count()
     args = TestParser(argsv).get_args()
 
