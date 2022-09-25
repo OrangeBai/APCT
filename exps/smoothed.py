@@ -10,7 +10,7 @@ from dataloader.base import *
 
 
 def smooth_test(model, args):
-    file_path = os.path.join(args.exp_dir, '_'.join([args.method, str(args.N0), str(args.N), str(args.sigma)]))
+    file_path = os.path.join(args.exp_dir, '_'.join([args.method, str(args.N0), str(args.N), str(args.sigma_2)]))
     smooth_pred(model, args)
 
     certify_res = ApproximateAccuracy(file_path).at_radii(np.linspace(0, 1, 256))
@@ -27,7 +27,7 @@ def smooth_pred(model, args):
         smoothed_classifier = Smooth(model, args)
 
     # prepare output file
-    file_path = os.path.join(args.exp_dir, '_'.join([args.method, str(args.N0), str(args.N), str(args.sigma)]))
+    file_path = os.path.join(args.exp_dir, '_'.join([args.method, str(args.N0), str(args.N), str(args.sigma_2)]))
     f = open(file_path, 'w')
     print("idx\tlabel\tpredict\tradius\tcorrect\ttime", file=f, flush=True)
 
@@ -36,7 +36,7 @@ def smooth_pred(model, args):
     for i in range(len(dataset)):
 
         # only certify every args.skip examples, and stop after args.max examples
-        if i % 50 != 0:
+        if i % args.skip != 0:
             continue
         if i == -1:
             break
