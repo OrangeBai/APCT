@@ -27,7 +27,7 @@ def smooth_pred(model, args):
         smoothed_classifier = Smooth(model, args)
 
     # prepare output file
-    file_path = os.path.join(args.exp_dir, '_'.join([args.method, args.N0, args.N, args.sigma]))
+    file_path = os.path.join(args.exp_dir, '_'.join([args.method, str(args.N0), str(args.N), str(args.sigma)]))
     f = open(file_path, 'w')
     print("idx\tlabel\tpredict\tradius\tcorrect\ttime", file=f, flush=True)
 
