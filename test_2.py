@@ -10,15 +10,15 @@ from exps.smoothed import *
 
 if __name__ == '__main__':
     argsv = ['--dataset', 'imagenet', '--exp_id', 'noise_000', '--model_type', 'net', '--test_name', 'smoothed_certify',
-             '--net', 'resnet50', '--data_size', '352']
+             '--net', 'resnet50']
     torch.cuda.device_count()
     args = TestParser(argsv).get_args()
 
     model = build_model(args).cuda()
     # torch.load(os.path.join(args.model_dir, ''))
-    model.load_weights(torch.load(r'/home/orange/Main/Experiment/ICLR/imagenet/noise_0.50/checkpoint.pth.tar')['state_dict'])
-    # ckpt = torch.load(os.path.join(args.model_dir, 'ckpt_best.pth'))
-    # model.load_weights(ckpt['model_state_dict'])
+
+    ckpt = torch.load(os.path.join(args.model_dir, 'ckpt_best.pth'))
+    model.load_weights(ckpt['model_state_dict'])
     # _, test_loader = set_loader(args)
     model.eval()
     smooth_test(model, args)

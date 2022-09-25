@@ -46,7 +46,7 @@ class ConvBlock(nn.Module):
         super().__init__()
         self.Conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size,
                               padding=padding, stride=stride,
-                              # bias=False
+                              bias=False
                               )
         self.BN = set_bn(kwargs['batch_norm'], 2, out_channels)
         self.Act = set_activation(kwargs['activation'])
