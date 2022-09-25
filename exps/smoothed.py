@@ -10,7 +10,7 @@ from dataloader.base import *
 
 
 def smooth_test(model, args):
-    file_path = os.path.join(args.exp_dir, '_'.join([args.method, args.N0, args.N, args.sigma]))
+    file_path = os.path.join(args.exp_dir, '_'.join([args.method, str(args.N0), str(args.N), str(args.sigma)]))
     smooth_pred(model, args)
 
     certify_res = ApproximateAccuracy(file_path).at_radii(np.linspace(0, 1, 256))
