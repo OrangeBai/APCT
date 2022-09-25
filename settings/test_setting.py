@@ -70,7 +70,6 @@ def non_ret(parser):
 
 def smoothed_certify(parser):
     parser.add_argument("--sigma_2", type=float, help="noise hyperparameter", default=0.1)
-    parser.add_argument("--batch", type=int, default=1000, help="batch size")
     parser.add_argument("--N0", type=int, default=100)
     parser.add_argument('--skip', type=int, default=1)
     parser.add_argument("--N", type=int, default=10000, help="number of samples to use")

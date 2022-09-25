@@ -60,7 +60,7 @@ class BaseParser:
 
         for key, val in args_dict.items():
             if not hasattr(cur_args, key):
-                self.parser.add_argument('--'+ key, default=val)
+                self.parser.add_argument('--' + key, default=val, type=type(val))
 
             self.parser.set_defaults(key=val)
         return
