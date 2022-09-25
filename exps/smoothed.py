@@ -46,7 +46,7 @@ def smooth_pred(model, args):
         before_time = time.time()
         # certify the prediction of g around x
         x = x.cuda()
-        prediction, radius = smoothed_classifier.certify(x, args.N0, args.N, args.smooth_alpha, args.batch)
+        prediction, radius = smoothed_classifier.certify(x, args.N0, args.N, args.smooth_alpha, args.batch_size)
         after_time = time.time()
         correct = int(prediction == label)
 
