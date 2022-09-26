@@ -260,6 +260,7 @@ class BaseTrainer:
             if epoch == 0:
                 self._init_dataset()
                 self._init_functions()
+                return
             else:
                 return
 
