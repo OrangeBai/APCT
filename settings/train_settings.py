@@ -221,10 +221,6 @@ class TrainParser(BaseParser):
         self.parser.add_argument('--noise_type', default='noise', type=str)
         self.parser.add_argument('--noise_eps', default=0.06, type=float)
 
-        self.parser.add_argument('--lip_inverse', default=0, type=int)
-        self.parser.add_argument('--lip_layers', default=2, type=float)
-        self.parser.add_argument('--lip_loss', default=0.00, type=float)
-
         # Adversarial Training
 
         # Prune Training

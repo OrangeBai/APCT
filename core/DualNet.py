@@ -1,4 +1,5 @@
 from models.blocks import *
+from models.net.resnet import Bottleneck
 
 
 class DualNet(nn.Module):
@@ -16,19 +17,20 @@ class DualNet(nn.Module):
     def count_block_len(self):
         counter = 0
         for module in self.net.layers.children():
-            if type(module) in [ConvBlock, LinearBlock]:
+            if type(module) in [ConvBlock, LinearBlock, Bottleneck]:
                 counter += 1
         return counter - 1
 
-    def predict(self, batch_x, eta_fixed, eta_float):
+    def predict(self, x, eta_fixed, eta_float):
         """
         for a batch of data, the first one should be raw data without perturbation
         """
         self.counter = -1
         fixed_neurons = []
-        for i, module in enumerate(self.net.layers.children()):
+        batch_x = self.net[0](x)
+        for i, module in enumerate(list(self.net[1].layers)):
             batch_x = self.compute_pre_act(module, batch_x)
-            if self.check_block(module) and i != len(self.net.layers) - 1:
+            if self.check_block(module) and i != len(list(self.net[1].layers)):
                 fixed = self.compute_fix_single_batch(batch_x)
                 fixed_neurons += [fixed]
 
@@ -95,7 +97,7 @@ class DualNet(nn.Module):
         return forward_pre_hook
 
     def check_block(self, module):
-        if type(module) in [ConvBlock, LinearBlock]:
+        if type(module) in [ConvBlock, LinearBlock, Bottleneck]:
             self.counter += 1
             return 1
         else:
@@ -138,6 +140,14 @@ class DualNet(nn.Module):
             return module.BN(module.Conv(x))
         elif type(module) == LinearBlock:
             return module.BN(module.FC(x))
+        elif type(module) == Bottleneck:
+            identity = x
+
+            out = module.bottle_net(x)
+
+            identity = module.downsample(x)
+
+            return out + identity
         else:
             return module(x)
 

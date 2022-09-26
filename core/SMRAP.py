@@ -1,4 +1,5 @@
 from core.DualNet import DualNet
+from models.net.resnet import Bottleneck
 from core.smooth_core import *
 
 
@@ -23,6 +24,7 @@ class SMRAP(Smooth):
         :param batch_size:
         :return: an ndarray[int] of length num_classes containing the per-class counts
         """
+        self.dual_net.eval()
         with torch.no_grad():
             counts = np.zeros(self.num_classes, dtype=int)
             for _ in range(ceil(num / batch_size)):
@@ -30,7 +32,8 @@ class SMRAP(Smooth):
                 num -= this_batch_size
 
                 batch = x.repeat((this_batch_size + 1, 1, 1, 1))
-                batch = self.reverse_noise(batch)
-                predictions = self.dual_net.predict(batch, 0.00, -0.25)[1:]
+                n = torch.randn_like(x).to(x.device) * self.sigma
+                # batch = self.reverse_noise(batch)
+                predictions = self.dual_net.predict(batch+n, 0.0, self.args.eta_float)[1:]
                 counts += self._count_arr(predictions.argmax(1).cpu().numpy(), self.num_classes)
             return counts

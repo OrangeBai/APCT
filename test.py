@@ -6,6 +6,7 @@ from dataloader.base import *
 from core.utils import accuracy, MetricLogger
 from core.pattern import *
 from exps.smoothed import *
+from exps.text_acc import test_acc
 
 
 if __name__ == '__main__':
@@ -16,12 +17,12 @@ if __name__ == '__main__':
 
     model = build_model(args).cuda()
     # torch.load(os.path.join(args.model_dir, ''))
-    model.load_weights(torch.load(r'/home/orange/Main/Experiment/ICLR/imagenet/noise_0.50/checkpoint.pth.tar')['state_dict'])
+    model.load_weights(torch.load(r'/home/user/Orange/ICLR/imagenet/resnet50_noise_025/checkpoint.pth.tar')['state_dict'])
     # ckpt = torch.load(os.path.join(args.model_dir, 'ckpt_best.pth'))
     # model.load_weights(ckpt['model_state_dict'])
     # _, test_loader = set_loader(args)
     model.eval()
-    smooth_test(model, args)
+    test_acc(model, args)
 
 
 

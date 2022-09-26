@@ -53,13 +53,13 @@ def get_dataset(args):
     train_dir = os.path.join(data_dir, 'train')
     val_dir = os.path.join(data_dir, 'val')
     if resize_exist:
-        train_composed = [ToTensor(), RandomResizedCrop((args.crop_size, args.crop_size)),transforms.Normalize(mean, std),  RandomHorizontalFlip()]
-        val_composed = [ToTensor(), RandomResizedCrop((args.crop_size, args.crop_size)),transforms.Normalize(mean, std)]
+        train_composed = [ToTensor(), RandomResizedCrop((args.crop_size, args.crop_size)),  RandomHorizontalFlip()]
+        val_composed = [ToTensor(), RandomResizedCrop((args.crop_size, args.crop_size))]
     else:
         train_composed = [ToTensor(), transforms.Resize((args.data_size, args.data_size)),
-                        CenterCrop((args.crop_size, args.crop_size)),transforms.Normalize(mean, std),  RandomHorizontalFlip()]
+                        CenterCrop((args.crop_size, args.crop_size)),  RandomHorizontalFlip()]
         val_composed = [ToTensor(), transforms.Resize((args.data_size, args.data_size)),
-                        CenterCrop((args.crop_size, args.crop_size)),transforms.Normalize(mean, std)]
+                        CenterCrop((args.crop_size, args.crop_size))]
     train_transform = Compose(train_composed)
     val_transform = Compose(val_composed)
 
@@ -90,6 +90,21 @@ def get_loaders(args):
     )
     return train_loader, test_loader
 
+def get_val(args):
+    val_composed = [transforms.Resize((args.data_size, args.data_size)), CenterCrop((args.crop_size, args.crop_size)), ToTensor()]
+    val_transform = Compose(val_composed)
+    test_dataset = ImageFolder(r'/DATA/ImageNet-2012/val', transform=val_transform)
+    return test_dataset
+
+def get_val_loader(args):
+    test_dataset = get_val(args)
+    test_loader = data.DataLoader(
+        dataset=test_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        pin_memory=True,
+    )
+    return test_loader
 # class ValLoader(datasets.Dataset):
 #
 #     def __init__(self, csv_file, root_dir, transform=None):

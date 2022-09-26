@@ -12,7 +12,7 @@ phase_2:
   data_size: 160
   crop_size: 128
   lr: 0.5
-  lr_e: 0.05
+  lr_e: 0.1
   lr_scheduler: linear
   start_epoch: 2
   end_epoch: 12
@@ -20,8 +20,8 @@ phase_3:
   batch_size: 128
   data_size: 256
   crop_size: 224
-  lr: 0.05
-  lr_e: 0.005
+  lr: 0.1
+  lr_e: 0.02
   lr_scheduler: linear
   start_epoch: 12
   end_epoch: 24
@@ -29,8 +29,17 @@ phase_4:
   batch_size: 128
   data_size: 256
   crop_size: 224
-  lr: 0.005
-  lr_e: 0.0001
+  lr: 0.02
+  lr_e: 0.002
   lr_scheduler: linear
   start_epoch: 24
   end_epoch: 30
+phase_5:
+  batch_size: 96
+  data_size: 352
+  crop_size: 288
+  lr: 0.005
+  lr_e: 0.00
+  lr_scheduler: linear
+  start_epoch: 30
+  end_epoch: 33

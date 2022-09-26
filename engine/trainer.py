@@ -117,7 +117,7 @@ class BaseTrainer:
             with torch.cuda.amp.autocast(dtype=torch.float16):
                 pred = self.model(images)
             top1, top5 = accuracy(pred, labels)
-            self.metrics.update(top1=(top1, len(images)))
+            self.metrics.update(top1=(top1, len(images)), top5=(top5, len(images)))
             self.metrics.all_reduce()
             # if self.args.record_lip:
             #     self.record_lip(images, labels, pred)
