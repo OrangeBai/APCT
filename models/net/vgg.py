@@ -57,7 +57,7 @@ class VGG(BaseModel):
         setattr(self, 'layers', nn.Sequential(*layers))
 
     def forward(self, x):
-
+        x = self.norm_layer(x)
         return self.layers(x)
 
 

@@ -2,6 +2,7 @@ import importlib
 import os
 from collections import OrderedDict
 import torch.nn as nn
+from dataloader.base import set_mean_sed
 import torch
 
 
@@ -10,6 +11,7 @@ class BaseModel(nn.Module):
     def __init__(self, args):
         super(BaseModel, self).__init__()
         self.set_up_kwargs = {'batch_norm': args.batch_norm, 'activation': args.activation}
+        self.norm_layer = NormalizeLayer(*set_mean_sed(args))
 
     def forward(self, x):
         pass
@@ -68,3 +70,28 @@ def build_model(args):
         exit(0)
     else:
         return model
+
+
+class NormalizeLayer(torch.nn.Module):
+    """Standardize the channels of a batch of images by subtracting the dataset mean
+      and dividing by the dataset standard deviation.
+
+      In order to certify radii in original coordinates rather than standardized coordinates, we
+      add the Gaussian noise _before_ standardizing, which is why we have standardization be the first
+      layer of the classifier rather than as a part of preprocessing as is typical.
+      """
+
+    def __init__(self, means, sds):
+        """
+        :param means: the channel means
+        :param sds: the channel standard deviations
+        """
+        super(NormalizeLayer, self).__init__()
+        self.means = torch.tensor(means).cuda()
+        self.sds = torch.tensor(sds).cuda()
+
+    def forward(self, input: torch.tensor):
+        (batch_size, num_channels, height, width) = input.shape
+        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
+        sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
+        return (input - means) / sds

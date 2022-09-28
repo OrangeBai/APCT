@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 from plot.cfg import *
 from core.smooth_analyze import *
 
@@ -13,7 +15,7 @@ if __name__ == '__main__':
     line_styles = ['r-', 'g-', 'b-', 'r--', 'g--', 'b--', ]
     fig, ax = plt.subplots()
     for file, line_style in zip(files, line_styles):
-        res = ApproximateAccuracy(file).at_radii(np.linspace(0, 1, 256))
+        res = ApproximateAccuracy(file).at_radii(np.linspace(0, 1, 100))
         # res = np.load(file)
         x = np.linspace(0, 1, len(res))
         ax.plot(x, res, line_style)
@@ -26,4 +28,4 @@ if __name__ == '__main__':
 
     ax.set_xlabel('Radius')
     ax.set_ylabel('Accuracy')
-    plt.show()
+    plt.savefig('cert-025.png', bbox_inches='tight')

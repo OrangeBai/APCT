@@ -33,6 +33,7 @@ class SMRAP(Smooth):
 
                 batch = x.repeat((this_batch_size + 1, 1, 1, 1))
                 n = torch.randn_like(x).to(x.device) * self.sigma
+                n[0] = 0
                 # batch = self.reverse_noise(batch)
                 predictions = self.dual_net.predict(batch+n, 0.0, self.args.eta_float)[1:]
                 counts += self._count_arr(predictions.argmax(1).cpu().numpy(), self.num_classes)

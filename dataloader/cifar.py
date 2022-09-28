@@ -54,13 +54,9 @@ def get_single_sets(args, *labels):
 
 
 def get_data_set(args):
-    mean, std = CIAFR10_MEAN_STD if args.dataset == 'cifar10' else CIAFR100_MEAN_STD
 
     train_transform = [transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor()]
     test_transform = [transforms.ToTensor()]
-    if args.data_bn:
-        train_transform += [transforms.Normalize(mean, std)]
-        test_transform += [transforms.Normalize(mean, std)]
     train_transform = transforms.Compose(train_transform)
     test_transform = transforms.Compose(test_transform)
     if args.dataset == 'cifar10':

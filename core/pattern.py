@@ -16,7 +16,7 @@ class ModelHook:
     def set_up(self):
         self.remove()
         for module_name, block in self.model.named_modules():
-            if type(block) in [LinearBlock, ConvBlock, BottleNeck, BasicBlock]:
+            if type(block) in [LinearBlock, ConvBlock]:
                 self.stored_values[module_name] = {}
                 self.add_block_hook(block, self.stored_values[module_name])
         return
@@ -159,7 +159,7 @@ def retrieve_float_neurons(stored_values):
     @return:
     """
     unpacked = unpack(stored_values)
-    return [[np.all(layer, axis=0) for layer in block]
+    return [[np.all(layer - layer[0], axis=0) for layer in block]
             for block in unpacked]
 
 

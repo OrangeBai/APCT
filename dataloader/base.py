@@ -41,22 +41,16 @@ def set_single_loaders(args, *labels):
 
 
 def set_mean_sed(args):
-    if args.data_bn == 0:
-        if args.dataset.lower() in ['cifar10', 'cifar100']:
-            mean, std = [0, 0, 0], [1, 1, 1]
-        else:
-            mean, std = [0], [1]
+    if args.dataset.lower() == 'cifar10':
+        mean, std = dataloader.cifar.CIAFR10_MEAN_STD
+    elif args.dataset.lower() == 'cifar100':
+        mean, std = dataloader.cifar.CIAFR100_MEAN_STD
+    elif args.dataset.lower() == 'mnist':
+        mean, std = dataloader.MNIST.MNIST_MEAN_STD
+    elif args.dataset.lower() == 'imagenet':
+        mean, std = dataloader.imagenet.IMAGENET_MEAN_STD
     else:
-        if args.dataset.lower() == 'cifar10':
-            mean, std = dataloader.cifar.CIAFR10_MEAN_STD
-        elif args.dataset.lower() == 'cifar100':
-            mean, std = dataloader.cifar.CIAFR100_MEAN_STD
-        elif args.dataset.lower() == 'mnist':
-            mean, std = dataloader.MNIST.MNIST_MEAN_STD
-        elif args.dataset.lower() == 'imagenet':
-            mean, std = dataloader.imagenet.IMAGENET_MEAN_STD
-        else:
-            raise NameError()
+        raise NameError()
     return mean, std
 
 
