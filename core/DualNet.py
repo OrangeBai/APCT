@@ -27,10 +27,10 @@ class DualNet(nn.Module):
         """
         self.counter = -1
         fixed_neurons = []
-        batch_x = self.net[0](x)
-        for i, module in enumerate(list(self.net[1].layers)):
+        batch_x = self.net.norm_layer(x)
+        for i, module in enumerate(list(self.net.layers)):
             batch_x = self.compute_pre_act(module, batch_x)
-            if self.check_block(module) and i != len(list(self.net[1].layers)):
+            if self.check_block(module) and i != len(list(self.net.layers)):
                 fixed = self.compute_fix_single_batch(batch_x)
                 fixed_neurons += [fixed]
 
