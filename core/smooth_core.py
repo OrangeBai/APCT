@@ -3,7 +3,8 @@ from scipy.stats import norm, binom_test
 import numpy as np
 from math import ceil
 from statsmodels.stats.proportion import proportion_confint
-from dataloader.base import set_mean_sed
+from dataloader import set_mean_sed
+
 
 class Smooth(object):
     """A smoothed classifier g """

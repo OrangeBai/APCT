@@ -1,16 +1,15 @@
-from tkinter.tix import Tree
 from models.base_model import build_model
 import torch.utils.data as data
 import yaml
+import os
 from torch.cuda.amp import GradScaler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
 
 from attack import *
-from dataloader.base import *
 from engine.logger import Log
 from models import *
-from torchvision.models.resnet import resnet50
+
 
 # DDP version
 class BaseTrainer:

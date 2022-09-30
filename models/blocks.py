@@ -1,3 +1,5 @@
+import torch
+
 from core.utils import *
 
 
@@ -47,3 +49,22 @@ class ConvBlock(nn.Module):
         return x
 
 
+class InputCenterLayer(torch.nn.Module):
+    """Centers the channels of a batch of images by subtracting the dataset mean.
+      In order to certify radii in original coordinates rather than standardized coordinates, we
+      add the Gaussian noise _before_ standardizing, which is why we have standardization be the first
+      layer of the classifier rather than as a part of preprocessing as is typical.
+      """
+
+    def __init__(self, means):
+        """
+        :param means: the channel means
+        :param sds: the channel standard deviations
+        """
+        super(InputCenterLayer, self).__init__()
+        self.means = torch.tensor(means).cuda()
+
+    def forward(self, x: torch.tensor):
+        (batch_size, num_channels, height, width) = x.shape
+        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
+        return x - means

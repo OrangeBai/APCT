@@ -1,13 +1,10 @@
 import datetime
 import os
 
-import torch.nn as nn
-
 from core.smooth_analyze import *
 from core.smooth_core import *
-from core.SMRAP import SMRAP
-from dataloader.base import *
-from dataloader.imagenet import get_val
+from core.SCRFP import SMRAP
+from dataloader import get_val
 
 
 def smooth_test(model, args):

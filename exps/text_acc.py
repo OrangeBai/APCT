@@ -1,7 +1,5 @@
-from dataloader.base import *
-from dataloader.imagenet import get_val_loader
-from attack import set_attack
-from core.utils import to_device, accuracy, MetricLogger
+from dataloader import get_val_loader
+from core.utils import accuracy, MetricLogger
 import torch
 
 def test_acc(model, args):

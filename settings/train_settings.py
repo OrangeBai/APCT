@@ -1,9 +1,7 @@
 from settings.base_parser import *
 import os
 import shutil
-import sys
 
-import torch
 import yaml
 
 from config import *

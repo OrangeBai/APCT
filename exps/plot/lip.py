@@ -3,12 +3,10 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from config import *
-import pandas as pd
+
 sns.set()
 sns.set_theme(style="darkgrid")
 from config import *
-import pandas as pd
 
 large = 22
 med = 16

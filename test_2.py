@@ -1,14 +1,8 @@
-import torch.cuda
-import os
 from settings.test_setting import TestParser
 from models.base_model import build_model
-from dataloader.base import *
-from core.utils import accuracy, MetricLogger
 from core.pattern import *
 from exps.smoothed import *
-from torchvision.models import resnet50
 from exps.text_acc import *
-from dataloader.base import *
 
 if __name__ == '__main__':
     argsv = ['--dataset', 'imagenet', '--exp_id', 'noise_000', '--model_type', 'net', '--test_name', 'smoothed_certify',

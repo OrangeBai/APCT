@@ -1,6 +1,6 @@
 from models.blocks import *
 from models.net.resnet import Bottleneck
-
+import torch.nn.functional as F
 
 class DualNet(nn.Module):
     def __init__(self, net, args):
@@ -43,7 +43,6 @@ class DualNet(nn.Module):
         self.fixed_neurons = fixed_neurons
         self.remove_handles()
         return batch_x
-
 
     def forward(self, x_1, x_2, eta_fixed, eta_float, balance=True):
         self.counter = -1
@@ -141,10 +140,7 @@ class DualNet(nn.Module):
         elif type(module) == LinearBlock:
             return module.BN(module.FC(x))
         elif type(module) == Bottleneck:
-            identity = x
-
             out = module.bottle_net(x)
-
             identity = module.downsample(x)
 
             return out + identity
@@ -161,7 +157,7 @@ class DualNet(nn.Module):
     def compute_fix_single_batch(self, batch_x):
         dims = len(batch_x.shape)
         if len(self.gamma) == 1:
-            x_0_pattern = (batch_x - self.gamma[0])[0].repeat((len(batch_x), ) + (1, ) * (dims-1))
+            x_0_pattern = (batch_x - self.gamma[0])[0].repeat((len(batch_x),) + (1,) * (dims - 1))
             return x_0_pattern * (batch_x - self.gamma[0]) > 0
 
     @staticmethod

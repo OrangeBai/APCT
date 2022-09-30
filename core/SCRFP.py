@@ -3,7 +3,7 @@ from models.net.resnet import Bottleneck
 from core.smooth_core import *
 
 
-class SMRAP(Smooth):
+class SCRFP(Smooth):
     """A smoothed classifier g """
 
     # to abstain, Smooth returns this int

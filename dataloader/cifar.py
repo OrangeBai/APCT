@@ -1,7 +1,6 @@
 import numpy as np
 import torch.utils.data as data
 from torchvision import transforms, datasets
-from torch.utils.data.distributed import DistributedSampler
 from config import *
 
 CIAFR10_MEAN_STD = [(0.4914, 0.4822, 0.4465), (0.2471, 0.2435, 0.2616)]
@@ -27,7 +26,6 @@ def get_single_sets(args, *labels):
         transforms.ToTensor(),
         transforms.Normalize(mean, std),
     ])
-    num_workers = 0
     if args.dataset == 'cifar10':
         test_dataset = datasets.CIFAR10(DATA_PATH, train=True, transform=test_transform, download=True)
     elif args.dataset == 'cifar100':
@@ -54,11 +52,8 @@ def get_single_sets(args, *labels):
 
 
 def get_data_set(args):
-
-    train_transform = [transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor()]
-    test_transform = [transforms.ToTensor()]
-    train_transform = transforms.Compose(train_transform)
-    test_transform = transforms.Compose(test_transform)
+    train_transform = transforms.Compose([transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor()])
+    test_transform = transforms.Compose([transforms.ToTensor()])
     if args.dataset == 'cifar10':
         train_dataset = datasets.CIFAR10(DATA_PATH, train=True, transform=train_transform, download=True)
         test_dataset = datasets.CIFAR10(DATA_PATH, train=False, transform=test_transform, download=True)

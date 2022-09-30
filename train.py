@@ -1,7 +1,5 @@
 from settings.train_settings import *
-from engine.trainer import BaseTrainer
 import torch.multiprocessing as mp
-import torch.distributed as dist
 from engine.ddp_train import train
 os.environ['MASTER_ADDR'] = 'localhost'
 os.environ['MASTER_PORT'] = '12350'

@@ -1,8 +1,6 @@
-import numpy as np
 import torch.nn
 
 from config import *
-from core.pattern import *
 from exps.smoothed import *
 from models.base_model import build_model
 from settings.test_setting import TestParser
