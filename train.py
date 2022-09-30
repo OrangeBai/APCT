@@ -1,8 +1,16 @@
-from settings.train_settings import *
 import torch.multiprocessing as mp
-from engine.ddp_train import train
+import torch.distributed as dist
+from engine.trainer import BaseTrainer
+from settings.train_settings import *
 os.environ['MASTER_ADDR'] = 'localhost'
 os.environ['MASTER_PORT'] = '12350'
+
+
+def train(rank, arg):
+    dist.init_process_group("gloo", rank=rank, world_size=args.world_size)
+    trainer = BaseTrainer(arg, rank)
+    trainer.train_model()
+
 
 if __name__ == '__main__':
 
