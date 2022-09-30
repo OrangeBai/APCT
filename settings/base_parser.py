@@ -10,12 +10,12 @@ from config import *
 class BaseParser:
     def __init__(self, argv=None):
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--dataset', default='cifar10', type=str)
-        self.parser.add_argument('--exp_id', default=0, type=str)
+        self.parser.add_argument('--dataset', type=str, required=True)
+        self.parser.add_argument('--exp_id', type=str, required=True)
         self.parser.add_argument('--dir', default='', type=str)
         # model type
-        self.parser.add_argument('--model_type', default='net', choices=['dnn', 'mini', 'net'])
-        self.parser.add_argument('--net', default='vgg16', type=str)
+        self.parser.add_argument('--model_type', choices=['dnn', 'mini', 'net'], required=True)
+        self.parser.add_argument('--net', type=str, required=True)
 
         self.unknown_args = []
         if argv is None:

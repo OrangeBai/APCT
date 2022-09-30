@@ -7,10 +7,8 @@ from config import *
 from PIL import Image
 
 SRC = os.path.join(DATA_PATH, 'ImageNet')
-# DST = r'/home/orange/Main/Data/ImageNet-sz'
 DST = os.path.join(DATA_PATH, 'ImageNet-sz')
-# DST = r'/home/orange/Main/Data/ImageNet-sz'
-SIZE = [352]
+SIZE = [160, 256, 352]
 
 num_cpus = multiprocessing.cpu_count()
 

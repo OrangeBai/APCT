@@ -1,20 +1,18 @@
 import importlib
 import os
 from collections import OrderedDict
-import torch.nn as nn
-from dataloader.base import set_mean_sed
+
 import torch
+import torch.nn as nn
+
+from dataloader.base import set_mean_sed
 
 
 class BaseModel(nn.Module):
     # TODO Record epoch info
     def __init__(self, args):
         super(BaseModel, self).__init__()
-        self.set_up_kwargs = {'batch_norm': args.batch_norm, 'activation': args.activation}
         self.norm_layer = NormalizeLayer(*set_mean_sed(args))
-
-    def forward(self, x):
-        pass
 
     def save_model(self, path, name=None):
         if not name:
@@ -46,30 +44,22 @@ class BaseModel(nn.Module):
 
 def build_model(args):
     """Import the module "model/[model_name]_model.py"."""
-    model = None
     if args.model_type == 'dnn':
         model_file_name = "models." + args.model_type
-        modules = importlib.import_module(model_file_name)
-        model = modules.__dict__['DNN'](args)
     elif args.model_type == 'mini':
         model_file_name = "models." + "mini"
-        modules = importlib.import_module(model_file_name)
-        model = modules.set_model(args)
     elif args.model_type == 'net':
         model_file_name = "models." + "net"
-        modules = importlib.import_module(model_file_name)
-        for k, val in modules.__dict__.items():
-            if k.lower() == args.net.lower():
-                model = val(args)
     else:
-        raise NameError
+        raise NameError('No model type named %s' % args.model_type)
 
-    if model is None:
-        print("In %s.py, there should be a subclass of BaseModel with class name that matches %s in lowercase." % (
-            model_file_name, args.net))
-        exit(0)
-    else:
-        return model
+    modules = importlib.import_module(model_file_name)
+    try:
+        net = getattr(modules, args.net)
+        model = net(args)
+    except NameError:
+        raise NameError('No model named %s in %s' % args.net, model_file_name)
+    return model
 
 
 class NormalizeLayer(torch.nn.Module):
@@ -90,8 +80,8 @@ class NormalizeLayer(torch.nn.Module):
         self.means = torch.tensor(means).cuda()
         self.sds = torch.tensor(sds).cuda()
 
-    def forward(self, input: torch.tensor):
-        (batch_size, num_channels, height, width) = input.shape
+    def forward(self, x: torch.tensor):
+        (batch_size, num_channels, height, width) = x.shape
         means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
-        sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
-        return (input - means) / sds
+        std = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
+        return (x - means) / std

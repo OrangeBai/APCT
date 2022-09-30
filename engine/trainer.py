@@ -1,4 +1,5 @@
 from tkinter.tix import Tree
+from models.base_model import build_model
 import torch.utils.data as data
 import yaml
 from torch.cuda.amp import GradScaler
