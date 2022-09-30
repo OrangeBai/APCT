@@ -1,0 +1,34 @@
+TRAIN:
+
+    # Architecture name, see pytorch models package for
+    # a list of possible architectures
+    arch: 'resnet50'
+    # FAST ADVERSARIAL TRAINING PARAMETER
+
+    # Starting epoch (interpret as multiplied by n_repeats)
+    start_epoch: 0
+
+    # Number of training epochs
+    epochs: 6
+
+    lr_epochs: !!python/tuple [0,1,6]
+    lr_values: !!python/tuple [0,0.4,0.04]
+
+
+DATA:
+    # Number of data workers
+    workers: 16
+
+    # Color value range
+    max_color_value: 255.0
+
+    # FAST ADVERSARIAL TRAINING PARAMETER
+
+    # Image Size
+    img_size: 160
+
+    # Training batch size
+    batch_size: 512
+
+    # Crop Size for data augmentation
+    crop_size: 128
