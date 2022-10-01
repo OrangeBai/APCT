@@ -1,8 +1,10 @@
 import torch.utils.data as data
 from attack import *
-from dataloader.base import *
+from engine.dataloader import set_dataset
 from engine.logger import Log
-from models import *
+import torch
+from core.utils import *
+from models.base_model import build_model
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
@@ -95,26 +97,8 @@ class DataModule(pl.LightningDataModule):
         super().__init__()
         self.args = args
     def prepare_data(self):
-        root=self.args.data_path
-        if 'mnist' in args.dataset.lower():
-            dataset =torchvision.datasets.MNIST(root, train = True, transform=None, target_transform = None, download= True)        
-            #split the dataset into train and test
-            tr,va,=int(len(dataset)*0.8), int(len(dataset)*0.1)
-            te=len(dataset)-tr -va
-            self.train_set, self.val_set,self.test_set= torch.utils.data.random_split(dataset, [tr,va,te])
-            
-        elif "cifar" in args.dataset.lower():
-            dataset=torchvision.datasets.CIFAR100(root, train= True, transform= None, target_transform = None, download = True)
-            tr,va,=int(len(dataset)*0.8), int(len(dataset)*0.1)
-            te=len(dataset)-tr -va
-            self.train_set,self.val_set,self.test_set= torch.utils.data.random_split(dataset, [tr,va,te])
-            
-        elif 'imagenet' in args.dataset.lower():
-            self.train_set=torchvision.datasets.ImageNet(root, 'train')
-            self.val_set=torchvision.datasets.ImageNet(root, 'val')
-            self.test_set=torchvision.datasets.ImageNet(root, 'test')
-        else:
-            raise NameError()
+        self.train_dataset, self.val_dataset = set_dataset(self.args)
+
     def setup(self, stage=None):
         if stage == 'fit' or stage is None:
             self.train_loader = data.DataLoader(
@@ -137,6 +121,7 @@ class DataModule(pl.LightningDataModule):
                 persistent_workers=True)
         if stage == 'test' or stage is None:
             pass
+
     def train_dataloader(self):
         try:
             return self.train_loader
@@ -151,6 +136,7 @@ class DataModule(pl.LightningDataModule):
             self.setup('fit')
         finally:
             return self.val_loader
+
 def run(args):
     callbacks=[
         ModelCheckpoint(metric="val_top1",mode="max",save_top_k=1,data_path=args.data_path),

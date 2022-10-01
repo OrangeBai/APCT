@@ -7,6 +7,5 @@ class Noise(Attack):
         self.sigma = args.sigma
 
     def forward(self, images, labels):
-        images = self._reverse_norm(images)
         n = images + torch.randn_like(images) * self.sigma
-        return self._norm(n)
+        return n

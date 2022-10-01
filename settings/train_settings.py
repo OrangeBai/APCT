@@ -1,27 +1,17 @@
-import argparse
+from settings.base_parser import *
 import os
 import shutil
-import sys
 
-import torch
 import yaml
 
 from config import *
 
 
-class ArgParser:
-    def __init__(self, train, argv=None):
-
-        self.parser = argparse.ArgumentParser()
-        self.unknown_args = []
-        if argv is None:
-            self.args = sys.argv[1:]
-        else:
-            self.args = sys.argv[1:] + argv
+class TrainParser(BaseParser):
+    def __init__(self, argv=None):
+        super(TrainParser, self).__init__(argv)
         self.file_setting()
-
         self._init_parser()
-        self.model_dir()
         self.rewrite()
 
         self.attack()
@@ -52,9 +42,7 @@ class ArgParser:
         self.parser.add_argument('--optimizer', default='SGD', choices=['SGD', 'Adam'])
         self.parser.add_argument('--lr', default=0.1, type=float)
         self.parser.add_argument('--warmup', default=2, type=float)
-        # model type
-        self.parser.add_argument('--model_type', default='net', choices=['dnn', 'mini', 'net'])
-        self.parser.add_argument('--net', default='vgg16', type=str)
+
         # training settings
         self.parser.add_argument('--num_workers', default=1, type=int)
         self.parser.add_argument('--print_every', default=100, type=int)
@@ -65,9 +53,6 @@ class ArgParser:
         # for adv training
         self.parser.add_argument('--attack', default='vanilla', type=str)
         # dataset and experiments
-        self.parser.add_argument('--dataset', default='cifar10', type=str)
-        self.parser.add_argument('--exp_id', default=0, type=str)
-        self.parser.add_argument('--dir', default='', type=str)
         # gpu settings
         self.parser.add_argument('--cuda', default=[0], type=list)
         self.parser.add_argument('--local_rank', type=int, default=0)
@@ -161,8 +146,7 @@ class ArgParser:
             self.parser.set_defaults(model_type='mini')
         elif args.dataset.lower() == 'imagenet':
             self.parser.add_argument('--num_cls', default=1000, type=int)
-            self.parser.add_argument('--data_size', default=256, type=int)
-            self.parser.add_argument('--crop_size', default=224, type=int)
+            self.parser.add_argument('--phase_path', default='./cfgs/phase_default.yml', type=str)
             self.parser.set_defaults(model_type='net')
         return
 
@@ -234,10 +218,6 @@ class ArgParser:
         self.parser.add_argument('--eta_float', default=0, type=float)
         self.parser.add_argument('--noise_type', default='noise', type=str)
         self.parser.add_argument('--noise_eps', default=0.06, type=float)
-
-        self.parser.add_argument('--lip_inverse', default=0, type=int)
-        self.parser.add_argument('--lip_layers', default=2, type=float)
-        self.parser.add_argument('--lip_loss', default=0.00, type=float)
 
         # Adversarial Training
 

@@ -11,10 +11,6 @@ class PGD(Attack):
         self.restarts = kwargs['restarts'] if 'restarts' in kwargs.keys() else 1
 
     def attack(self, images, labels):
-
-        images = to_device(self.device, images.clone().detach())[0]
-        labels = to_device(self.device, labels.clone().detach())[0]
-        images = self._reverse_norm(images)
         loss_fn = nn.CrossEntropyLoss()
 
         adv_images = images.clone().detach()

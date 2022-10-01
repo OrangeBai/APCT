@@ -16,7 +16,7 @@ class ModelHook:
     def set_up(self):
         self.remove()
         for module_name, block in self.model.named_modules():
-            if type(block) in [LinearBlock, ConvBlock, BottleNeck, BasicBlock]:
+            if type(block) in [LinearBlock, ConvBlock]:
                 self.stored_values[module_name] = {}
                 self.add_block_hook(block, self.stored_values[module_name])
         return
@@ -44,24 +44,7 @@ class ModelHook:
         return res
 
 
-def set_input_hook(stored_values, device='cpu'):
-    """
-    record input values of the module
-    @param stored_values: recorder
-    @return: activation hook
-    """
-
-    def hook(layer, input_var, output_var):
-        input_var = input_var[0]
-        if device == 'cpu':
-            stored_values.append(to_numpy(input_var))
-        else:
-            stored_values.append(input_var)
-
-    return hook
-
-
-def set_bound_hook(stored_values, bound=1e-1, device='cpu'):
+def set_bound_hook(stored_values, bound=1e-1):
     """
     record input values of the module
     @param stored_values: recorder
@@ -71,10 +54,7 @@ def set_bound_hook(stored_values, bound=1e-1, device='cpu'):
     def hook(layer, input_var, output_var):
         input_var = input_var[0]
         bound_sum = input_var[input_var.abs() < bound].abs().sum()
-        if device == 'cpu':
-            stored_values.append(bound_sum.cpu().detach())
-        else:
-            stored_values.append(bound_sum)
+        stored_values.append(bound_sum)
 
     return hook
 
@@ -155,11 +135,10 @@ def retrieve_float_neurons(stored_values):
     """
     calculate the float neurons of given pattern
     @param stored_values: stored value from ModelHook
-    @param sample_size: size of noised samples for each input
     @return:
     """
     unpacked = unpack(stored_values)
-    return [[np.all(layer, axis=0) for layer in block]
+    return [[np.all(layer - layer[0], axis=0) for layer in block]
             for block in unpacked]
 
 

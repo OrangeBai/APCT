@@ -78,3 +78,4 @@ class Log:
 
     def info(self, msg):
         self.logger.info(msg)
+        print(msg)

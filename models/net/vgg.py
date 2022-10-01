@@ -1,5 +1,6 @@
-from models.blocks import *
 from models.base_model import BaseModel
+from models.blocks import *
+
 cfgs = {
     'vgg11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M', 4096, 4096, None],
     'vgg13': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M', 4096, 4096, None],
@@ -14,24 +15,17 @@ class VGG(BaseModel):
     def __init__(self, args):
         super().__init__(args)
         self.num_cls = args.num_cls
-
-        if args.net.lower() == 'vgg11':
-            cfg = cfgs['vgg11']
-        elif args.net.lower() == 'vgg13':
-            cfg = cfgs['vgg13']
-        elif args.net.lower() == 'vgg16':
-            cfg = cfgs['vgg16']
-        elif args.net.lower() == 'vgg19':
-            cfg = cfgs['vgg19']
-        else:
+        self.args = args
+        try:
+            cfg = cfgs[args.net.lower()]
+        except KeyError:
             raise NameError("No network named {}".format(args.net))
-
         if args.config is not None:
             cfg = args.config
 
-        self.set_up(cfg, args.model_type)
+        self.set_up(cfg)
 
-    def set_up(self, cfg, model_type):
+    def set_up(self, cfg):
 
         layers = []
         num_pooling = 0
@@ -46,18 +40,21 @@ class VGG(BaseModel):
                     pre_filters = pre_filters * 7 * 7
             else:
                 if num_pooling < 5:
-                    layers += [ConvBlock(pre_filters, layer, kernel_size=(3, 3), padding=1, **self.set_up_kwargs)]
+                    layers += [ConvBlock(pre_filters, layer, kernel_size=(3, 3), padding=1,
+                                         bn=self.args.batch_norm, act=self.args.activation)]
                     pre_filters = layer
                 else:
                     if layer is not None:
-                        layers += [LinearBlock(pre_filters, layer, **self.set_up_kwargs)]
+                        layers += [LinearBlock(pre_filters, layer, bn=self.args.batch_norm,
+                                               act=self.args.activation)]
                         pre_filters = layer
                     else:
-                        layers += [LinearBlock(pre_filters, self.num_cls, batch_norm=1, activation=None)]
+                        layers += [LinearBlock(pre_filters, self.num_cls,
+                                               bn=self.args.batch_norm, act=self.args.activation)]
         setattr(self, 'layers', nn.Sequential(*layers))
 
     def forward(self, x):
-
+        x = self.norm_layer(x)
         return self.layers(x)
 
 
@@ -86,11 +83,17 @@ class VGG13(VGG):
         super().__init__(args)
 
 
-class VGG16(VGG):
-    def __init__(self, args):
-        super().__init__(args)
+def vgg16(args):
+    return VGG(args)
 
 
-class VGG19(VGG):
-    def __init__(self, args):
-        super().__init__(args)
+def vgg13(args):
+    return VGG(args)
+
+
+def vgg11(args):
+    return VGG(args)
+
+
+def vgg19(args):
+    return VGG(args)
