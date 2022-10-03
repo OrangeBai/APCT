@@ -1,12 +1,13 @@
 import torch.utils.data as data
 from attack import *
-from engine.dataloader import set_dataset
+from engine.dataloader import set_dataloader
 from engine.logger import Log
 import torch
 from core.utils import *
 from models.base_model import build_model
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
+from pytorch_lightning.strategies.ddp import DDPStrategy
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 
 # DDP version
@@ -14,12 +15,25 @@ class PLModel(pl.LightningModule):
     def __init__(self, args):
         self.args = args
         #self._init_dataset()
+        super().__init__()
         self.model = build_model(args)
         self.attack = set_attack(self.model, self.args)
         self.loss_function = torch.nn.CrossEntropyLoss()
         #self.start_epoch, self.best_acc = self.resume()
+    
+    def setup(self, stage):
+        if stage == 'fit':
+            self.train_loader, self.val_loader = set_dataloader(self.args)
+            return 
+        else:
+            return 
         
-    def configure_optimizer(self,):
+    def train_dataloader(self):
+        return self.train_loader
+    def val_dataloader(self):
+        return self.val_loader
+        
+    def configure_optimizers(self,):
         """
         Initialize optimizer:
             SGD: Implements stochastic gradient descent (optionally with momentum).
@@ -32,6 +46,7 @@ class PLModel(pl.LightningModule):
                 args.weight_decay: weight decay (L2 penalty) (default: 5e-4)
         """
         args=self.args
+        total_step = self.args.num_epoch * len(self.train_loader)
         if args.optimizer == 'SGD':
             optimizer = torch.optim.SGD(self.model.parameters(), lr=args.lr + 1e-8, momentum=args.momentum,
                                         weight_decay=args.weight_decay)
@@ -42,7 +57,7 @@ class PLModel(pl.LightningModule):
             raise NameError('Optimizer {} not found'.format(args.lr_scheduler))
 
         if args.lr_scheduler == 'milestones':
-            milestones = [milestone * args.total_step for milestone in args.milestones]
+            milestones = [milestone * total_step for milestone in args.milestones]
             lr_scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=args.gamma)
         elif args.lr_scheduler == 'linear':
             # diff = args.lr - args.lr_e
@@ -69,7 +84,8 @@ class PLModel(pl.LightningModule):
         else:
             raise NameError('Scheduler {0} not found'.format(args.lr_scheduler))
         return [optimizer],[lr_scheduler]
-    def train_step(self, batch,batch_idx):
+
+    def training_step(self, batch, batch_idx):
         images, labels = batch[0], batch[1]
         images = self.attack(images, labels)
         outputs = self.model(images)
@@ -87,72 +103,31 @@ class PLModel(pl.LightningModule):
         images, labels = batch[0], batch[1]
         pred = self.model(images)
         top1, top5 = accuracy(pred, labels)
-        self.log('val_top1', top1,prog_bar=True)
-        loss = self.loss_function(outputs, labels)
-        self.log('val_loss', loss,prog_bar=True)
+        self.log('val_top1', top1,prog_bar=True, sync_dist=True)
+        loss = self.loss_function(pred, labels)
+        # self.log('val_loss', loss,prog_bar=True, sync_dist=True)
         return loss
-        
-class DataModule(pl.LightningDataModule):
-    def __init__(self, args):
-        super().__init__()
-        self.args = args
-    def prepare_data(self):
-        self.train_dataset, self.val_dataset = set_dataset(self.args)
 
-    def setup(self, stage=None):
-        if stage == 'fit' or stage is None:
-            self.train_loader = data.DataLoader(
-                dataset=self.train_dataset,
-                batch_size=self.args.batch_size,
-                shuffle=True,
-                num_workers=self.args.workers,
-                pin_memory=True,
-                drop_last=True,
-                prefetch_factor=4,
-                persistent_workers=True)
-            self.val_loader = data.DataLoader(
-                dataset=self.test_dataset,
-                batch_size=self.args.batch_size,
-                shuffle=True,
-                num_workers=self.args.workers,
-                pin_memory=True,
-                drop_last=True,
-                prefetch_factor=4,
-                persistent_workers=True)
-        if stage == 'test' or stage is None:
-            pass
 
-    def train_dataloader(self):
-        try:
-            return self.train_loader
-        except:
-            self.setup('fit')
-        finally:
-            return self.train_loader
-    def val_dataloader(self):
-        try:
-            return self.val_loader
-        except:
-            self.setup('fit')
-        finally:
-            return self.val_loader
+    def on_epoch_end(self) -> None:
+        return super().on_epoch_end()
 
 def run(args):
     callbacks=[
-        ModelCheckpoint(metric="val_top1",mode="max",save_top_k=1,data_path=args.data_path),
+        ModelCheckpoint(save_top_k=1,mode="max",dirpath=args.model_dir, filename="ckpt-best"),
         LearningRateMonitor(logging_interval='step'),
         EarlyStopping(monitor="val_top1",mode="max",patience=10),
     ]
     logtool=None
     trainer=pl.Trainer(devices="auto",
-    precision="auto",
-    accelerator="auto",
-    strategy="ddp",
+    precision=16,
+    amp_backend="native",
+    accelerator="cuda",
+    strategy = DDPStrategy(find_unused_parameters=False),
     callbacks=callbacks,
-    max_epochs=args.epochs,
+    max_epochs=args.num_epoch,
     )
 
-  
+    # datamodule=DataModule(args)
     model=PLModel(args)
-    datamodule=DataModule(args)
-    trainer.fit(model,datamodule=datamodule)
+    trainer.fit(model)

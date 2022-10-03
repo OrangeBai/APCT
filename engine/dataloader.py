@@ -1,5 +1,6 @@
 from torchvision.transforms import *
 from torchvision.datasets import CIFAR10, CIFAR100, MNIST, ImageFolder
+from torch.utils.data import DataLoader
 from config import *
 import os
 
@@ -7,6 +8,29 @@ MNIST_MEAN_STD = (0.1307,), (0.3081,)
 CIAFR10_MEAN_STD = [(0.4914, 0.4822, 0.4465), (0.2471, 0.2435, 0.2616)]
 CIAFR100_MEAN_STD = [(0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)]
 IMAGENET_MEAN_STD = [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)]
+
+
+def set_dataloader(args):
+    train_dataset, val_dataset = set_dataset(args)
+    train_loader = DataLoader(
+                dataset=train_dataset,
+                batch_size=args.batch_size,
+                shuffle=True,
+                num_workers=8,
+                pin_memory=True,
+                drop_last=True,
+                prefetch_factor=4,
+                persistent_workers=True)
+    val_loader = DataLoader(
+                dataset=val_dataset,
+                batch_size=args.batch_size,
+                shuffle=False,
+                num_workers=8,
+                pin_memory=True,
+                drop_last=True,
+                prefetch_factor=4,
+                persistent_workers=True)
+    return train_loader, val_loader
 
 
 def set_dataset(args):
@@ -33,10 +57,10 @@ def set_dataset(args):
 def set_transforms(args):
     if args.dataset.lower() == 'mnist':
         train_composed = [RandomCrop(32, padding=4), ToTensor()]
-        test_composed = transforms.Compose([ToTensor()])
+        test_composed = [ToTensor()]
     elif args.dataset.lower() in ['cifar10', 'cifra100']:
-        train_composed = transforms.Compose([RandomCrop(32, padding=4), RandomHorizontalFlip(), ToTensor()])
-        test_composed = transforms.Compose([transforms.ToTensor()])
+        train_composed = [RandomCrop(32, padding=4), RandomHorizontalFlip(), ToTensor()]
+        test_composed = [transforms.ToTensor()]
     elif args.dataset.lower() == 'imagenet':
         train_composed = [ToTensor(), RandomResizedCrop((args.crop_size, args.crop_size)), RandomHorizontalFlip()]
         test_composed = [ToTensor(), RandomResizedCrop((args.crop_size, args.crop_size))]
