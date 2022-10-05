@@ -3,15 +3,8 @@ import multiprocessing
 import os
 import time
 from functools import partial
-from config import *
 from PIL import Image
-
-SRC = os.path.join(DATA_PATH, 'ImageNet')
-DST = os.path.join(DATA_PATH, 'ImageNet-sz')
-SIZE = [160, 256, 352]
-
-num_cpus = multiprocessing.cpu_count()
-
+import argparse
 
 def resize_folder(src_folder, dst_folders, sizes):
     [os.makedirs(dst_folder, exist_ok=True) for dst_folder in dst_folders]
@@ -44,6 +37,15 @@ def resize_category(src, dst, cat_name):
 
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_path', type=str, required=True)
+    args = parser.parse_args()
+    SRC = os.path.join(args.data_path, 'ImageNet-2012')
+    DST = os.path.join(args.data_path, 'ImageNet-2012-sz')
+    SIZE = [160, 256, 352]
+    
+    num_cpus = multiprocessing.cpu_count()
     train_src = os.path.join(SRC, 'train')
     val_src = os.path.join(SRC, 'val')
 
