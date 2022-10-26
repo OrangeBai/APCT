@@ -1,4 +1,6 @@
 path=$1
+cd $path
+echo "Making Val Directories at $path"
 mkdir -p n01440764	
 mkdir -p n01443537	
 mkdir -p n01484850	
