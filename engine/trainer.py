@@ -1,4 +1,5 @@
 import torch.utils.data as data
+from pytorch_lightning.loggers import CSVLogger
 from attack import *
 from engine.dataloader import set_dataloader
 from engine.logger import Log
@@ -30,6 +31,7 @@ class PLModel(pl.LightningModule):
         
     def train_dataloader(self):
         return self.train_loader
+        
     def val_dataloader(self):
         return self.val_loader
         
@@ -91,21 +93,21 @@ class PLModel(pl.LightningModule):
         outputs = self.model(images)
         loss = self.loss_function(outputs, labels)
         top1, top5 = accuracy(outputs, labels)
-        self.log('loss', loss,prog_bar=True)
-        self.log('top1', top1,prog_bar=True)
-        self.log('top5', top5,prog_bar=True)
+        # self.log('loss', loss,prog_bar=True, sync_dist=True, on_epoch=True)
+        # self.log('top1', top1,prog_bar=True, sync_dist=True, on_epoch=True)
+        # self.log('top5', top5,prog_bar=True, sync_dist=True, on_epoch=True)
         return loss
     def on_train_epoch(self):
         #set new scheduler
-        
         self.attack.update_epoch()
+
     def validation_step(self, batch,batch_idx):
         images, labels = batch[0], batch[1]
         pred = self.model(images)
         top1, top5 = accuracy(pred, labels)
-        self.log('val_top1', top1,prog_bar=True, sync_dist=True)
+        self.log('val_top1', top1,prog_bar=True, sync_dist=True, on_epoch=True)
         loss = self.loss_function(pred, labels)
-        # self.log('val_loss', loss,prog_bar=True, sync_dist=True)
+        self.log('val_loss', loss,prog_bar=True, sync_dist=True)
         return loss
 
 
@@ -115,10 +117,9 @@ class PLModel(pl.LightningModule):
 def run(args):
     callbacks=[
         ModelCheckpoint(save_top_k=1,mode="max",dirpath=args.model_dir, filename="ckpt-best"),
-        LearningRateMonitor(logging_interval='step'),
-        EarlyStopping(monitor="val_top1",mode="max",patience=10),
+        # LearningRateMonitor(logging_interval='step')
     ]
-    logtool=None
+    logtool= CSVLogger(args.model_dir, name="")
     trainer=pl.Trainer(devices="auto",
     precision=16,
     amp_backend="native",
@@ -126,6 +127,7 @@ def run(args):
     strategy = DDPStrategy(find_unused_parameters=False),
     callbacks=callbacks,
     max_epochs=args.num_epoch,
+    logger=logtool
     )
 
     # datamodule=DataModule(args)
