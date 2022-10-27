@@ -10,6 +10,9 @@ import pytorch_lightning as pl
 from pytorch_lightning import Trainer
 from pytorch_lightning.strategies.ddp import DDPStrategy
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
+from pytorch_lightning import loggers as pl_loggers
+import wandb
+import math
 
 # DDP version
 class PLModel(pl.LightningModule):
@@ -31,60 +34,15 @@ class PLModel(pl.LightningModule):
         
     def train_dataloader(self):
         return self.train_loader
-        
+
     def val_dataloader(self):
         return self.val_loader
         
     def configure_optimizers(self,):
-        """
-        Initialize optimizer:
-            SGD: Implements stochastic gradient descent (optionally with momentum).
-                args.momentum: momentum factor (default: 0.9)
-                args.weight_decay: weight decay (L2 penalty) (default: 5e-4)
-            Adam: Implements Adam algorithm.
-                args.beta_1, beta_2:
-                    coefficients used for computing running averages of gradient and its square, default (0.9, 0.99)
-                args.eps: term added to the denominator to improve numerical stability (default: 1e-8)
-                args.weight_decay: weight decay (L2 penalty) (default: 5e-4)
-        """
-        args=self.args
-        total_step = self.args.num_epoch * len(self.train_loader)
-        if args.optimizer == 'SGD':
-            optimizer = torch.optim.SGD(self.model.parameters(), lr=args.lr + 1e-8, momentum=args.momentum,
-                                        weight_decay=args.weight_decay)
-        elif args.optimizer == 'Adam':
-            optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr + 1e-8, betas=(args.beta_1, args.beta_2),
-                                        weight_decay=args.weight_decay)
-        else:
-            raise NameError('Optimizer {} not found'.format(args.lr_scheduler))
+        self.args.total_step = self.args.num_epoch * len(self.train_loader)
+        optimizer = init_optimizer(self.args, self.model)
 
-        if args.lr_scheduler == 'milestones':
-            milestones = [milestone * total_step for milestone in args.milestones]
-            lr_scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=args.gamma)
-        elif args.lr_scheduler == 'linear':
-            # diff = args.lr - args.lr_e
-            # LinearLR(optimizer, start_factor=args.lr, end_factor=args.lr_e, total_iters=args.num_)
-            # def lambda_rule(step):
-            #     return (args.lr - (step / args.total_step) * diff) / args.lr
-
-            lr_scheduler = LLR(optimizer, lr_st=args.lr, lr_ed=args.lr_e, steps=args.total_step)
-
-        elif args.lr_scheduler == 'exp':
-            gamma = math.pow(args.lr_e / args.lr, 1 / args.total_step)
-            lr_scheduler = ExponentialLR(optimizer, gamma)
-        elif args.lr_scheduler == 'cyclic':
-            up = int(args.total_step * args.up_ratio)
-            down = int(args.total_step * args.down_ratio)
-            lr_scheduler = CyclicLR(optimizer, base_lr=args.lr_e, max_lr=args.lr,
-                                    step_size_up=up, step_size_down=down, mode='triangular2', cycle_momentum=False)
-        elif args.lr_scheduler == 'static':
-            def lambda_rule(t):
-                return 1.0
-
-            lr_scheduler = LambdaLR(optimizer, lr_lambda=lambda_rule)
-        # TODO ImageNet scheduler
-        else:
-            raise NameError('Scheduler {0} not found'.format(args.lr_scheduler))
+        lr_scheduler = init_scheduler(self.args, optimizer=optimizer)
         return [optimizer],[lr_scheduler]
 
     def training_step(self, batch, batch_idx):
@@ -93,9 +51,8 @@ class PLModel(pl.LightningModule):
         outputs = self.model(images)
         loss = self.loss_function(outputs, labels)
         top1, top5 = accuracy(outputs, labels)
-        # self.log('loss', loss,prog_bar=True, sync_dist=True, on_epoch=True)
-        # self.log('top1', top1,prog_bar=True, sync_dist=True, on_epoch=True)
-        # self.log('top5', top5,prog_bar=True, sync_dist=True, on_epoch=True)
+        wandb.log({'loss': loss, 'top1': top1, 'top5': top5[0], 'lr': self.optimizers().param_groups[0]['lr']})
+        # wandb.watch(model)
         return loss
     def on_train_epoch(self):
         #set new scheduler
@@ -105,9 +62,9 @@ class PLModel(pl.LightningModule):
         images, labels = batch[0], batch[1]
         pred = self.model(images)
         top1, top5 = accuracy(pred, labels)
-        self.log('val_top1', top1,prog_bar=True, sync_dist=True, on_epoch=True)
+        self.log('val_top1', top1, sync_dist=True, on_epoch=True)
         loss = self.loss_function(pred, labels)
-        self.log('val_loss', loss,prog_bar=True, sync_dist=True)
+        self.log('val_loss', loss, sync_dist=True)
         return loss
 
 
@@ -120,6 +77,7 @@ def run(args):
         # LearningRateMonitor(logging_interval='step')
     ]
     logtool= CSVLogger(args.model_dir, name="")
+    tb_logger = pl_loggers.TensorBoardLogger(save_dir=args.model_dir)
     trainer=pl.Trainer(devices="auto",
     precision=16,
     amp_backend="native",
@@ -127,7 +85,7 @@ def run(args):
     strategy = DDPStrategy(find_unused_parameters=False),
     callbacks=callbacks,
     max_epochs=args.num_epoch,
-    logger=logtool
+    logger=tb_logger
     )
 
     # datamodule=DataModule(args)

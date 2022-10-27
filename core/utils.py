@@ -6,6 +6,7 @@ import torch.distributed as dist
 import torch.nn as nn
 from torch.optim.lr_scheduler import *
 from torch.optim.lr_scheduler import _LRScheduler
+import math
 
 
 class LLR(_LRScheduler):
