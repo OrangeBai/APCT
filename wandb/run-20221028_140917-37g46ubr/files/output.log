@@ -1,0 +1,73 @@
+Using 16bit native Automatic Mixed Precision (AMP)
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+Traceback (most recent call last):
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/runpy.py", line 194, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/adapter/../../debugpy/launcher/../../debugpy/__main__.py", line 39, in <module>
+    cli.main()
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/adapter/../../debugpy/launcher/../../debugpy/../debugpy/server/cli.py", line 430, in main
+    run()
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/adapter/../../debugpy/launcher/../../debugpy/../debugpy/server/cli.py", line 284, in run_file
+    runpy.run_path(target, run_name="__main__")
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/_vendored/pydevd/_pydevd_bundle/pydevd_runpy.py", line 321, in run_path
+    return _run_module_code(code, init_globals, run_name,
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/_vendored/pydevd/_pydevd_bundle/pydevd_runpy.py", line 135, in _run_module_code
+    _run_code(code, mod_globals, init_globals,
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/_vendored/pydevd/_pydevd_bundle/pydevd_runpy.py", line 124, in _run_code
+    exec(code, run_globals)
+  File "train.py", line 8, in <module>
+    run(args)
+  File "/home/orange/Main/Code/APCT-master/engine/trainer.py", line 100, in run
+    model=PLModel(args)
+  File "/home/orange/Main/Code/APCT-master/engine/trainer.py", line 28, in __init__
+    self.model_hook.set_up(torch.randn((128, 3, 32, 32)).cuda())
+  File "/home/orange/Main/Code/APCT-master/core/pattern.py", line 21, in set_up
+    x = block(x)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Main/Code/APCT-master/models/mini/vgg.py", line 57, in forward
+    x = self.norm_layer(x)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Main/Code/APCT-master/models/base_model.py", line 87, in forward
+    return (x - means) / std
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!
+Traceback (most recent call last):
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/runpy.py", line 194, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/adapter/../../debugpy/launcher/../../debugpy/__main__.py", line 39, in <module>
+    cli.main()
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/adapter/../../debugpy/launcher/../../debugpy/../debugpy/server/cli.py", line 430, in main
+    run()
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/adapter/../../debugpy/launcher/../../debugpy/../debugpy/server/cli.py", line 284, in run_file
+    runpy.run_path(target, run_name="__main__")
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/_vendored/pydevd/_pydevd_bundle/pydevd_runpy.py", line 321, in run_path
+    return _run_module_code(code, init_globals, run_name,
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/_vendored/pydevd/_pydevd_bundle/pydevd_runpy.py", line 135, in _run_module_code
+    _run_code(code, mod_globals, init_globals,
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/_vendored/pydevd/_pydevd_bundle/pydevd_runpy.py", line 124, in _run_code
+    exec(code, run_globals)
+  File "train.py", line 8, in <module>
+    run(args)
+  File "/home/orange/Main/Code/APCT-master/engine/trainer.py", line 100, in run
+    model=PLModel(args)
+  File "/home/orange/Main/Code/APCT-master/engine/trainer.py", line 28, in __init__
+    self.model_hook.set_up(torch.randn((128, 3, 32, 32)).cuda())
+  File "/home/orange/Main/Code/APCT-master/core/pattern.py", line 21, in set_up
+    x = block(x)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Main/Code/APCT-master/models/mini/vgg.py", line 57, in forward
+    x = self.norm_layer(x)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Main/Code/APCT-master/models/base_model.py", line 87, in forward
+    return (x - means) / std
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!

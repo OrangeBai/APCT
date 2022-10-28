@@ -1,0 +1,33 @@
+{
+    "os": "Linux-5.15.0-52-generic-x86_64-with-glibc2.17",
+    "python": "3.8.13",
+    "heartbeatAt": "2022-10-28T14:30:40.285209",
+    "startedAt": "2022-10-28T14:30:39.712750",
+    "docker": null,
+    "gpu": "NVIDIA GeForce GTX 1060",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": [
+        "--dataset",
+        "cifar10",
+        "--exp_id",
+        "test",
+        "--net",
+        "vgg13",
+        "--model_type",
+        "mini"
+    ],
+    "state": "running",
+    "program": "train.py",
+    "codePath": "train.py",
+    "git": {
+        "remote": "https://github.com/OrangeBai/APCT-master.git",
+        "commit": "f13c5287d45ccc4f4b25076fef24aea0076af01a"
+    },
+    "email": "jzp0306@gmail.com",
+    "root": "/home/orange/Main/Code/APCT-master",
+    "host": "orange-OMEN-by-HP-Laptop-17-an0xx",
+    "username": "orange",
+    "executable": "/home/orange/Programs/anaconda3/envs/pytorch/bin/python"
+}

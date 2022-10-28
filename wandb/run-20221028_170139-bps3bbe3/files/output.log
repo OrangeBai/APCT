@@ -1,0 +1,45 @@
+Using 16bit native Automatic Mixed Precision (AMP)
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/configuration_validator.py:210: LightningDeprecationWarning: The `LightningModule.on_epoch_end` hook was deprecated in v1.6 and will be removed in v1.8. Please use `LightningModule.on_<train/validation/test>_epoch_end` instead.
+  rank_zero_deprecation(
+Initializing distributed: GLOBAL_RANK: 0, MEMBER: 1/1
+----------------------------------------------------------------------------------------------------
+distributed_backend=nccl
+All distributed processes registered. Starting with 1 processes
+----------------------------------------------------------------------------------------------------
+Missing logger folder: /home/orange/Main/Experiment/ICLR/cifar10/vgg13_test/lightning_logs
+/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:616: UserWarning: Checkpoint directory /home/orange/Main/Experiment/ICLR/cifar10/vgg13_test exists and is not empty.
+  rank_zero_warn(f"Checkpoint directory {dirpath} exists and is not empty.")
+Files already downloaded and verified
+Files already downloaded and verified
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+  | Name          | Type             | Params
+---------------------------------------------------
+0 | model         | VGG              | 28.3 M
+1 | attack        | Vanilla          | 28.3 M
+2 | loss_function | CrossEntropyLoss | 0
+---------------------------------------------------
+28.3 M    Trainable params
+0         Non-trainable params
+28.3 M    Total params
+56.696    Total estimated model params size (MB)
+
+Epoch 0:   0%|                                                                                                                  | 0/468 [00:00<?, ?it/s]1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+/home/orange/Main/Code/APCT-master/core/pattern.py:51: RuntimeWarning: divide by zero encountered in log
+  s += -layer[j] * np.log(layer[j])
+/home/orange/Main/Code/APCT-master/core/pattern.py:51: RuntimeWarning: invalid value encountered in multiply

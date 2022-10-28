@@ -1,4 +1,99 @@
 from models.blocks import *
+import time
+
+class BaseHook:
+    def __init__(self, model, hook, Gamma):
+        self.model=model
+        self.handles = []
+        self.features = {}
+        self.hook = hook
+        self.Gamma = Gamma
+        self.num_pattern = len(Gamma) + 1
+        self.set_up()
+
+    def remove(self):
+        for handle in self.handles:
+            handle.remove()
+        self.stored_values = {}
+
+    def set_up(self):
+        for block_name, block in self.model.named_modules():
+            if type(block) in [LinearBlock, ConvBlock]:
+                self.features[block_name] = {}
+                self.add_block_hook(block_name, block)
+
+    def add_block_hook(self, block_name, block):
+        for module_name, module in block.named_modules():
+            if check_activation(module):
+                self.features[block_name][module_name] = []
+                handle = module.register_forward_hook(self.save_outputs_hook(block_name, module_name))
+                self.handles.append(handle)
+
+    def save_outputs_hook(self, block_name, layer_name):
+        def fn(layer, input_var, output_var):
+            input_var = input_var[0]
+            t = time.time()
+            pattern = get_pattern(input_var, self.Gamma)
+            if self.features[block_name][layer_name] == []:
+                self.features[block_name][layer_name] = np.zeros((self.num_pattern, ) + pattern.shape[1:])
+            for i in range(1 + len(self.Gamma)):
+                self.features[block_name][layer_name][i] += (pattern==i).sum(axis=0)
+        return fn
+
+    def retrieve(self):
+        entropy = []
+        for block in self.features.values():
+            for layer in block.values():
+                layer = layer.reshape(self.num_pattern, -1)
+                layer /= layer.sum(axis=0)
+                s = np.zeros(layer.shape[1])
+                for j in range(self.num_pattern):
+                    s += -layer[j] * np.log(1e-8 + layer[j])
+                # layer_entropy = []
+                entropy.append(s)
+        return entropy
+
+    def retrieve_res(self, fun=None, reset=True, *args, **kwargs):
+        if fun is not None:
+            res = fun(self.features, *args, **kwargs)
+        else:
+            res = self.features
+        if reset:
+            self.set_up()
+        return res
+
+
+class FloatEntropyHook(BaseHook):
+    def __init__(self, model, Gamma):
+        super().__init__(model, set_output_hook)
+        self.Gamma = Gamma
+        self.num_pattern = len(Gamma) + 1
+        self.float_entropy = None
+        self.init = False
+
+    def pre_process(self):
+        # packed = self.retrieve_res(unpack)
+        for block_name, block in self.features.items():
+            for layer_name, layer in block.items():
+                layer_pattern = get_pattern(layer, self.Gamma)
+                layer_frequency = np.array((self.num_pattern, ) + layer_pattern[1:])
+                for i in range(len(self.Gamma)+ 1):
+                    layer_frequency[i] = (layer_pattern==i).sum(axis=0)
+                self.features[block_name][layer_name] = layer_frequency
+        return
+                # self.features[layer = layer_frequency
+
+    # def pack(self):
+    #     res = self.retrieve_res(unpack)
+    #     for block_name, blocks in self.features.items():
+    #         for layer_name, layer in blocks:
+    #             self.float_entropy[block_name][]
+                    
+
+
+
+    
+
 
 
 class ModelHook:
@@ -11,18 +106,29 @@ class ModelHook:
         self.stored_values = {}
         self.handles = []
 
-        self.set_up()
-
-    def set_up(self):
+    def set_up(self, x):
         self.remove()
         for module_name, block in self.model.named_modules():
             if type(block) in [LinearBlock, ConvBlock]:
                 self.stored_values[module_name] = {}
-                self.add_block_hook(block, self.stored_values[module_name])
+                self.add_block_hook(block, self.stored_values[module_name], x)
+            else:
+                x = block(x)
         return
 
-    def add_block_hook(self, block, storage):
+    def add_block_hook(self, block, storage, x):
         for module_name, module in block.named_modules():
+            if check_activation(module):
+                storage[module_name] = [x.shape]
+                self.handles.append(module.register_forward_hook(
+                    self.hook(storage[module_name], *self.args, **self.kwargs))
+                )
+            x = module(x)
+
+    def add_block_hook_pre_sized(self, block, storage, size=(128, 3, 64, 64)):
+        x = torch.random(size)
+        for module_name, module in block.named_modules():
+            x = module(x)
             if check_activation(module):
                 storage[module_name] = []
                 self.handles.append(module.register_forward_hook(
@@ -34,14 +140,6 @@ class ModelHook:
             handle.remove()
         self.stored_values = {}
 
-    def retrieve_res(self, fun=None, reset=True, *args, **kwargs):
-        if fun is not None:
-            res = fun(self.stored_values, *args, **kwargs)
-        else:
-            res = self.stored_values
-        if reset:
-            self.set_up()
-        return res
 
 
 def set_bound_hook(stored_values, bound=1e-1):
@@ -58,8 +156,27 @@ def set_bound_hook(stored_values, bound=1e-1):
 
     return hook
 
+def set_float_entropy_hook(stored_values, Gamma):
+    """
+    record input values of the module
+    @param stored_values: recorder
+    @return: activation hook
+    """
 
-def set_output_hook(stored_values):
+    def hook(layer, input_var, output_var):
+        input_var = input_var[0]
+        layer_shape = input_var.shape[1:]
+        # if stored_values == []:
+        #     stored_values = np.zeros((len(Gamma,) + tuple(layer_shape)))
+        
+        # if len(stored_values) == 0:
+        #     stored_values = np.zeros((1 + len(Gamma,) + tuple(layer_shape)))
+        pattern = get_pattern(input_var, Gamma)
+        for i in range(1 + len(Gamma)):
+            stored_values[i] = (input_var==i).sum(axis=0)
+    return hook
+
+def set_output_hook():
     """
     record input values of the module
     @param stored_values: recorder

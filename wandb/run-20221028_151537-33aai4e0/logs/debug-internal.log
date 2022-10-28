@@ -1,0 +1,47 @@
+2022-10-28 15:15:37,208 INFO    StreamThr :552318 [internal.py:wandb_internal():88] W&B internal server running at pid: 552318, started at: 2022-10-28 15:15:37.205673
+2022-10-28 15:15:37,216 DEBUG   HandlerThread:552318 [handler.py:handle_request():138] handle_request: status
+2022-10-28 15:15:37,221 DEBUG   SenderThread:552318 [sender.py:send_request():317] send_request: status
+2022-10-28 15:15:37,226 DEBUG   SenderThread:552318 [sender.py:send():303] send: header
+2022-10-28 15:15:37,226 INFO    WriterThread:552318 [datastore.py:open_for_write():75] open: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/run-33aai4e0.wandb
+2022-10-28 15:15:37,234 DEBUG   SenderThread:552318 [sender.py:send():303] send: run
+2022-10-28 15:15:37,620 DEBUG   HandlerThread:552318 [handler.py:handle_request():138] handle_request: check_version
+2022-10-28 15:15:37,632 INFO    SenderThread:552318 [dir_watcher.py:__init__():216] watching files in: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files
+2022-10-28 15:15:37,633 INFO    SenderThread:552318 [sender.py:_start_run_threads():928] run started: 33aai4e0 with start time 1666966537.20039
+2022-10-28 15:15:37,633 DEBUG   SenderThread:552318 [sender.py:send():303] send: summary
+2022-10-28 15:15:37,634 INFO    SenderThread:552318 [sender.py:_save_file():1171] saving file wandb-summary.json with policy end
+2022-10-28 15:15:37,635 DEBUG   SenderThread:552318 [sender.py:send_request():317] send_request: check_version
+2022-10-28 15:15:37,723 DEBUG   HandlerThread:552318 [handler.py:handle_request():138] handle_request: run_start
+2022-10-28 15:15:37,732 DEBUG   HandlerThread:552318 [meta.py:__init__():34] meta init
+2022-10-28 15:15:37,733 DEBUG   HandlerThread:552318 [meta.py:__init__():49] meta init done
+2022-10-28 15:15:37,733 DEBUG   HandlerThread:552318 [meta.py:probe():215] probe
+2022-10-28 15:15:37,746 DEBUG   HandlerThread:552318 [meta.py:_setup_git():205] setup git
+2022-10-28 15:15:37,772 DEBUG   HandlerThread:552318 [meta.py:_setup_git():212] setup git done
+2022-10-28 15:15:37,772 DEBUG   HandlerThread:552318 [meta.py:_save_pip():53] save pip
+2022-10-28 15:15:37,774 DEBUG   HandlerThread:552318 [meta.py:_save_pip():67] save pip done
+2022-10-28 15:15:37,774 DEBUG   HandlerThread:552318 [meta.py:_save_conda():74] save conda
+2022-10-28 15:15:38,637 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_created():275] file/dir created: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/requirements.txt
+2022-10-28 15:15:38,637 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_created():275] file/dir created: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/wandb-summary.json
+2022-10-28 15:15:38,638 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_created():275] file/dir created: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/conda-environment.yaml
+2022-10-28 15:15:39,928 DEBUG   HandlerThread:552318 [meta.py:_save_conda():84] save conda done
+2022-10-28 15:15:39,928 DEBUG   HandlerThread:552318 [meta.py:probe():253] probe done
+2022-10-28 15:15:40,021 DEBUG   SenderThread:552318 [sender.py:send():303] send: files
+2022-10-28 15:15:40,021 INFO    SenderThread:552318 [sender.py:_save_file():1171] saving file wandb-metadata.json with policy now
+2022-10-28 15:15:40,045 DEBUG   HandlerThread:552318 [handler.py:handle_request():138] handle_request: stop_status
+2022-10-28 15:15:40,045 DEBUG   SenderThread:552318 [sender.py:send_request():317] send_request: stop_status
+2022-10-28 15:15:40,223 DEBUG   SenderThread:552318 [sender.py:send():303] send: telemetry
+2022-10-28 15:15:40,585 INFO    Thread-23 :552318 [upload_job.py:push():143] Uploaded file /tmp/tmpb5kb7qn9wandb/2p1y7c10-wandb-metadata.json
+2022-10-28 15:15:40,635 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/conda-environment.yaml
+2022-10-28 15:15:40,636 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_created():275] file/dir created: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/wandb-metadata.json
+2022-10-28 15:15:42,637 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_created():275] file/dir created: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/output.log
+2022-10-28 15:15:44,638 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/output.log
+2022-10-28 15:15:46,640 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/output.log
+2022-10-28 15:15:47,640 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/output.log
+2022-10-28 15:15:48,641 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/output.log
+2022-10-28 15:15:48,877 DEBUG   HandlerThread:552318 [handler.py:handle_request():138] handle_request: partial_history
+2022-10-28 15:15:48,879 DEBUG   SenderThread:552318 [sender.py:send():303] send: history
+2022-10-28 15:15:48,880 DEBUG   SenderThread:552318 [sender.py:send():303] send: summary
+2022-10-28 15:15:48,881 INFO    SenderThread:552318 [sender.py:_save_file():1171] saving file wandb-summary.json with policy end
+2022-10-28 15:15:49,642 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/wandb-summary.json
+2022-10-28 15:15:49,642 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/output.log
+2022-10-28 15:16:06,271 DEBUG   SenderThread:552318 [sender.py:send():303] send: stats
+2022-10-28 15:16:07,664 INFO    Thread-19 :552318 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/orange/Main/Code/APCT-master/wandb/run-20221028_151537-33aai4e0/files/config.yaml

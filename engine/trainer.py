@@ -1,6 +1,8 @@
+from readline import set_pre_input_hook
 import torch.utils.data as data
 from pytorch_lightning.loggers import CSVLogger
 from attack import *
+from core.pattern import *
 from engine.dataloader import set_dataloader
 from engine.logger import Log
 import torch
@@ -23,6 +25,7 @@ class PLModel(pl.LightningModule):
         self.model = build_model(args)
         self.attack = set_attack(self.model, self.args)
         self.loss_function = torch.nn.CrossEntropyLoss()
+        self.model_hook = BaseHook(self.model, set_output_hook, set_gamma(self.args.activation))
         #self.start_epoch, self.best_acc = self.resume()
     
     def setup(self, stage):
@@ -45,18 +48,29 @@ class PLModel(pl.LightningModule):
         lr_scheduler = init_scheduler(self.args, optimizer=optimizer)
         return [optimizer],[lr_scheduler]
 
+    # def on_train_start(self):
+        
+    #     self.float_entropy = []
+    #     return super().on_train_start()
+
     def training_step(self, batch, batch_idx):
         images, labels = batch[0], batch[1]
-        images = self.attack(images, labels)
+        # images = self.attack(images, labels)
+        
         outputs = self.model(images)
         loss = self.loss_function(outputs, labels)
         top1, top5 = accuracy(outputs, labels)
         wandb.log({'loss': loss, 'top1': top1, 'top5': top5[0], 'lr': self.optimizers().param_groups[0]['lr']})
+        res = self.model_hook.retrieve()
+        for i,r  in enumerate(res):
+            wandb.log({'entropy_layer_{}'.format(str(i).zfill(2)): r.mean()})
+            wandb.log({'entropy_layer_var_{}'.format(str(i).zfill(2)): r.var()})
         # wandb.watch(model)
         return loss
-    def on_train_epoch(self):
-        #set new scheduler
-        self.attack.update_epoch()
+    # def on_train_epoch(self):
+    #     #set new scheduler
+    #     # self.attack.update_epoch()
+    #     pass
 
     def validation_step(self, batch,batch_idx):
         images, labels = batch[0], batch[1]

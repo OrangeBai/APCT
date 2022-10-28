@@ -1,0 +1,189 @@
+Using 16bit native Automatic Mixed Precision (AMP)
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/configuration_validator.py:210: LightningDeprecationWarning: The `LightningModule.on_epoch_end` hook was deprecated in v1.6 and will be removed in v1.8. Please use `LightningModule.on_<train/validation/test>_epoch_end` instead.
+  rank_zero_deprecation(
+Initializing distributed: GLOBAL_RANK: 0, MEMBER: 1/1
+----------------------------------------------------------------------------------------------------
+distributed_backend=nccl
+All distributed processes registered. Starting with 1 processes
+----------------------------------------------------------------------------------------------------
+Missing logger folder: /home/orange/Main/Experiment/ICLR/cifar10/vgg13_test/lightning_logs
+/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:616: UserWarning: Checkpoint directory /home/orange/Main/Experiment/ICLR/cifar10/vgg13_test exists and is not empty.
+  rank_zero_warn(f"Checkpoint directory {dirpath} exists and is not empty.")
+Files already downloaded and verified
+Files already downloaded and verified
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+  | Name          | Type             | Params
+---------------------------------------------------
+0 | model         | VGG              | 28.3 M
+1 | attack        | Vanilla          | 28.3 M
+2 | loss_function | CrossEntropyLoss | 0
+---------------------------------------------------
+28.3 M    Trainable params
+0         Non-trainable params
+28.3 M    Total params
+56.696    Total estimated model params size (MB)
+Sanity Checking DataLoader 0:   0%|                                                                                               | 0/2 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/runpy.py", line 194, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/adapter/../../debugpy/launcher/../../debugpy/__main__.py", line 39, in <module>
+    cli.main()
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/adapter/../../debugpy/launcher/../../debugpy/../debugpy/server/cli.py", line 430, in main
+    run()
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/adapter/../../debugpy/launcher/../../debugpy/../debugpy/server/cli.py", line 284, in run_file
+    runpy.run_path(target, run_name="__main__")
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/_vendored/pydevd/_pydevd_bundle/pydevd_runpy.py", line 321, in run_path
+    return _run_module_code(code, init_globals, run_name,
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/_vendored/pydevd/_pydevd_bundle/pydevd_runpy.py", line 135, in _run_module_code
+    _run_code(code, mod_globals, init_globals,
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/_vendored/pydevd/_pydevd_bundle/pydevd_runpy.py", line 124, in _run_code
+    exec(code, run_globals)
+  File "train.py", line 8, in <module>
+    run(args)
+  File "/home/orange/Main/Code/APCT-master/engine/trainer.py", line 104, in run
+    trainer.fit(model)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 696, in fit
+    self._call_and_handle_interrupt(
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 648, in _call_and_handle_interrupt
+    return self.strategy.launcher.launch(trainer_fn, *args, trainer=self, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/strategies/launchers/subprocess_script.py", line 93, in launch
+    return function(*args, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 735, in _fit_impl
+    results = self._run(model, ckpt_path=self.ckpt_path)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 1166, in _run
+    results = self._run_stage()
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 1252, in _run_stage
+    return self._run_train()
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 1274, in _run_train
+    self._run_sanity_check()
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 1343, in _run_sanity_check
+    val_loop.run()
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/loops/loop.py", line 200, in run
+    self.advance(*args, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/loops/dataloader/evaluation_loop.py", line 155, in advance
+    dl_outputs = self.epoch_loop.run(self._data_fetcher, dl_max_batches, kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/loops/loop.py", line 200, in run
+    self.advance(*args, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/loops/epoch/evaluation_epoch_loop.py", line 143, in advance
+    output = self._evaluation_step(**kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/loops/epoch/evaluation_epoch_loop.py", line 240, in _evaluation_step
+    output = self.trainer._call_strategy_hook(hook_name, *kwargs.values())
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 1704, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/strategies/ddp.py", line 358, in validation_step
+    return self.model(*args, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/parallel/distributed.py", line 963, in forward
+    output = self.module(*inputs[0], **kwargs[0])
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/overrides/base.py", line 90, in forward
+    return self.module.validation_step(*inputs, **kwargs)
+  File "/home/orange/Main/Code/APCT-master/engine/trainer.py", line 74, in validation_step
+    pred = self.model(images)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Main/Code/APCT-master/models/mini/vgg.py", line 58, in forward
+    return self.layers(x)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/container.py", line 141, in forward
+    input = module(input)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Main/Code/APCT-master/models/blocks.py", line 48, in forward
+    x = self.Act(x)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1131, in _call_impl
+    hook_result = hook(self, input, result)
+  File "/home/orange/Main/Code/APCT-master/core/pattern.py", line 36, in fn
+    pattern = get_pattern(input_var, self.Gamma)
+  File "/home/orange/Main/Code/APCT-master/core/pattern.py", line 214, in get_pattern
+    pattern += input_var > Gamma[i]
+TypeError: Concatenation operation is not implemented for NumPy arrays, use np.concatenate() instead. Please do not rely on this error; it may not be given on all Python implementations.
+Traceback (most recent call last):
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/runpy.py", line 194, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/adapter/../../debugpy/launcher/../../debugpy/__main__.py", line 39, in <module>
+    cli.main()
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/adapter/../../debugpy/launcher/../../debugpy/../debugpy/server/cli.py", line 430, in main
+    run()
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/adapter/../../debugpy/launcher/../../debugpy/../debugpy/server/cli.py", line 284, in run_file
+    runpy.run_path(target, run_name="__main__")
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/_vendored/pydevd/_pydevd_bundle/pydevd_runpy.py", line 321, in run_path
+    return _run_module_code(code, init_globals, run_name,
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/_vendored/pydevd/_pydevd_bundle/pydevd_runpy.py", line 135, in _run_module_code
+    _run_code(code, mod_globals, init_globals,
+  File "/home/orange/.vscode/extensions/ms-python.python-2022.16.1/pythonFiles/lib/python/debugpy/_vendored/pydevd/_pydevd_bundle/pydevd_runpy.py", line 124, in _run_code
+    exec(code, run_globals)
+  File "train.py", line 8, in <module>
+    run(args)
+  File "/home/orange/Main/Code/APCT-master/engine/trainer.py", line 104, in run
+    trainer.fit(model)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 696, in fit
+    self._call_and_handle_interrupt(
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 648, in _call_and_handle_interrupt
+    return self.strategy.launcher.launch(trainer_fn, *args, trainer=self, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/strategies/launchers/subprocess_script.py", line 93, in launch
+    return function(*args, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 735, in _fit_impl
+    results = self._run(model, ckpt_path=self.ckpt_path)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 1166, in _run
+    results = self._run_stage()
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 1252, in _run_stage
+    return self._run_train()
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 1274, in _run_train
+    self._run_sanity_check()
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 1343, in _run_sanity_check
+    val_loop.run()
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/loops/loop.py", line 200, in run
+    self.advance(*args, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/loops/dataloader/evaluation_loop.py", line 155, in advance
+    dl_outputs = self.epoch_loop.run(self._data_fetcher, dl_max_batches, kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/loops/loop.py", line 200, in run
+    self.advance(*args, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/loops/epoch/evaluation_epoch_loop.py", line 143, in advance
+    output = self._evaluation_step(**kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/loops/epoch/evaluation_epoch_loop.py", line 240, in _evaluation_step
+    output = self.trainer._call_strategy_hook(hook_name, *kwargs.values())
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 1704, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/strategies/ddp.py", line 358, in validation_step
+    return self.model(*args, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/parallel/distributed.py", line 963, in forward
+    output = self.module(*inputs[0], **kwargs[0])
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/overrides/base.py", line 90, in forward
+    return self.module.validation_step(*inputs, **kwargs)
+  File "/home/orange/Main/Code/APCT-master/engine/trainer.py", line 74, in validation_step
+    pred = self.model(images)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Main/Code/APCT-master/models/mini/vgg.py", line 58, in forward
+    return self.layers(x)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/container.py", line 141, in forward
+    input = module(input)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/orange/Main/Code/APCT-master/models/blocks.py", line 48, in forward
+    x = self.Act(x)
+  File "/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1131, in _call_impl
+    hook_result = hook(self, input, result)
+  File "/home/orange/Main/Code/APCT-master/core/pattern.py", line 36, in fn
+    pattern = get_pattern(input_var, self.Gamma)
+  File "/home/orange/Main/Code/APCT-master/core/pattern.py", line 214, in get_pattern
+    pattern += input_var > Gamma[i]
+TypeError: Concatenation operation is not implemented for NumPy arrays, use np.concatenate() instead. Please do not rely on this error; it may not be given on all Python implementations.
