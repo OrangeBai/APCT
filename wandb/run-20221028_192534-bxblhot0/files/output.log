@@ -1,0 +1,243 @@
+Using 16bit native Automatic Mixed Precision (AMP)
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/configuration_validator.py:210: LightningDeprecationWarning: The `LightningModule.on_epoch_end` hook was deprecated in v1.6 and will be removed in v1.8. Please use `LightningModule.on_<train/validation/test>_epoch_end` instead.
+  rank_zero_deprecation(
+Initializing distributed: GLOBAL_RANK: 0, MEMBER: 1/1
+----------------------------------------------------------------------------------------------------
+distributed_backend=nccl
+All distributed processes registered. Starting with 1 processes
+----------------------------------------------------------------------------------------------------
+Missing logger folder: /home/orange/Main/Experiment/ICLR/cifar10/vgg13_test/lightning_logs
+/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:616: UserWarning: Checkpoint directory /home/orange/Main/Experiment/ICLR/cifar10/vgg13_test exists and is not empty.
+  rank_zero_warn(f"Checkpoint directory {dirpath} exists and is not empty.")
+Files already downloaded and verified
+Files already downloaded and verified
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+  | Name          | Type             | Params
+---------------------------------------------------
+0 | model         | VGG              | 28.3 M
+1 | attack        | Vanilla          | 28.3 M
+2 | loss_function | CrossEntropyLoss | 0
+---------------------------------------------------
+28.3 M    Trainable params
+0         Non-trainable params
+28.3 M    Total params
+56.696    Total estimated model params size (MB)
+
+
+
+Epoch 0:   4%|███▍                                                                                 | 19/468 [00:06<02:38,  2.83it/s, loss=2.17, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+
+
+
+Epoch 0:  26%|█████████████████████▉                                                              | 122/468 [00:20<00:58,  5.87it/s, loss=1.63, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+
+
+Epoch 0:  45%|█████████████████████████████████████▉                                               | 209/468 [00:32<00:40,  6.42it/s, loss=1.5, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+
+
+
+Epoch 0:  66%|███████████████████████████████████████████████████████▋                            | 310/468 [00:46<00:23,  6.64it/s, loss=1.36, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+Epoch 0:  97%|█████████████████████████████████████████████████████████████████████████████████▎  | 453/468 [00:56<00:01,  7.95it/s, loss=1.33, v_num=0]
+
+
+
+
+Epoch 1:   5%|████▏                                                                                | 23/468 [00:07<02:16,  3.26it/s, loss=1.28, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+
+
+
+Epoch 1:  26%|█████████████████████▌                                                              | 120/468 [00:21<01:01,  5.68it/s, loss=1.19, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+
+
+
+Epoch 1:  47%|███████████████████████████████████████▎                                            | 219/468 [00:35<00:40,  6.20it/s, loss=1.11, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+
+
+
+Epoch 1:  69%|█████████████████████████████████████████████████████████▌                          | 321/468 [00:49<00:22,  6.48it/s, loss=1.01, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+Epoch 1:  88%|████████████████████████████████████████████████████████████████████████▋          | 410/468 [00:57<00:08,  7.16it/s, loss=0.952, v_num=0]
+
+
+
+
+Epoch 2:   3%|██▋                                                                                 | 15/468 [00:06<03:10,  2.37it/s, loss=0.941, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+
+
+
+Epoch 2:  24%|███████████████████▊                                                               | 112/468 [00:20<01:04,  5.49it/s, loss=0.945, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+
+
+
+Epoch 2:  46%|█████████████████████████████████████▊                                             | 213/468 [00:34<00:41,  6.15it/s, loss=0.842, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+
+
+
+Epoch 2:  67%|███████████████████████████████████████████████████████▊                           | 315/468 [00:48<00:23,  6.47it/s, loss=0.877, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+Epoch 2:  86%|███████████████████████████████████████████████████████████████████████▋           | 404/468 [00:56<00:08,  7.11it/s, loss=0.835, v_num=0]
+
+
+
+
+Epoch 3:   2%|█▉                                                                                  | 11/468 [00:05<03:54,  1.95it/s, loss=0.787, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+
+
+
+Epoch 3:  24%|███████████████████▌                                                               | 110/468 [00:19<01:02,  5.75it/s, loss=0.839, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+
+
+
+Epoch 3:  45%|█████████████████████████████████████▏                                             | 210/468 [00:33<00:41,  6.27it/s, loss=0.794, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+
+
+
+Epoch 3:  66%|██████████████████████████████████████████████████████▊                            | 309/468 [00:47<00:24,  6.49it/s, loss=0.816, v_num=0]
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 524400 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 262256 bytes
+[34m[1mwandb[39m[22m: [33mWARNING[39m Serializing object of type ndarray that is 131184 bytes
+
+
+
+
+Epoch 3:  82%|███████████████████████████████████████████████████████████████████▋               | 382/468 [00:55<00:12,  6.86it/s, loss=0.772, v_num=0]
+/home/orange/Programs/anaconda3/envs/pytorch/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py:653: UserWarning: Detected KeyboardInterrupt, attempting graceful shutdown...
+
+Epoch 3:  83%|████████████████████████████████████████████████████████████████████▊              | 388/468 [00:56<00:11,  6.89it/s, loss=0.783, v_num=0]

@@ -25,7 +25,6 @@ class PLModel(pl.LightningModule):
         self.model = build_model(args)
         self.attack = set_attack(self.model, self.args)
         self.loss_function = torch.nn.CrossEntropyLoss()
-        self.model_hook = BaseHook(self.model, set_output_hook, set_gamma(self.args.activation))
         #self.start_epoch, self.best_acc = self.resume()
     
     def setup(self, stage):
@@ -59,13 +58,17 @@ class PLModel(pl.LightningModule):
         
         outputs = self.model(images)
         loss = self.loss_function(outputs, labels)
+        self.lr_schedulers().step()
         top1, top5 = accuracy(outputs, labels)
-        wandb.log({'loss': loss, 'top1': top1, 'top5': top5[0], 'lr': self.optimizers().param_groups[0]['lr']})
-        res = self.model_hook.retrieve()
-        for i,r  in enumerate(res):
-            wandb.log({'entropy_layer_{}'.format(str(i).zfill(2)): r.mean()})
-            wandb.log({'entropy_layer_var_{}'.format(str(i).zfill(2)): r.var()})
-        # wandb.watch(model)
+        info = {'loss': loss, 'top1': top1, 'top5': top5[0], 'lr': self.optimizers().param_groups[0]['lr']}
+        if batch_idx % 100 == 0:
+            self.model_hook = BaseHook(self.model, set_output_hook, set_gamma(self.args.activation))
+        if batch_idx % 100 == 10:
+            res = self.model_hook.retrieve()
+            self.model_hook.remove()
+            for i, r in enumerate(res):
+                info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+        wandb.log(info)
         return loss
     # def on_train_epoch(self):
     #     #set new scheduler
@@ -82,8 +85,8 @@ class PLModel(pl.LightningModule):
         return loss
 
 
-    def on_epoch_end(self) -> None:
-        return super().on_epoch_end()
+    def on_train_end(self) -> None:
+        pass
 
 def run(args):
     callbacks=[
