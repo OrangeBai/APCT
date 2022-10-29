@@ -129,7 +129,7 @@ def run(args):
     callbacks=callbacks,
     max_epochs=args.num_epoch,
     check_val_every_n_epoch=None,
-    val_check_interval=200,
+    val_check_interval=args.val_every,
     logger=logtool,
     enable_progress_bar=args.npbar
     )
