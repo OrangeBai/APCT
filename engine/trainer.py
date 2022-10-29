@@ -120,6 +120,7 @@ def run(args):
         ModelCheckpoint(save_top_k=1,mode="max",dirpath=args.model_dir, filename="ckpt-best"),
     ]
     logtool= WandbLogger(name="", save_dir=args.model_dir)
+    print(args.npbar)
     trainer=pl.Trainer(devices="auto",
     precision=16,
     amp_backend="native",
@@ -130,6 +131,7 @@ def run(args):
     check_val_every_n_epoch=None,
     val_check_interval=200,
     logger=logtool,
+    enable_progress_bar=args.npbar
     )
 
     # datamodule=DataModule(args)
