@@ -26,6 +26,8 @@ class PLModel(pl.LightningModule):
         self.attack = set_attack(self.model, self.args)
         self.loss_function = torch.nn.CrossEntropyLoss()
         #self.start_epoch, self.best_acc = self.resume()
+        self.model_hook = BaseHook(self.model, set_output_hook, set_gamma(self.args.activation))
+
 
         train_data, self.val_data = set_dataset(self.args)
 
@@ -63,40 +65,54 @@ class PLModel(pl.LightningModule):
         top1, top5 = accuracy(outputs, labels)
         self.info = {'train/loss': loss, 'train/top1': top1, 'train/top5': top5[0], 'lr': self.optimizers().param_groups[0]['lr'], 'step': self.global_step}
         return loss
-    # def on_train_epoch(self):
-    #     #set new scheduler
-    #     # self.attack.update_epoch()
-    #     pass
-
-    def on_train_batch_start(self, batch, batch_idx):
-        if self.global_step % 100 == 0:
-            self.model_hook = BaseHook(self.model, set_output_hook, set_gamma(self.args.activation))
-
-    def on_train_batch_end(self, outputs, batch):
-        if self.global_step % 100 == 5:
+    
+    def on_train_batch_end(self, outputs, batch, batch_idx):
+        if self.global_step % self.args.pack_every == 0:
             res = self.model_hook.retrieve()
             for i, r in enumerate(res):
                 
                 self.info['train/entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
                 self.info['train/entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
-            self.model_hook.remove()
         
         wandb.log(self.info)
         return
 
+
+
     def validation_step(self, batch, batch_idx):
         images, labels = batch[0], batch[1]
+        batch_size = len(images)
         pred = self.model(images)
         top1, top5 = accuracy(pred, labels)
         loss = self.loss_function(pred, labels)
-        self.log('val/top1', top1, sync_dist=True, on_epoch=True)
-        self.log('val/loss', loss, sync_dist=True, on_epoch=True)
-        res = self.model_hook.retrieve()
+        
+        return {'batch_size': batch_size, 'loss': loss * batch_size, 
+                'top1':top1[0] * batch_size, 'top5': top5[0] * batch_size}
+    
+    def validation_step_end(self, batch_parts):
+        # predictions from each GPU
+        batch_output = {}
+        for key, val in batch_parts.items():
+            batch_output[key] = val
+        return batch_output
+
+    def validation_epoch_end(self, validation_step_outputs) -> None:
+        epoch_output = {}
+        for out in validation_step_outputs:
+            for k, v in out.items():
+                if k not in epoch_output.keys():
+                    epoch_output[k] = v
+                else:
+                    epoch_output[k] += v
         info = {'step': self.global_step}
+        for k, v in epoch_output.items():
+            if k != 'batch_size':
+                info['val/'+k] = v / epoch_output['batch_size']
+        res = self.model_hook.retrieve()
         for i, r in enumerate(res):
             info['val/entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
         wandb.log(info)
-        return loss
+        return
 
 
 def run(args):
@@ -111,6 +127,7 @@ def run(args):
     strategy = DDPStrategy(find_unused_parameters=False),
     callbacks=callbacks,
     max_epochs=args.num_epoch,
+    check_val_every_n_epoch=None,
     val_check_interval=200,
     logger=logtool,
     )

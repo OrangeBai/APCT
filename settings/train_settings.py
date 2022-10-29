@@ -63,6 +63,7 @@ class TrainParser(BaseParser):
 
         # for expressive ability
         self.parser.add_argument('--split', default=1.0, type=float)
+        self.parser.add_argument('--pack_every', default=10, type=int)
 
         self.resume()
         self.lr_scheduler()
