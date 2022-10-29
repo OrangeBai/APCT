@@ -61,6 +61,9 @@ class TrainParser(BaseParser):
         self.parser.add_argument('--mode', default='client')
         self.parser.add_argument('--port', default=52162)
 
+        # for expressive ability
+        self.parser.add_argument('--split', default=1.0, type=float)
+
         self.resume()
         self.lr_scheduler()
         self.optimizer()

@@ -3,7 +3,7 @@ import torch.utils.data as data
 from pytorch_lightning.loggers import CSVLogger
 from attack import *
 from core.pattern import *
-from engine.dataloader import set_dataloader
+from engine.dataloader import set_dataloader, set_dataset
 from engine.logger import Log
 import torch
 from core.utils import *
@@ -12,7 +12,7 @@ import pytorch_lightning as pl
 from pytorch_lightning import Trainer
 from pytorch_lightning.strategies.ddp import DDPStrategy
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
-from pytorch_lightning import loggers as pl_loggers
+from pytorch_lightning.loggers import WandbLogger
 import wandb
 import math
 
@@ -26,13 +26,21 @@ class PLModel(pl.LightningModule):
         self.attack = set_attack(self.model, self.args)
         self.loss_function = torch.nn.CrossEntropyLoss()
         #self.start_epoch, self.best_acc = self.resume()
-    
+        self.model_hook = BaseHook(self.model, set_output_hook, set_gamma(self.args.activation))
+
+        train_data, self.val_data = set_dataset(self.args)
+
+        train_set_size = int(len(train_data) * self.args.split)
+        valid_set_size = len(train_data) - train_set_size
+        seed = torch.Generator().manual_seed(42)
+        self.train_data, _ = data.random_split(train_data, [train_set_size, valid_set_size], generator=seed)
+
     def setup(self, stage):
         if stage == 'fit':
-            self.train_loader, self.val_loader = set_dataloader(self.args)
+            self.train_loader, self.val_loader = set_dataloader(self.args, [self.train_data, self.val_data])
             return 
         else:
-            return 
+            return
         
     def train_dataloader(self):
         return self.train_loader
@@ -45,7 +53,7 @@ class PLModel(pl.LightningModule):
         optimizer = init_optimizer(self.args, self.model)
 
         lr_scheduler = init_scheduler(self.args, optimizer=optimizer)
-        return [optimizer],[lr_scheduler]
+        return [optimizer],[{"scheduler": lr_scheduler, "interval": "step"}]
 
     # def on_train_start(self):
         
@@ -58,16 +66,13 @@ class PLModel(pl.LightningModule):
         
         outputs = self.model(images)
         loss = self.loss_function(outputs, labels)
-        self.lr_schedulers().step()
         top1, top5 = accuracy(outputs, labels)
-        info = {'loss': loss, 'top1': top1, 'top5': top5[0], 'lr': self.optimizers().param_groups[0]['lr']}
-        if batch_idx % 100 == 0:
-            self.model_hook = BaseHook(self.model, set_output_hook, set_gamma(self.args.activation))
-        if batch_idx % 100 == 10:
-            res = self.model_hook.retrieve()
-            self.model_hook.remove()
-            for i, r in enumerate(res):
-                info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+        info = {'train/loss': loss, 'train/top1': top1, 'train/top5': top5[0], 'lr': self.optimizers().param_groups[0]['lr'], 'step': self.global_step}
+        res = self.model_hook.retrieve()
+        for i, r in enumerate(res):
+            # info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+            info['train/entropy/layer_{}'.format(str(i).zfill(2))] = r.mean()
+            info['train/entropy/layer_{}_var'.format(str(i).zfill(2))] = r.var()
         wandb.log(info)
         return loss
     # def on_train_epoch(self):
@@ -75,13 +80,18 @@ class PLModel(pl.LightningModule):
     #     # self.attack.update_epoch()
     #     pass
 
-    def validation_step(self, batch,batch_idx):
+    def validation_step(self, batch, batch_idx):
         images, labels = batch[0], batch[1]
         pred = self.model(images)
         top1, top5 = accuracy(pred, labels)
-        self.log('val_top1', top1, sync_dist=True, on_epoch=True)
         loss = self.loss_function(pred, labels)
-        self.log('val_loss', loss, sync_dist=True)
+        self.log('val/top1', top1, sync_dist=True, on_epoch=True)
+        self.log('val/loss', loss, sync_dist=True, on_epoch=True)
+        res = self.model_hook.retrieve()
+        info = {'epoch': self.current_epoch}
+        for i, r in enumerate(res):
+            info['val/entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+        wandb.log(info)
         return loss
 
 
@@ -91,10 +101,8 @@ class PLModel(pl.LightningModule):
 def run(args):
     callbacks=[
         ModelCheckpoint(save_top_k=1,mode="max",dirpath=args.model_dir, filename="ckpt-best"),
-        # LearningRateMonitor(logging_interval='step')
     ]
-    logtool= CSVLogger(args.model_dir, name="")
-    tb_logger = pl_loggers.TensorBoardLogger(save_dir=args.model_dir)
+    logtool= WandbLogger(name="", save_dir=args.model_dir)
     trainer=pl.Trainer(devices="auto",
     precision=16,
     amp_backend="native",
@@ -102,7 +110,7 @@ def run(args):
     strategy = DDPStrategy(find_unused_parameters=False),
     callbacks=callbacks,
     max_epochs=args.num_epoch,
-    logger=tb_logger
+    logger=logtool
     )
 
     # datamodule=DataModule(args)

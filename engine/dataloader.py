@@ -10,8 +10,11 @@ CIAFR100_MEAN_STD = [(0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)]
 IMAGENET_MEAN_STD = [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)]
 
 
-def set_dataloader(args):
-    train_dataset, val_dataset = set_dataset(args)
+def set_dataloader(args, datasets=None):
+    if datasets is None:
+        train_dataset, val_dataset = set_dataset(args)
+    else:
+        train_dataset, val_dataset = datasets
     train_loader = DataLoader(
                 dataset=train_dataset,
                 batch_size=args.batch_size,

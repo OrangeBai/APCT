@@ -4,6 +4,6 @@ import wandb
 
 if __name__ == '__main__':
     args = TrainParser().get_args()
-    wandb.init(project="express")
+    wandb.init(dir=args.model_dir, project="express")
     wandb.config = args
     run(args)
