@@ -172,11 +172,7 @@ class TrainParser(BaseParser):
             return
         path = args.model_dir
         if os.path.exists(path):
-            if args.resume:
-                pass
-            else:
-                shutil.rmtree(path)
-                os.makedirs(path)
+            pass
         else:
             os.makedirs(path)
 

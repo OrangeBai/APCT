@@ -9,10 +9,10 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "/home/user/Orange/code/APCT-master/train.py",
+            "program": "/home/orange/Main/Code/APCT-master/train.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--world_size", "2", "--dataset", "cifar10", "--attack noise", "--sigma", "0.15", "--exp_id noise_015", "--print_every", "5"]
+            "args": ["--dataset", "cifar10", "--exp_id", "express", "--model_type", "mini", "--net", "vgg16"]
         }
     ]
 }
