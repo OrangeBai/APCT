@@ -26,7 +26,6 @@ class PLModel(pl.LightningModule):
         self.attack = set_attack(self.model, self.args)
         self.loss_function = torch.nn.CrossEntropyLoss()
         #self.start_epoch, self.best_acc = self.resume()
-        self.model_hook = BaseHook(self.model, set_output_hook, set_gamma(self.args.activation))
 
         train_data, self.val_data = set_dataset(self.args)
 
@@ -55,11 +54,6 @@ class PLModel(pl.LightningModule):
         lr_scheduler = init_scheduler(self.args, optimizer=optimizer)
         return [optimizer],[{"scheduler": lr_scheduler, "interval": "step"}]
 
-    # def on_train_start(self):
-        
-    #     self.float_entropy = []
-    #     return super().on_train_start()
-
     def training_step(self, batch, batch_idx):
         images, labels = batch[0], batch[1]
         # images = self.attack(images, labels)
@@ -67,18 +61,28 @@ class PLModel(pl.LightningModule):
         outputs = self.model(images)
         loss = self.loss_function(outputs, labels)
         top1, top5 = accuracy(outputs, labels)
-        info = {'train/loss': loss, 'train/top1': top1, 'train/top5': top5[0], 'lr': self.optimizers().param_groups[0]['lr'], 'step': self.global_step}
-        res = self.model_hook.retrieve()
-        for i, r in enumerate(res):
-            # info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
-            info['train/entropy/layer_{}'.format(str(i).zfill(2))] = r.mean()
-            info['train/entropy/layer_{}_var'.format(str(i).zfill(2))] = r.var()
-        wandb.log(info)
+        self.info = {'train/loss': loss, 'train/top1': top1, 'train/top5': top5[0], 'lr': self.optimizers().param_groups[0]['lr'], 'step': self.global_step}
         return loss
     # def on_train_epoch(self):
     #     #set new scheduler
     #     # self.attack.update_epoch()
     #     pass
+
+    def on_train_batch_start(self, batch, batch_idx):
+        if self.global_step % 100 == 0:
+            self.model_hook = BaseHook(self.model, set_output_hook, set_gamma(self.args.activation))
+
+    def on_train_batch_end(self, outputs, batch):
+        if self.global_step % 100 == 5:
+            res = self.model_hook.retrieve()
+            for i, r in enumerate(res):
+                
+                self.info['train/entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
+                self.info['train/entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
+            self.model_hook.remove()
+        
+        wandb.log(self.info)
+        return
 
     def validation_step(self, batch, batch_idx):
         images, labels = batch[0], batch[1]
@@ -88,15 +92,12 @@ class PLModel(pl.LightningModule):
         self.log('val/top1', top1, sync_dist=True, on_epoch=True)
         self.log('val/loss', loss, sync_dist=True, on_epoch=True)
         res = self.model_hook.retrieve()
-        info = {'epoch': self.current_epoch}
+        info = {'step': self.global_step}
         for i, r in enumerate(res):
             info['val/entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
         wandb.log(info)
         return loss
 
-
-    def on_train_end(self) -> None:
-        pass
 
 def run(args):
     callbacks=[
@@ -110,7 +111,8 @@ def run(args):
     strategy = DDPStrategy(find_unused_parameters=False),
     callbacks=callbacks,
     max_epochs=args.num_epoch,
-    logger=logtool
+    val_check_interval=200,
+    logger=logtool,
     )
 
     # datamodule=DataModule(args)
