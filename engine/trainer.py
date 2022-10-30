@@ -63,8 +63,7 @@ class PLModel(pl.LightningModule):
         loss = self.loss_function(outputs, labels)
         top1, top5 = accuracy(outputs, labels)
         self.log('train/loss', loss, sync_dist=True)
-        self.log('train/top1', loss, sync_dist=True)
-        self.log('lr', self.optimizers().param_groups[0]['lr'])
+        self.log('train/top1', top1, sync_dist=True)
         self.log('step', self.global_step)
         return loss
     
@@ -108,7 +107,7 @@ class PLModel(pl.LightningModule):
                     epoch_output[k] = v
                 else:
                     epoch_output[k] += v
-        info = {'step': self.global_step}
+        info = {'step': self.global_step,"lr": self.optimizers().param_groups[0]['lr']}
         for k, v in epoch_output.items():
             if k != 'batch_size':
                 info['val/'+k] = v / epoch_output['batch_size']
@@ -117,6 +116,8 @@ class PLModel(pl.LightningModule):
         res = self.model_hook.retrieve()
         for i, r in enumerate(res):
             info['val/entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+            info['entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
+            info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
         self.model_hook.remove()
         wandb.log(info)
         return
