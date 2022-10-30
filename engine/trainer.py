@@ -115,7 +115,8 @@ class PLModel(pl.LightningModule):
 
         res = self.model_hook.retrieve()
         for i, r in enumerate(res):
-            info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+            if self.global_step % 400 == 0:
+                info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
             info['entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
             info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
         self.model_hook.remove()
@@ -130,8 +131,7 @@ class PLModel(pl.LightningModule):
         res = self.model_hook.retrieve()
         info = {'step': self.global_step,"lr": self.optimizers().param_groups[0]['lr']}
         for i, r in enumerate(res):
-            if self.global_step % 400 == 0:
-                info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+            info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
             info['entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
             info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
         self.model_hook.remove()
