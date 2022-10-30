@@ -54,22 +54,22 @@ def init_scheduler(args, optimizer):
     if args.lr == 0:
         args.lr += 1e-6
     if args.lr_scheduler == 'milestones':
-        milestones = [milestone * args.total_step for milestone in args.milestones]
+        milestones = [milestone * args.num_step for milestone in args.milestones]
         lr_scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=args.gamma)
     elif args.lr_scheduler == 'linear':
         # diff = args.lr - args.lr_e
         # LinearLR(optimizer, start_factor=args.lr, end_factor=args.lr_e, total_iters=args.num_)
         # def lambda_rule(step):
-        #     return (args.lr - (step / args.total_step) * diff) / args.lr
+        #     return (args.lr - (step / args.num_step) * diff) / args.lr
 
-        lr_scheduler = LLR(optimizer, lr_st=args.lr, lr_ed=args.lr_e, steps=args.total_step)
+        lr_scheduler = LLR(optimizer, lr_st=args.lr, lr_ed=args.lr_e, steps=args.num_step)
 
     elif args.lr_scheduler == 'exp':
-        gamma = math.pow(args.lr_e / args.lr, 1 / args.total_step)
+        gamma = math.pow(args.lr_e / args.lr, 1 / args.num_step)
         lr_scheduler = ExponentialLR(optimizer, gamma)
     elif args.lr_scheduler == 'cyclic':
-        up = int(args.total_step * args.up_ratio)
-        down = int(args.total_step * args.down_ratio)
+        up = int(args.num_step * args.up_ratio)
+        down = int(args.num_step * args.down_ratio)
         lr_scheduler = CyclicLR(optimizer, base_lr=args.lr_e, max_lr=args.lr,
                                 step_size_up=up, step_size_down=down, mode='triangular2', cycle_momentum=False)
     elif args.lr_scheduler == 'static':

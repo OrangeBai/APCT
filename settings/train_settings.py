@@ -24,7 +24,8 @@ class TrainParser(BaseParser):
         self.parser.add_argument('--resume', default=0, type=int)
         # step-wise or epoch-wise
         self.parser.add_argument('--start_epoch', default=0, type=int)
-        self.parser.add_argument('--num_epoch', default=60, type=int)
+        self.parser.add_argument('--num_epoch', default=None, type=int)
+        self.parser.add_argument('--num_step', default=None, type=int)
         self.parser.add_argument('--batch_size', default=128, type=int)
 
         # DDP
@@ -63,7 +64,7 @@ class TrainParser(BaseParser):
 
         # for expressive ability
         self.parser.add_argument('--split', default=1.0, type=float)
-        self.parser.add_argument('--pack_every', default=10, type=int)
+        self.parser.add_argument('--pack_every', default=20, type=int)
         self.parser.add_argument('--npbar', default=True, action='store_false')
         self.parser.add_argument('--val_every', default=200, type=int)
         self.resume()

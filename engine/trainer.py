@@ -50,7 +50,8 @@ class PLModel(pl.LightningModule):
         return self.val_loader
         
     def configure_optimizers(self,):
-        self.args.total_step = self.args.num_epoch * len(self.train_loader)
+        if self.args.num_step == None:
+            self.args.num_step = self.args.num_epoch * len(self.train_loader)
         optimizer = init_optimizer(self.args, self.model)
 
         lr_scheduler = init_scheduler(self.args, optimizer=optimizer)
@@ -128,6 +129,7 @@ def run(args):
     strategy = DDPStrategy(find_unused_parameters=False),
     callbacks=callbacks,
     max_epochs=args.num_epoch,
+    max_steps=args.num_steps, 
     check_val_every_n_epoch=None,
     val_check_interval=args.val_every,
     logger=logtool,
