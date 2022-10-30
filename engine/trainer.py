@@ -25,7 +25,6 @@ class PLModel(pl.LightningModule):
         self.model = build_model(args)
         self.attack = set_attack(self.model, self.args)
         self.loss_function = torch.nn.CrossEntropyLoss()
-        #self.start_epoch, self.best_acc = self.resume()
         self.model_hook = BaseHook(self.model, set_output_hook, set_gamma(self.args.activation))
 
 

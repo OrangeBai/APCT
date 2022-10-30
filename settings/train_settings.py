@@ -64,9 +64,9 @@ class TrainParser(BaseParser):
 
         # for expressive ability
         self.parser.add_argument('--split', default=1.0, type=float)
-        self.parser.add_argument('--pack_every', default=20, type=int)
+        self.parser.add_argument('--pack_every', default=64, type=int)
         self.parser.add_argument('--npbar', default=True, action='store_false')
-        self.parser.add_argument('--val_every', default=200, type=int)
+        self.parser.add_argument('--val_every', default=400, type=int)
         self.resume()
         self.lr_scheduler()
         self.optimizer()
