@@ -130,7 +130,7 @@ def run(args):
     strategy = DDPStrategy(find_unused_parameters=False),
     callbacks=callbacks,
     max_epochs=args.num_epoch,
-    max_steps=args.num_steps, 
+    max_steps=args.num_step, 
     check_val_every_n_epoch=None,
     val_check_interval=args.val_every,
     logger=logtool,
