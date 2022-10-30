@@ -117,7 +117,7 @@ class PLModel(pl.LightningModule):
 
 
 def run(args):
-    logtool= WandbLogger(name="", save_dir=args.model_dir)
+    logtool= WandbLogger(name="", save_dir=args.model_dir, project=args.model_dir)
     wandb.config = args
     callbacks=[
         ModelCheckpoint(save_top_k=1,mode="max",dirpath=logtool.experiment.dir, filename="ckpt-best"),
