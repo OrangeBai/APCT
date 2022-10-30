@@ -77,8 +77,8 @@ class NormalizeLayer(torch.nn.Module):
         :param sds: the channel standard deviations
         """
         super(NormalizeLayer, self).__init__()
-        self.means = torch.tensor(means).cuda()
-        self.sds = torch.tensor(sds).cuda()
+        self.means = torch.tensor(means)
+        self.sds = torch.tensor(sds)
 
     def forward(self, x: torch.tensor):
         (batch_size, num_channels, height, width) = x.shape

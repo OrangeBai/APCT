@@ -11,8 +11,8 @@
             "request": "launch",
             "program": "/home/orange/Main/Code/APCT-master/train.py",
             "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": ["--dataset", "cifar10", "--exp_id", "express", "--model_type", "mini", "--net", "vgg16", "--batch_size", "128", "--pack_every", "20", "--num_step", "2400", "--split", "0.1"]
+            "justMyCode": false,
+            "args": ["--dataset", "cifar10", "--exp_id", "express2", "--model_type", "mini", "--net", "vgg16", "--batch_size", "128", "--num_step", "2400"]
         },
 
         {

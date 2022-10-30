@@ -22,7 +22,7 @@ class PLModel(pl.LightningModule):
         self.args = args
         #self._init_dataset()
         super().__init__()
-        self.model = build_model(args)
+        self.model = build_model(args).cuda()
         self.attack = set_attack(self.model, self.args)
         self.loss_function = torch.nn.CrossEntropyLoss()
 
@@ -115,14 +115,41 @@ class PLModel(pl.LightningModule):
 
         res = self.model_hook.retrieve()
         for i, r in enumerate(res):
-            info['val/entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+            info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
             info['entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
             info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
         self.model_hook.remove()
         wandb.log(info)
         return
 
+    def on_fit_end(self) -> None:
+        self.model_hook = BaseHook(self.model, set_output_hook, set_gamma(self.args.activation))
+        dl = self.train_dataloader()
+        for x, _ in dl:
+            self.model(x)
+        res = self.model_hook.retrieve()
+        info = {'step': self.global_step,"lr": self.optimizers().param_groups[0]['lr']}
+        for i, r in enumerate(res):
+            if self.global_step % 400 == 0:
+                info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+            info['entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
+            info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
+        self.model_hook.remove()
+        return
 
+    def on_fit_start(self) -> None:
+        self.model_hook = BaseHook(self.model, set_output_hook, set_gamma(self.args.activation))
+        dl = self.train_dataloader()
+        for x, _ in dl:
+            self.model(x.cuda())
+        res = self.model_hook.retrieve()
+        info = {'step': self.global_step,"lr": self.optimizers().param_groups[0]['lr']}
+        for i, r in enumerate(res):
+            info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+            info['entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
+            info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
+        self.model_hook.remove()
+        return
 def run(args):
     name = 'split_{0:.2f}_batchsize_{1:03}'.format(args.split, args.batch_size)
     logtool= WandbLogger(name=name, save_dir=args.model_dir, project=args.exp_id)
