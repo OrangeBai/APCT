@@ -1,31 +1,26 @@
-from readline import set_pre_input_hook
+import pytorch_lightning as pl
 import torch.utils.data as data
-from pytorch_lightning.loggers import CSVLogger
+import wandb
+from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.strategies.ddp import DDPStrategy
+
 from attack import *
 from core.pattern import *
-from engine.dataloader import set_dataloader, set_dataset
-from engine.logger import Log
-import torch
 from core.utils import *
+from engine.dataloader import set_dataloader, set_dataset
 from models.base_model import build_model
-import pytorch_lightning as pl
-from pytorch_lightning import Trainer
-from pytorch_lightning.strategies.ddp import DDPStrategy
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor, ModelPruning
-from pytorch_lightning.loggers import WandbLogger
-import wandb
-import math
+
 
 # DDP version
 class PLModel(pl.LightningModule):
     def __init__(self, args):
         self.args = args
-        #self._init_dataset()
+        # self._init_dataset()
         super().__init__()
         self.model = build_model(args).cuda()
         self.attack = set_attack(self.model, self.args)
         self.loss_function = torch.nn.CrossEntropyLoss()
-
 
         train_data, self.val_data = set_dataset(self.args)
 
@@ -37,28 +32,28 @@ class PLModel(pl.LightningModule):
     def setup(self, stage):
         if stage == 'fit':
             self.train_loader, self.val_loader = set_dataloader(self.args, [self.train_data, self.val_data])
-            return 
+            return
         else:
             return
-        
+
     def train_dataloader(self):
         return self.train_loader
 
     def val_dataloader(self):
         return self.val_loader
-        
-    def configure_optimizers(self,):
+
+    def configure_optimizers(self, ):
         if self.args.num_step == None:
             self.args.num_step = self.args.num_epoch * len(self.train_loader)
         optimizer = init_optimizer(self.args, self.model)
 
         lr_scheduler = init_scheduler(self.args, optimizer=optimizer)
-        return [optimizer],[{"scheduler": lr_scheduler, "interval": "step"}]
+        return [optimizer], [{"scheduler": lr_scheduler, "interval": "step"}]
 
     def training_step(self, batch, batch_idx):
         images, labels = batch[0], batch[1]
         # images = self.attack(images, labels)
-        
+
         outputs = self.model(images)
         loss = self.loss_function(outputs, labels)
         top1, top5 = accuracy(outputs, labels)
@@ -66,15 +61,15 @@ class PLModel(pl.LightningModule):
         self.log('train/top1', top1, sync_dist=True)
         self.log('step', self.global_step)
         return loss
-    
+
     def on_train_batch_end(self, outputs, batch, batch_idx):
         # if self.global_step % self.args.pack_every == 0:
         #     res = self.model_hook.retrieve()
         #     for i, r in enumerate(res):
-                
+
         #         self.info['train/entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
         #         self.info['train/entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
-        
+
         # wandb.log(self.info)
         return
 
@@ -88,10 +83,10 @@ class PLModel(pl.LightningModule):
         pred = self.model(images)
         top1, top5 = accuracy(pred, labels)
         loss = self.loss_function(pred, labels)
-        
-        return {'batch_size': batch_size, 'loss': loss * batch_size, 
-                'top1':top1[0] * batch_size, 'top5': top5[0] * batch_size}
-    
+
+        return {'batch_size': batch_size, 'loss': loss * batch_size,
+                'top1': top1[0] * batch_size, 'top5': top5[0] * batch_size}
+
     def validation_step_end(self, batch_parts):
         # predictions from each GPU
         batch_output = {}
@@ -107,11 +102,10 @@ class PLModel(pl.LightningModule):
                     epoch_output[k] = v
                 else:
                     epoch_output[k] += v
-        info = {'step': self.global_step,"lr": self.optimizers().param_groups[0]['lr']}
+        info = {'step': self.global_step, "lr": self.optimizers().param_groups[0]['lr']}
         for k, v in epoch_output.items():
             if k != 'batch_size':
-                info['val/'+k] = v / epoch_output['batch_size']
-        
+                info['val/' + k] = v / epoch_output['batch_size']
 
         res = self.model_hook.retrieve()
         for i, r in enumerate(res):
@@ -129,9 +123,9 @@ class PLModel(pl.LightningModule):
         for x, _ in dl:
             self.model(x)
         res = self.model_hook.retrieve()
-        info = {'step': self.global_step,"lr": self.optimizers().param_groups[0]['lr']}
+        info = {'step': -2, "lr": self.optimizers().param_groups[0]['lr']}
         for i, r in enumerate(res):
-            info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+            info['trainset/entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
             info['entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
             info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
         self.model_hook.remove()
@@ -143,35 +137,37 @@ class PLModel(pl.LightningModule):
         for x, _ in dl:
             self.model(x.cuda())
         res = self.model_hook.retrieve()
-        info = {'step': self.global_step,"lr": self.optimizers().param_groups[0]['lr']}
+        info = {'step': -1, "lr": self.optimizers().param_groups[0]['lr']}
         for i, r in enumerate(res):
-            info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+            info['trainset/entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
             info['entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
             info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
         self.model_hook.remove()
         return
+
+
 def run(args):
     name = 'split_{0:.2f}_batchsize_{1:03}'.format(args.split, args.batch_size)
-    logtool= WandbLogger(name=name, save_dir=args.model_dir, project=args.exp_id)
+    logtool = WandbLogger(name=name, save_dir=args.model_dir, project=args.exp_id)
     wandb.config = args
-    callbacks=[
-        ModelCheckpoint(save_top_k=1,mode="max",dirpath=logtool.experiment.dir, filename="ckpt-best"),
+    callbacks = [
+        ModelCheckpoint(save_top_k=1, mode="max", dirpath=logtool.experiment.dir, filename="ckpt-best"),
         # ModelPruning("l1_unstructured", amount=0.5)
     ]
-    trainer=pl.Trainer(devices="auto",
-    precision=16,
-    amp_backend="native",
-    accelerator="cuda",
-    strategy = DDPStrategy(find_unused_parameters=False),
-    callbacks=callbacks,
-    max_epochs=args.num_epoch,
-    max_steps=args.num_step, 
-    check_val_every_n_epoch=None,
-    val_check_interval=args.val_every,
-    logger=logtool,
-    enable_progress_bar=args.npbar
-    )
+    trainer = pl.Trainer(devices="auto",
+                         precision=16,
+                         amp_backend="native",
+                         accelerator="cuda",
+                         strategy=DDPStrategy(find_unused_parameters=False),
+                         callbacks=callbacks,
+                         max_epochs=args.num_epoch,
+                         max_steps=args.num_step,
+                         check_val_every_n_epoch=None,
+                         val_check_interval=args.val_every,
+                         logger=logtool,
+                         enable_progress_bar=args.npbar
+                         )
 
     # datamodule=DataModule(args)
-    model=PLModel(args)
+    model = PLModel(args)
     trainer.fit(model)

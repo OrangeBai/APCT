@@ -1,0 +1,79 @@
+import re
+import matplotlib.pyplot as plt
+import wandb
+import seaborn as sns
+
+sns.set()
+sns.set_theme(style="darkgrid")
+
+large = 22
+med = 16
+small = 12
+params = {'axes.titlesize': large,
+          'legend.fontsize': large,
+          'figure.figsize': (16, 9),
+          'axes.labelsize': large,
+          'xtick.labelsize': large,
+          'ytick.labelsize': large,
+
+          'figure.titlesize': large}
+plt.rcParams.update(params)
+# Project is specified by <entity/project-name>
+numeric_const_pattern = r"""
+     [-+]? # optional sign
+     (?:
+         (?: \d* \. \d+ ) # .1 .12 .123 etc 9.1 etc 98.1 etc
+         |
+         (?: \d+ \.? ) # 1. 12. 123. etc 1 12 123 etc
+     )
+     # followed by optional exponent part if desired
+     (?: [Ee] [+-]? \d+ ) ?
+     """
+rx = re.compile(numeric_const_pattern, re.VERBOSE)
+WANDB_DIR = "/home/orange/Main/Experiment/ICLR/cifar10/cifar10/vgg16_express2/"
+api = wandb.Api()
+runs = api.runs("orangebai/express2")
+
+bench_id = ''
+for run in runs:
+    if run.name == 'split: 100%':
+        bench_id = run.id
+        break
+
+batch_ids = {100: bench_id}
+for run in runs:
+    if 'split' in run.name and 'batchsize' not in run.name:
+        batch_size = rx.findall(run.name)[0]
+        batch_ids[int(batch_size)] = run.id
+
+for run in runs:
+    print(run.name)
+    if 'batchsize' in run.name and 'split' not in run.name:
+        batch_size = rx.findall(run.name)[0]
+        batch_ids[int(batch_size)] = run.id
+
+lines = []
+color = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+for i in [1, 6,  11]:
+    fig, ax = plt.subplots()
+    entropy_name = 'val/entropy_layer_{:02}'.format(i)
+    print(entropy_name)
+    keys = list(batch_ids.keys())
+    keys.sort()
+    for k, c in zip(keys, color):
+        run = api.run("orangebai/express2/{}".format(batch_ids[k]))
+        data = run.history(keys=["step", entropy_name, entropy_name])
+        a = list(data[entropy_name])[-1]
+        b = list(data[entropy_name])[-2]
+
+
+        plt.hist([a,b],
+                 histtype='bar',
+                 stacked=False,
+                 fill=True,
+                 # label=labels,
+                 alpha=0.8,  # opacity of the bars
+                 # color=colors,
+                 edgecolor="k")
+
+print(1)
