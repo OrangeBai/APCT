@@ -36,6 +36,9 @@ class PLModel(pl.LightningModule):
         else:
             return
 
+    def forward(self, x):
+        return self.model(x)
+
     def train_dataloader(self):
         return self.train_loader
 
@@ -52,6 +55,7 @@ class PLModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         images, labels = batch[0], batch[1]
+        images += images + torch.randn_like(images) * self.args.sigma
         # images = self.attack(images, labels)
 
         outputs = self.model(images)
@@ -163,7 +167,7 @@ def run(args):
                          max_epochs=args.num_epoch,
                          max_steps=args.num_step,
                          check_val_every_n_epoch=None,
-                         val_check_interval=args.val_every,
+                         val_check_interval=None,
                          logger=logtool,
                          enable_progress_bar=args.npbar
                          )

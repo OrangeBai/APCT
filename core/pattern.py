@@ -62,6 +62,63 @@ class BaseHook:
             self.set_up()
         return res
 
+class FloatHook:
+    def __init__(self, model, hook, Gamma):
+        self.model=model
+        self.handles = []
+        self.features = {}
+        self.hook = hook
+        self.Gamma = Gamma
+        self.num_pattern = len(Gamma) + 1
+        self.set_up()
+
+    def remove(self):
+        for handle in self.handles:
+            handle.remove()
+        self.stored_values = {}
+
+    def set_up(self):
+        for block_name, block in self.model.named_modules():
+            if type(block) in [LinearBlock, ConvBlock]:
+                self.features[block_name] = {}
+                self.add_block_hook(block_name, block)
+
+    def add_block_hook(self, block_name, block):
+        for module_name, module in block.named_modules():
+            if check_activation(module):
+                self.features[block_name][module_name] = []
+                handle = module.register_forward_hook(self.save_outputs_hook(block_name, module_name))
+                self.handles.append(handle)
+
+    def save_outputs_hook(self, block_name, module_name):
+        def fn(layer, input_var, output_var):
+            input_var = input_var[0]
+            pattern = get_pattern(input_var, self.Gamma)
+            self.features[block_name][module_name].append(pattern)
+        return fn
+
+    def retrieve(self):
+        ratios = []
+        for block in self.features.values():
+            for layer in block.values():
+                con = np.concatenate(layer)
+                diff = con - con[0]
+                ft = np.any(diff, axis=0).sum()
+                total = diff[0].size
+                ratios.append(ft / total)
+        return ratios
+
+    def retrieve_res(self, fun=None, reset=True, *args, **kwargs):
+        if fun is not None:
+            res = fun(self.features, *args, **kwargs)
+        else:
+            res = self.features
+        if reset:
+            self.set_up()
+        return res
+
+
+
 
 class FloatEntropyHook(BaseHook):
     def __init__(self, model, Gamma):
