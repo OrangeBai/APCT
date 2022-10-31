@@ -34,23 +34,18 @@ WANDB_DIR = "/home/orange/Main/Experiment/ICLR/cifar10/cifar10/vgg16_express2/"
 api = wandb.Api()
 runs = api.runs("orangebai/express2")
 
-bench_id = ''
-for run in runs:
-    if run.name == 'split: 100%':
-        bench_id = run.id
-        break
+# bench_id = ''
+# for run in runs:
+#     if run.name == 'split: 100%':
+#         bench_id = run.id
+#         break
 
-batch_ids = {100: bench_id}
+batch_ids = {}
 for run in runs:
-    if 'split' in run.name and 'batchsize' not in run.name:
-        batch_size = rx.findall(run.name)[0]
-        batch_ids[int(batch_size)] = run.id
-
-for run in runs:
-    print(run.name)
-    if 'batchsize' in run.name and 'split' not in run.name:
-        batch_size = rx.findall(run.name)[0]
-        batch_ids[int(batch_size)] = run.id
+    if 'split' in run.name and 'batchsize' in run.name and run.state == 'finished' and run.id != 'wftmzrgd':
+        split, batch_size = rx.findall(run.name)
+        batch_ids[int(float(split) * 100)] = run.id
+        print(run.name)
 
 lines = []
 color = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']

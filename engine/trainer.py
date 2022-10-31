@@ -132,6 +132,7 @@ class PLModel(pl.LightningModule):
             info['trainset/entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
             info['entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
             info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
+        wandb.log(info)
         self.model_hook.remove()
         return
 
@@ -147,6 +148,7 @@ class PLModel(pl.LightningModule):
             info['entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
             info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
         self.model_hook.remove()
+        wandb.log(info)
         return
 
 
