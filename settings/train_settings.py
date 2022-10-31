@@ -23,7 +23,7 @@ class TrainParser(BaseParser):
         # step-wise or epoch-wise
         self.parser.add_argument('--start_epoch', default=0, type=int)
         self.parser.add_argument('--num_epoch', default=None, type=int)
-        self.parser.add_argument('--num_step', default=None, type=int)
+        self.parser.add_argument('--num_step', default=-1, type=int)
         self.parser.add_argument('--batch_size', default=128, type=int)
 
         # DDP
