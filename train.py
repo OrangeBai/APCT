@@ -12,7 +12,8 @@ if __name__ == '__main__':
 
     logtool = WandbLogger(name=args.name, save_dir=args.model_dir, project=args.project, config=args)
     callbacks = [
-        ModelCheckpoint(save_top_k=1, mode="max", dirpath=logtool.experiment.dir, filename="ckpt-best"),
+        ModelCheckpoint(monitor='val/top1', save_top_k=1, mode="max", save_on_train_epoch_end=False,
+                        dirpath=logtool.experiment.dir, filename="ckpt-best"),
         # ModelPruning("l1_unstructured", amount=0.5)
     ]
     trainer = pl.Trainer(devices="auto",
