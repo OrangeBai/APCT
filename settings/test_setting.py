@@ -5,14 +5,13 @@ from settings.train_settings import *
 class TestParser(BaseParser):
     def __init__(self, argv=None):
         super(TestParser, self).__init__(argv)
-        self.load()
         self.parser.add_argument('--test_name', default='acc', type=str)
-        self.parser.add_argument('--data_size', default=160, type=int)
-        self.parser.add_argument('--crop_size', default=128, type=int)
-        args, _ = self.parser.parse_known_args(self.args)
-        exp_dir = os.path.join(args.model_dir, 'exp')
-        os.makedirs(exp_dir, exist_ok=True)
-        self.parser.add_argument('--exp_dir', default=os.path.join(args.model_dir, 'exp'))
+        # self.parser.add_argument('--data_size', default=160, type=int)
+        # self.parser.add_argument('--crop_size', default=128, type=int)
+        # args, _ = self.parser.parse_known_args(self.args)
+        # exp_dir = os.path.join(args.model_dir, 'exp')
+        # os.makedirs(exp_dir, exist_ok=True)
+        # self.parser.add_argument('--exp_dir', default=os.path.join(args.model_dir, 'exp'))
 
         self._set_up_test()
 

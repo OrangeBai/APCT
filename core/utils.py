@@ -106,11 +106,6 @@ def init_optimizer(args, model):
     return optimizer
 
 
-def init_loss(args):
-    # TODO other loss functions
-    return torch.nn.CrossEntropyLoss()
-
-
 def accuracy(output, target, top_k=(1, 5)):
     """
     Computes the accuracy over the k top predictions for the specified values of k
@@ -132,15 +127,6 @@ def accuracy(output, target, top_k=(1, 5)):
             correct_k = correct[:k].contiguous().view(-1).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
-
-
-def is_dist_avail_and_initialized():
-    # TODO review distributed coding
-    if not dist.is_available():
-        return False
-    if not dist.is_initialized():
-        return False
-    return True
 
 
 class SmoothedValue(object):

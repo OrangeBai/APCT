@@ -1,4 +1,4 @@
-from core.smooth_analyze import *
+from core.smooth.smooth_analyze import *
 
 if __name__ == '__main__':
     large = 22
