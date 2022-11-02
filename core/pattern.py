@@ -52,16 +52,37 @@ class EntropyHook(BaseHook):
                 self.features[block_name][layer_name][i] += (pattern == i).sum(axis=0)
         return fn
 
-    def retrieve(self):
+    def retrieve(self, reshape=True):
         entropy = []
         for block in self.features.values():
             for layer in block.values():
                 layer = layer.reshape(self.num_pattern, -1)
+
                 layer /= layer.sum(axis=0)
-                s = np.zeros(layer.shape[1])
+                s = np.zeros(layer.shape[1:])
                 for j in range(self.num_pattern):
                     s += -layer[j] * np.log(1e-8 + layer[j])
-                # layer_entropy = []
+
+                entropy.append(s)
+        return entropy
+
+
+class PruneHook(EntropyHook):
+    def __init__(self, model, Gamma):
+        super().__init__(model, Gamma)
+
+    def retrieve(self, reshape=True):
+        entropy = []
+        for block in self.features.values():
+            for layer in block.values():
+                if reshape:
+                    layer = layer.reshape(self.num_pattern, -1)
+
+                layer /= layer.sum(axis=0)
+                s = np.zeros(layer.shape[1:])
+                for j in range(self.num_pattern):
+                    s += -layer[j] * np.log(1e-8 + layer[j])
+
                 entropy.append(s)
         return entropy
 

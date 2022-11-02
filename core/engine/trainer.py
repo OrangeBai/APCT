@@ -1,4 +1,5 @@
 import pytorch_lightning as pl
+import torch.nn.utils.prune
 import torch.utils.data as data
 import wandb
 
@@ -13,7 +14,7 @@ class BaseTrainer(pl.LightningModule):
     def __init__(self, arg):
         super().__init__()
         self.args = arg
-        self.model = build_model(arg)
+        self.model = build_model(arg).cuda()
         self.loss_function = torch.nn.CrossEntropyLoss()
         self.train_loader, self.val_loader = None, None
 
@@ -122,6 +123,7 @@ class EntropyTrainer(BaseTrainer):
         self.model_hook.set_up()
         dl = self.train_dataloader()
         self.model.eval()
+        self.model = self.model.cuda()
         for x, _ in dl:
             self.model(x.cuda())
         res = self.model_hook.retrieve()
@@ -136,6 +138,28 @@ class EntropyTrainer(BaseTrainer):
         return
 
 
+class PruneTrainer(BaseTrainer):
+    def __init__(self, args):
+        super().__init__(args)
+        self.model_hook = PruneHook(self.model, set_gamma(self.args.activation))
+
+    def on_validation_epoch_start(self) -> None:
+        self.model_hook.set_up()
+        return super().on_validation_epoch_start()
+
+    def validation_epoch_end(self, validation_step_outputs):
+        info = {'step': self.global_step}
+        res = self.model_hook.retrieve(reshape=False)
+        counter = 0
+        # torch.nn.utils.prune.global_unstructured()
+        for name, block in self.model.named_modules():
+            if type(block) in [ConvBlock, LinearBlock]:
+                print(block)
+
+        self.model_hook.remove()
+        wandb.log(info)
+        return
+
 def set_pl_model(args):
     if args.train_mode == 'std':
         return BaseTrainer(args)
@@ -144,6 +168,6 @@ def set_pl_model(args):
     elif args.train_mode == 'exp':
         return EntropyTrainer(args)
     elif args.train_mode == 'pru':
-        return BaseTrainer(args)
+        return PruneTrainer(args)
     else:
         raise NameError

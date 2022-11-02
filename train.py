@@ -1,5 +1,5 @@
 from settings.train_settings import TrainParser
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, ModelPruning
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.strategies.ddp import DDPStrategy
 
@@ -11,11 +11,27 @@ if __name__ == '__main__':
     args = TrainParser().get_args()
 
     logtool = WandbLogger(name=args.name, save_dir=args.model_dir, project=args.project, config=args)
+
+    # datamodule=DataModule(args)
+    model = set_pl_model(args)
+
+    def compute_amount(epoch):
+        # the sum of all returned values need to be smaller than 1
+        # if epoch == 2:
+        #     return 0.5
+        #
+        # elif epoch == 50:
+        #     return 0.25
+        #
+        # elif 75 < epoch < 99:
+        #     return 0.01
+        return 0.5
     callbacks = [
         ModelCheckpoint(monitor='val/top1', save_top_k=1, mode="max", save_on_train_epoch_end=False,
                         dirpath=logtool.experiment.dir, filename="ckpt-best"),
-        # ModelPruning("l1_unstructured", amount=0.5)
+        # ModelPruning("l1_unstructured", amount=compute_amount)
     ]
+
     trainer = pl.Trainer(devices="auto",
                          precision=16,
                          amp_backend="native",
@@ -29,10 +45,4 @@ if __name__ == '__main__':
                          logger=logtool,
                          enable_progress_bar=args.npbar
                          )
-
-    # datamodule=DataModule(args)
-    model = set_pl_model(args)
     trainer.fit(model)
-
-
-
