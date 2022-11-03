@@ -104,7 +104,7 @@ class EntropyTrainer(BaseTrainer):
         info = {'step': self.global_step}
         res = self.model_hook.retrieve()
         for i, r in enumerate(res):
-            info['entropy_layer_{}'.format(str(i).zfill(2))] = list(r)
+            info['entropy/layer/{}'.format(str(i).zfill(2))] = list(r)
             info['entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
             info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
         self.model_hook.remove()

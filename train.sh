@@ -10,7 +10,7 @@ python train.py --dataset cifar10 --net vgg16 --project test --name test --num_e
 
 
 # test neuron entropy
-python train.py --dataset cifar10 --net vgg16 --project expressive --name split_0.1 --num_step 24000 --val_step 400\
+python train.py --dataset cifar10 --net vgg16 --project expressive --name split_0.1 --num_step 240 --val_step 120\
                 --train_mode exp --split 0.1
 
 # prune training
