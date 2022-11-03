@@ -79,6 +79,14 @@ class AttackTrainer(BaseTrainer):
         loss = super().training_step([images, labels], batch_idx)
         return loss
 
+    def validation_step(self, batch, batch_idx):
+        super().validation_step(batch, batch_idx)
+        images, labels = batch[0], batch[1]
+        pred = self.model(images)
+        top1, top5 = accuracy(pred, labels)
+        self.log('val/adv_top1', top1, sync_dist=True, on_epoch=True)
+        return
+
 
 class EntropyTrainer(BaseTrainer):
     def __init__(self, args):
@@ -159,6 +167,7 @@ class PruneTrainer(BaseTrainer):
         self.model_hook.remove()
         wandb.log(info)
         return
+
 
 def set_pl_model(args):
     if args.train_mode == 'std':

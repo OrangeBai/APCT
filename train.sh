@@ -2,11 +2,9 @@
 python train.py --dataset cifar10 --net vgg16 --project test --name test --num_epoch 60
 
 # adv training
-python train.py --dataset cifar10 --net vgg16 --project test --name test --num_epoch 60\
-                --train_mode adv --attack noise --sigma 0.125
+python train.py --dataset cifar10 --net vgg16 --project test --name test --num_epoch 60 --train_mode adv --attack noise --sigma 0.125
 
-python train.py --dataset cifar10 --net vgg16 --project test --name test --num_epoch 60\
-                --train_mode adv --attack fgsm --ord inf --eps 0.3
+python train.py --dataset cifar10 --net vgg16 --project test --name test --num_epoch 2 --train_mode adv --attack fgsm --ord inf --eps 0.3
 
 
 # test neuron entropy
