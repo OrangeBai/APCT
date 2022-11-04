@@ -8,13 +8,13 @@ import wandb
 
 
 if __name__ == '__main__':
-    argsv = ['--dataset', 'cifar10', '--net', 'vgg', '--project', 'express_03']
+    argsv = ['--dataset', 'cifar10', '--net', 'vgg', '--project', 'express_04']
     args = TestParser(argsv).get_args()
     WANDB_DIR = args.model_dir
     api = wandb.Api()
     runs = api.runs(args.project, filters={"display_name": {"$regex": "split*"}})
     for i in range(15):
-        tag = 'trainset/entropy_dist_{}'.format(str(i).zfill(2))
+        tag = 'trainset/entropy/layer/{}'.format(str(i).zfill(2))
         all_dist = []
         names = []
         for run in runs:
@@ -23,7 +23,20 @@ if __name__ == '__main__':
         fig, ax = plt.subplots()
         ax.hist(all_dist)
         ax.legend(names)
-        ax.set_title('Layer {}'.format(i))
+        ax.set_title('Trainset Layer {}'.format(i))
+        plt.show()
+
+    for i in range(15):
+        tag = 'trainset/entropy/layer/{}'.format(str(i).zfill(2))
+        all_dist = []
+        names = []
+        for run in runs:
+            all_dist.append(run.history(keys=[tag])[tag][1])
+            names.append(run.name)
+        fig, ax = plt.subplots()
+        ax.hist(all_dist)
+        ax.legend(names)
+        ax.set_title('Trainset Layer {}'.format(i))
         plt.show()
 
 #

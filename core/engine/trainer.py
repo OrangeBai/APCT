@@ -113,7 +113,7 @@ class EntropyTrainer(BaseTrainer):
         res = self.model_hook.retrieve()
         for i, r in enumerate(res):
             info['entropy/layer/{}'.format(str(i).zfill(2))] = list(r)
-            info['entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
+            info['entropy/layer_mean/{}'.format(str(i).zfill(2))] = r.mean()
             info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
         self.model_hook.remove()
         wandb.log(info)
