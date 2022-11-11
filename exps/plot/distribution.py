@@ -5,40 +5,103 @@ import seaborn as sns
 from core.engine.trainer import set_pl_model
 from settings.test_setting import TestParser
 import wandb
-
+import pandas as pd
+import numpy as np
 
 if __name__ == '__main__':
-    argsv = ['--dataset', 'cifar10', '--net', 'vgg', '--project', 'express_04']
+    argsv = ['--dataset', 'cifar10', '--net', 'vgg', '--project', 'express_05']
     args = TestParser(argsv).get_args()
     WANDB_DIR = args.model_dir
-    api = wandb.Api()
+    api = wandb.Api(timeout=60)
     runs = api.runs(args.project, filters={"display_name": {"$regex": "split*"}})
-    for i in range(15):
-        tag = 'trainset/entropy/layer/{}'.format(str(i).zfill(2))
+
+    penguins = sns.load_dataset("penguins")
+    train_df, val_df = [], []
+    run = api.runs(args.project, filters={"display_name": 'split_0.1'})[0]
+    for i in range(0, 15):
+        tag = 'trainset/entropy_dist_{}'.format(str(i).zfill(2))
+        dist = run.history(keys=[tag])[tag][1]
+        df = {'value': dist, 'layer': i, 'dataset': 'train', 'exp': run.name, 'weight': 1/len(dist)}
+        train_df.append(pd.DataFrame(df))
+
+        tag = 'entropy/layer/{}'.format(str(i).zfill(2))
+        dist = run.history(keys=[tag])[tag][1]
+        df = {'value': dist, 'layer': i, 'dataset': 'val', 'exp': run.name, 'weight': 1/len(dist)}
+        val_df.append(pd.DataFrame(df))
+    train_df, val_df = pd.concat(train_df), pd.concat(val_df)
+    sns.histplot(train_df, stat='probability', bins=40, x='layer', y='value', hue='dataset', multiple='layer',
+                 pthresh=0.05, cbar=True, weights='weight', legend=False)
+    plt.show()
+    sns.histplot(val_df, stat='probability', bins=40, x='layer', y='value', hue='dataset', multiple='layer',
+                 pthresh=0.05, cbar=True, weights='weight', legend=False)
+    plt.show()
+    print(1)
+
+    train_df, val_df = [], []
+    run = api.runs(args.project, filters={"display_name": 'split_1.0'})[0]
+    for i in range(0, 15):
+        tag = 'trainset/entropy_dist_{}'.format(str(i).zfill(2))
+        dist = run.history(keys=[tag])[tag][1]
+        df = {'value': dist, 'layer': i, 'dataset': 'train', 'exp': run.name, 'weight': 1/len(dist)}
+        train_df.append(pd.DataFrame(df))
+
+        tag = 'entropy/layer/{}'.format(str(i).zfill(2))
+        dist = run.history(keys=[tag])[tag][1]
+        df = {'value': dist, 'layer': i, 'dataset': 'val', 'exp': run.name, 'weight': 1/len(dist)}
+        val_df.append(pd.DataFrame(df))
+    train_df, val_df = pd.concat(train_df), pd.concat(val_df)
+    sns.histplot(train_df, stat='probability', bins=40, x='layer', y='value', hue='dataset', multiple='layer',
+                 pthresh=0.05, cbar=True, weights='weight', legend=False)
+    plt.show()
+    sns.histplot(val_df, stat='probability', bins=40, x='layer', y='value', hue='dataset', multiple='layer',
+                 pthresh=0.05, cbar=True, weights='weight', legend=False)
+    plt.show()
+    print(1)
+
+
+
+    all_df = []
+    run = api.runs(args.project, filters={"display_name": 'split_0.1'})[0]
+    for i in range(2, 15):
+        tag = 'trainset/entropy_dist_{}'.format(str(i).zfill(2))
+        df = {'value': run.history(keys=[tag])[tag][1], 'layer': i, 'dataset': 'train', 'exp': run.name}
+        all_df.append(pd.DataFrame(df))
+
+        tag = 'entropy/layer/{}'.format(str(i).zfill(2))
+        df = {'value': run.history(keys=[tag])[tag][1], 'layer': i, 'dataset': 'val', 'exp': run.name}
+        all_df.append(pd.DataFrame(df))
+    all_df = pd.concat(all_df)
+    sns.histplot(all_df, stat='probability', bins=35, x='layer', y='value', hue='dataset', multiple='layer',
+                 pthresh=0.05, cbar=True)
+    plt.show()
+    print(1)
+        # fig, ax = plt.subplots()
+        # ax.hist(all_dist)
+        # ax.legend(names)
+        # ax.set_title('Trainset Layer {}'.format(i))
+        # plt.show()
+
+    for i in range(10,15):
+        tag = 'entropy/layer/{}'.format(str(i).zfill(2))
         all_dist = []
         names = []
-        for run in runs:
-            all_dist.append(run.history(keys=[tag])[tag][1])
-            names.append(run.name)
+        dist = run.history(keys=[tag])[tag].iloc[-1]
+        all_dist.append(dist)
+        names.append(run.name)
         fig, ax = plt.subplots()
         ax.hist(all_dist)
         ax.legend(names)
-        ax.set_title('Trainset Layer {}'.format(i))
+        ax.set_title('Val set Layer {}'.format(i))
         plt.show()
 
-    for i in range(15):
-        tag = 'trainset/entropy/layer/{}'.format(str(i).zfill(2))
-        all_dist = []
-        names = []
-        for run in runs:
-            all_dist.append(run.history(keys=[tag])[tag][1])
-            names.append(run.name)
-        fig, ax = plt.subplots()
-        ax.hist(all_dist)
-        ax.legend(names)
-        ax.set_title('Trainset Layer {}'.format(i))
-        plt.show()
 
+    run = api.runs(args.project, filters={"display_name": 'split_0.1'})[0]
+    all_df = {}
+    for i in range(10, 15):
+        tag = 'entropy/layer/{}'.format(str(i).zfill(2))
+        dist = run.history(keys=[tag])[tag].iloc[-1]
+        all_df[i] = dist
+    all_df = pd.DataFrame(all_df)
 #
 #     logtool = WandbLogger(name=args.name, save_dir=args.model_dir, project=args.project, config=args)
 # sns.set()

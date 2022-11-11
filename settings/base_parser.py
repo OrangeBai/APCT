@@ -32,7 +32,7 @@ class BaseParser:
         @return:
         """
         args, _ = self.parser.parse_known_args(self.args)
-        path = os.path.join(MODEL_PATH, args.dataset, args.net)
+        path = os.path.join(MODEL_PATH, args.dataset, args.net, args.project)
         os.makedirs(path, exist_ok=True)
         self.parser.add_argument('--model_dir', default=path, type=str, help='model directory')
         return

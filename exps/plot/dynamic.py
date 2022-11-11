@@ -4,17 +4,6 @@ import numpy as np
 import numpy.matlib
 import wandb
 
-large = 22
-med = 16
-small = 12
-params = {'axes.titlesize': large,
-          'legend.fontsize': large,
-          'axes.labelsize': large,
-          'xtick.labelsize': large,
-          'ytick.labelsize': large,
-
-          'figure.titlesize': large}
-
 WANDB_DIR = "/home/orange/Main/Experiment/ICLR/cifar10/cifar10/vgg16_express2/"
 api = wandb.Api(timeout=300)
 run = api.run("orangebai/express2/wftmzrgd")

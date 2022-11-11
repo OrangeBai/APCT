@@ -29,7 +29,6 @@ if __name__ == '__main__':
     callbacks = [
         ModelCheckpoint(monitor='val/top1', save_top_k=1, mode="max", save_on_train_epoch_end=False,
                         dirpath=logtool.experiment.dir, filename="ckpt-best"),
-        # ModelPruning("l1_unstructured", amount=compute_amount)
     ]
 
     trainer = pl.Trainer(devices="auto",
