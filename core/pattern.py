@@ -137,8 +137,6 @@ def set_bound_hook(stored_values, bound=1e-1):
     return hook
 
 
-
-
 def get_pattern(input_var, Gamma):
     pattern = np.zeros(input_var.shape)
     num_of_pattern = len(Gamma)

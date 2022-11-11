@@ -12,6 +12,12 @@ def set_activation(activation):
         return nn.GELU()
     elif activation.lower() == 'leakyrelu':
         return nn.LeakyReLU(0.1, inplace=True)
+    elif activation.lower() == 'sigmoid':
+        return nn.Sigmoid()
+    elif activation.lower() == 'relu6':
+        return nn.ReLU6()
+    elif activation.lower() == 'tanh':
+        return nn.Tanh()
 
 
 class LinearBlock(nn.Module):
