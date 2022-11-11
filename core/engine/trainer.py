@@ -112,10 +112,13 @@ class EntropyTrainer(BaseTrainer):
     def validation_epoch_end(self, validation_step_outputs):
         info = {'step': self.global_step}
         res = self.model_hook.retrieve()
+        avg_res, num_neuron = 0, 0
         for i, r in enumerate(res):
-            info['entropy/layer/{}'.format(str(i).zfill(2))] = list(r)
-            info['entropy/layer_mean/{}'.format(str(i).zfill(2))] = r.mean()
-            info['entropy/layer_var/{}'.format(str(i).zfill(2))] = r.var()
+            avg_res += r.sum()
+            num_neuron += r.size
+            info['val_set/entropy_dist/layer_{}'.format(str(i).zfill(2))] = list(r)
+            info['val_set/entropy_mean/layer_{}'.format(str(i).zfill(2))] = r.mean()
+            info['val_set/entropy_var/layer_{}'.format(str(i).zfill(2))] = r.var()
         self.model_hook.remove()
         wandb.log(info)
         return
@@ -138,10 +141,14 @@ class EntropyTrainer(BaseTrainer):
         res = self.model_hook.retrieve()
         self.model_hook.remove()
         info = {'step': step}
+        avg_res, num_neuron = 0, 0
         for i, r in enumerate(res):
-            info['trainset/entropy_dist_{}'.format(str(i).zfill(2))] = list(r)
-            info['trainset/entropy/layer/{}'.format(str(i).zfill(2))] = r.mean()
-            info['trainset/layer_var/{}'.format(str(i).zfill(2))] = r.var()
+            avg_res += r.sum()
+            num_neuron += len(r)
+            info['train_set/entropy_dist/layer_{}'.format(str(i).zfill(2))] = list(r)
+            info['train_set/entropy_mean/layer_{}'.format(str(i).zfill(2))] = r.mean()
+            info['train_set/entropy_var/layer_{}'.format(str(i).zfill(2))] = r.var()
+        info['train_set/entropy_global'] = avg_res / num_neuron
         self.model.train()
         wandb.log(info)
         return
