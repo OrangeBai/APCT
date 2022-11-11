@@ -13,7 +13,7 @@ if __name__ == '__main__':
     logtool = WandbLogger(name=args.name, save_dir=args.model_dir, project=args.project, config=args)
 
     # datamodule=DataModule(args)
-    model = set_pl_model(args)
+    model = set_pl_model(args.train_mode)(args)
 
     def compute_amount(epoch):
         # the sum of all returned values need to be smaller than 1

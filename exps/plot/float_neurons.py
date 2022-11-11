@@ -1,20 +1,34 @@
-from core.pattern import FloatHook, set_output_hook
+from core.pattern import FloatHook
 from core.utils import *
-from core.engine import set_dataset
-from core.engine import PLModel
+from core.engine.dataloader import set_dataset
+from core.engine.trainer import set_pl_model
+from pytorch_lightning.loggers import WandbLogger
 from settings.test_setting import TestParser
 import wandb
+import os
+
 
 if __name__ == '__main__':
-    argsv = ['--dataset', 'cifar10', '--net', 'vgg', '--project', 'adv_compare']
+    argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'adv_compare']
     args = TestParser(argsv).get_args()
-    WANDB_DIR = args.model_dir
+    # os.environ["WANDB_DIR"] = args.model_dir
     api = wandb.Api(timeout=60)
+    runs = api.runs(args.project)
 
-    model = PLModel.load_from_checkpoint(path, args=args)
-    hook = FloatHook(model.model, set_output_hook, Gamma=set_gamma(args.activation))
+    cur_run = runs[2]
+    for k, v in cur_run.config.items():
+        if not hasattr(args, k):
+            setattr(args, k, v)
+
+    model = set_pl_model(cur_run.config['train_mode'])(args)
+    restore = wandb.restore('ckpt-best.ckpt', run_path=os.path.join(*cur_run.path), root=os.path.join(args.model_dir, cur_run.id)).name
+    model.load_state_dict(torch.load(restore)['state_dict'])
+    model = model.cuda()
+    hook = FloatHook(model, Gamma=set_gamma(args.activation))
+    hook.set_up()
     model.eval()
     _, test = set_dataset(args)
+    sigma = 4/255
     for i in range(1000):
         for j in range(2):
             x = test[i][0].repeat(500, 1, 1, 1).cuda()

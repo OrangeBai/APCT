@@ -6,7 +6,7 @@ import torch
 class FGSM(Attack):
     def __init__(self, model, args, **kwargs):
         super(FGSM, self).__init__(model, args, **kwargs)
-        self.eps = kwargs['eps'] if 'eps' in kwargs.keys() else 8 / 255
+        self.eps = args.eps
 
     def forward(self, images, labels):
 

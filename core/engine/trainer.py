@@ -46,6 +46,7 @@ class BaseTrainer(pl.LightningModule):
         top1, top5 = accuracy(outputs, labels)
         self.log('train/loss', loss, sync_dist=True)
         self.log('train/top1', top1, sync_dist=True)
+        self.log('lr', self.lr, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -169,14 +170,14 @@ class PruneTrainer(BaseTrainer):
         return
 
 
-def set_pl_model(args):
-    if args.train_mode == 'std':
-        return BaseTrainer(args)
-    elif args.train_mode == 'adv':
-        return AttackTrainer(args)
-    elif args.train_mode == 'exp':
-        return EntropyTrainer(args)
-    elif args.train_mode == 'pru':
-        return PruneTrainer(args)
+def set_pl_model(train_mode):
+    if train_mode == 'std':
+        return BaseTrainer
+    elif train_mode == 'adv':
+        return AttackTrainer
+    elif train_mode == 'exp':
+        return EntropyTrainer
+    elif train_mode == 'pru':
+        return PruneTrainer
     else:
         raise NameError

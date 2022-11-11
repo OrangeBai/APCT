@@ -93,7 +93,14 @@ class FloatHook(BaseHook):
         self.Gamma = Gamma
         self.num_pattern = len(Gamma) + 1
 
-    def save_outputs_hook(self, block_name, module_name):
+    def add_block_hook(self, block_name, block):
+        for module_name, module in block.named_modules():
+            if check_activation(module):
+                self.features[block_name][module_name] = []
+                handle = module.register_forward_hook(self.hook(block_name, module_name))
+                self.handles.append(handle)
+
+    def hook(self, block_name, module_name):
         def fn(layer, input_var, output_var):
             input_var = input_var[0]
             pattern = get_pattern(input_var, self.Gamma)
