@@ -119,6 +119,7 @@ class EntropyTrainer(BaseTrainer):
             info['val_set/entropy_dist/layer_{}'.format(str(i).zfill(2))] = list(r)
             info['val_set/entropy_mean/layer_{}'.format(str(i).zfill(2))] = r.mean()
             info['val_set/entropy_var/layer_{}'.format(str(i).zfill(2))] = r.var()
+        info['val_set/entropy_global'] = avg_res / num_neuron
         self.model_hook.remove()
         wandb.log(info)
         return
