@@ -53,17 +53,21 @@ if __name__ == '__main__':
 
     # names = ['std', 'noise_0.12', 'noise_0.25', 'noise_0.50']
     # names = ['std', 'noise_0.12', 'noise_0.25', 'noise_0.50']
-    names = ['std', 'noise_0.12', 'noise_0.25', 'noise_0.50', 'fgsm_04', 'fgsm_08']
-    fig, ax = plt.subplots(figsize=(16, 9))
-    width = 0.1
+    names = {'std': 'Standard', 'noise_0.12': 'Noise: 0.12', 'noise_0.25': 'Noise: 0.25',
+             'noise_0.50': 'Noise: 0.50', 'fgsm_04': 'FGSM: 4/255', 'fgsm_08': 'FGSM: 8/255'}
+    fig, ax = plt.subplots(figsize=(18, 8))
+    width = 0.15
     plt.style.use('ggplot')
-    for i, name in enumerate(names):
-        data = np.array(all_float[name])
+    for i, (name_id, name) in enumerate(names.items()):
+        data = np.array(all_float[name_id])
         mean = np.array(data).mean(axis=0)
-        var = np.array(data).var(axis=0) * 5
-        xx = np.arange(len(mean)) + (i - 1.5) * width
+        xx = np.arange(len(mean)) + (i - 2) * width
 
-        ax.bar(xx, mean, width=width, yerr=var, label=name)
-    fig.legend()
+        ax.bar(xx, mean, width=width, label=name)
+
+    for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] + ax.get_xticklabels() + ax.get_yticklabels()):
+        item.set_fontsize(20)
+    fig.legend(loc='upper right', bbox_to_anchor=(0.90, 0.88), prop={'size': 12})
     plt.show()
+    plt.savefig(bbox_inches='tight')
     # ax.bar(np.arange(0, len(all_mean[0]), 1), all_mean)
