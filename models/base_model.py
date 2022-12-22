@@ -5,7 +5,7 @@ from collections import OrderedDict
 import torch
 import torch.nn as nn
 
-from core.engine.dataloader import set_mean_sed
+from core.dataloader import set_mean_sed
 
 
 class BaseModel(nn.Module):
@@ -45,11 +45,11 @@ class BaseModel(nn.Module):
 def build_model(args):
     """Import the module "model/[model_name]_model.py"."""
     if args.dataset.lower() == 'minist':
-        model_file_name = "core.models." + 'dnn'
+        model_file_name = "models." + 'dnn'
     elif args.dataset.lower() in ['cifar10', 'cifar100']:
-        model_file_name = "core.models." + "mini"
+        model_file_name = "models." + "mini"
     elif args.dataset.lower() == 'imagenet':
-        model_file_name = "core.models." + "net"
+        model_file_name = "models." + "net"
     else:
         raise NameError()
 

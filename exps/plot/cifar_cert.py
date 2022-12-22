@@ -1,3 +1,4 @@
+from core.SCRFP import ApproximateAccuracy
 from core.smooth.smooth_analyze import *
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-from collections import defaultdict, deque, Iterable, OrderedDict
+from collections import defaultdict, deque, OrderedDict
 
 import numpy as np
 import torch
@@ -301,6 +301,7 @@ def check_phase(phase_file, epoch):
         if epoch in range(v['start_epoch'], v['end_epoch']):
             return p, v
     raise ValueError('Phase file not matching training')
+
 
 def load_weight(model, state_dict):
     new_dict = OrderedDict()

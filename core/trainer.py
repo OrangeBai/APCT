@@ -1,13 +1,13 @@
 import pytorch_lightning as pl
-import torch.nn.utils.prune
+from torch.nn.utils.prune import L1Unstructured, global_unstructured
 import torch.utils.data as data
 import wandb
-
-from core.attack import *
+from core.prune import *
+from core.attack import set_attack
 from core.pattern import *
 from core.utils import *
-from core.engine.dataloader import set_dataloader, set_dataset
-from core.models.base_model import build_model
+from core.dataloader import set_dataloader, set_dataset
+from models.base_model import build_model
 
 
 class BaseTrainer(pl.LightningModule):
@@ -161,18 +161,34 @@ class PruneTrainer(BaseTrainer):
         self.model_hook = PruneHook(self.model, set_gamma(self.args.activation))
 
     def on_validation_epoch_start(self) -> None:
+        if not (self.current_epoch % self.args.prune_every == 0 and self.current_epoch > 0):
+            return
         self.model_hook.set_up()
         return super().on_validation_epoch_start()
 
     def validation_epoch_end(self, validation_step_outputs):
+        if not (self.current_epoch % self.args.prune_every == 0 and self.current_epoch > 0):
+            return
         info = {'step': self.global_step}
         res = self.model_hook.retrieve(reshape=False)
-        counter = 0
+        parameters_to_prune = []
+        importance_dict = {}
         # torch.nn.utils.prune.global_unstructured()
-        for name, block in self.model.named_modules():
-            if type(block) in [ConvBlock, LinearBlock]:
-                print(block)
 
+        for name, block in self.model.named_modules():
+            if not check_valid_block(block):
+                continue
+            compute_params(block, res[name], parameters_to_prune, importance_dict, self.args.prune_eta)
+
+        prune_model(parameters_to_prune, importance_dict, self.args)
+
+        pruned = 0
+        nele = 0
+
+        for module in importance_dict.keys():
+            pruned += torch.sum(module.weight == 0)
+            nele += module.weight.nelement()
+        print("Global sparsity: {:.2f}%".format(pruned/nele))
         self.model_hook.remove()
         wandb.log(info)
         return

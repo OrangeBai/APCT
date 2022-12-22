@@ -3,7 +3,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, ModelPruning
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.strategies.ddp import DDPStrategy
 
-from core.engine.trainer import set_pl_model
+from core.trainer import set_pl_model
 import pytorch_lightning as pl
 
 

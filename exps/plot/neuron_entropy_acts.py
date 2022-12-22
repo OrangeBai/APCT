@@ -1,12 +1,5 @@
-import os
-
-import matplotlib.pyplot as plt
 import wandb
 
-from core.engine.dataloader import set_dataset
-from core.engine.trainer import set_pl_model
-from core.pattern import FloatHook
-from core.utils import *
 from settings.test_setting import TestParser
 
 if __name__ == '__main__':

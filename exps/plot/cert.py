@@ -1,5 +1,6 @@
 from plot.cfg import *
-from core.smooth.smooth_analyze import *
+
+from core.SCRFP import ApproximateAccuracy
 
 if __name__ == '__main__':
     files = [

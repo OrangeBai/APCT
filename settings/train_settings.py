@@ -1,3 +1,5 @@
+import math
+
 from settings.base_parser import *
 import os
 import yaml
@@ -119,9 +121,14 @@ class TrainParser(BaseParser):
         elif args.train_mode == 'exp':
             self.parser.add_argument('--split', default=1.0, type=float)
         elif args.train_mode == 'pru':
-            self.parser.add_argument('--conv_dn_rate', default=0.95, type=float)
-            self.parser.add_argument('--linear_dn_rate', default=0.90, type=float)
-            self.parser.add_argument('--prune_every', default=30, type=float)
+            self.parser.add_argument('--prune_eta', default=1, type=float)
+            self.parser.add_argument('--prune_every', default=20, type=float)
+            self.parser.add_argument('--method', default='Hard', type=str,
+                                     choices=['L1Unstructured', 'RandomStructured', 'LnStructured',
+                                              'RandomUnstructured', 'Hard'])
+            self.parser.add_argument('--total_amount', default=0.5, type=float)
+            self.set_prune()
+
         return
 
     def check(self):
@@ -136,3 +143,15 @@ class TrainParser(BaseParser):
             # if train for certain steps
             self.parser.add_argument('--val_epoch', default=None, type=int)
             self.parser.add_argument('--val_step', default=100, type=int)
+
+    def set_prune(self):
+        args, _ = self.parser.parse_known_args(self.args)
+        if args.method == 'Hard':
+            self.parser.set_defaults(prune_eta=0)
+            self.parser.add_argument('--conv_pru_bound', default=0.1, type=float)
+            self.parser.add_argument('--fc_pru_bound', default=0.1, type=float)
+        else:
+            prune_times = args.num_epoch // args.prune_every
+            amount = 1 - math.pow(1 - args.total_amount, 1/prune_times)
+            self.parser.add_argument('--amount', default=amount, type=float)
+

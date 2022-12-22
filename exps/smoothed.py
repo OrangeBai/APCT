@@ -1,9 +1,7 @@
 import datetime
 import os
 
-from core.smooth.smooth_analyze import *
-from core.smooth.smooth_core import *
-from core.smooth.SCRFP import SMRAP
+from core.SCRFP import SMRAP, Smooth, ApproximateAccuracy
 from dataloader import get_val
 
 
