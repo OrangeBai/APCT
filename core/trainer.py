@@ -185,9 +185,12 @@ class PruneTrainer(BaseTrainer):
         pruned = 0
         nele = 0
 
-        for module in importance_dict.keys():
-            pruned += torch.sum(module.weight == 0)
-            nele += module.weight.nelement()
+        for i, module in enumerate(importance_dict.keys()):
+            cur_pruned = torch.sum(module.weight == 0)
+            cur_element = module.weight.nelement()
+            print("Layer {0:d}: prune {1:d}, total {2:d}, sparsity: {3:.2f}%".format(i, cur_pruned, cur_element, cur_pruned / cur_element))
+            pruned += cur_pruned
+            nele += cur_element
         print("Global sparsity: {:.2f}%".format(pruned/nele))
         self.model_hook.remove()
         wandb.log(info)

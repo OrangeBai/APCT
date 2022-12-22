@@ -1,5 +1,6 @@
 import torch
 from torch.nn.utils.prune import global_unstructured, L1Unstructured, random_structured, ln_structured, RandomStructured
+
 from models.blocks import ConvBlock, LinearBlock
 
 
@@ -22,7 +23,7 @@ def compute_importance(weight, channel_entropy, eta):
     if eta is None:
         importance_scores = None
     elif eta == 0:
-        importance_scores = channel_entropy
+        importance_scores = channel_entropy * torch.ones_like(weight)
     else:
         importance_scores = eta * channel_entropy * weight
 
@@ -85,15 +86,15 @@ def prune_model(parameters_to_prune, importance_dict, args):
     elif args.method == 'Hard':
         for cur_param, cur_name in parameters_to_prune:
             if isinstance(cur_param, torch.nn.Conv2d):
-                num_filters = torch.sum(importance_dict[cur_param] < args.fc_pru_bound)
+                num_filters = int(torch.sum(importance_dict[cur_param][:, 0, 0, 0] < args.conv_pru_bound))
             elif isinstance(cur_param, torch.nn.Linear):
-                num_filters = torch.sum(importance_dict[cur_param] < args.fc_pru_bound)
+                num_filters = int(torch.sum(importance_dict[cur_param][:, 0] < args.fc_pru_bound))
             else:
                 raise NameError("Invalid Block for pruning")
             if num_filters > 0:
-
-                ln_structured(cur_param, cur_name, num_filters, num_filters, dim=0,
+                ln_structured(cur_param, cur_name, num_filters, 2, dim=0,
                               importance_scores=importance_dict[cur_param])
+
 
 def monitor(importance_dict):
     pruned = 0
