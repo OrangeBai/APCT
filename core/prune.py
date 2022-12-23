@@ -85,14 +85,21 @@ def prune_model(parameters_to_prune, importance_dict, args):
             random_structured(cur_param, cur_name, args.amount, dim=0)
     elif args.method == 'Hard':
         for cur_param, cur_name in parameters_to_prune:
+            n_dims = len(cur_param.weight.shape)
+            slc = [slice(None)] * n_dims
+            if hasattr(cur_param, 'weight_mask'):
+                keep_channel = cur_param.weight_mask.sum([d for d in range(n_dims) if d != 0]) != 0
+                slc[0] = keep_channel
+
+            tensor_to_pru = importance_dict[cur_param][slc]
             if isinstance(cur_param, torch.nn.Conv2d):
-                num_filters = int(torch.sum(importance_dict[cur_param][:, 0, 0, 0] < args.conv_pru_bound))
+                num_filters = torch.sum(torch.as_tensor(tensor_to_pru[:, 0, 0, 0] < args.conv_pru_bound).to(torch.int))
             elif isinstance(cur_param, torch.nn.Linear):
-                num_filters = int(torch.sum(importance_dict[cur_param][:, 0] < args.fc_pru_bound))
+                num_filters = torch.sum(torch.as_tensor(tensor_to_pru[:, 0] < args.conv_pru_bound).to(torch.int))
             else:
                 raise NameError("Invalid Block for pruning")
-            if num_filters > 0:
-                ln_structured(cur_param, cur_name, num_filters, 2, dim=0,
+            if 0 < num_filters < len(tensor_to_pru):
+                ln_structured(cur_param, cur_name, int(num_filters), 2, dim=0,
                               importance_scores=importance_dict[cur_param])
 
 

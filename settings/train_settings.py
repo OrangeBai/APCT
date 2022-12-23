@@ -17,7 +17,6 @@ class TrainParser(BaseParser):
     def _init_parser(self):
         # train mode
         self.parser.add_argument('--train_mode', default='std', type=str)
-        self.train_mode()
 
         # step-wise or epoch-wise
         self.parser.add_argument('--num_epoch', default=None, type=int)
@@ -41,6 +40,7 @@ class TrainParser(BaseParser):
         self.lr_scheduler()
         self.optimizer()
         self.dataset()
+        self.train_mode()
         return self.parser
 
     def get_args(self):
@@ -55,9 +55,11 @@ class TrainParser(BaseParser):
         elif args.lr_scheduler in ['exp', 'linear']:
             self.parser.add_argument('--lr_e', default=0.0001 * args.lr, type=float)  # for linear
         elif args.lr_scheduler == 'cyclic':
+            self.parser.add_argument('--num_circles', default=2, type=int)
+            args, _ = self.parser.parse_known_args(self.args)
             self.parser.add_argument('--base_lr', default=0.0001 * args.lr)
-            self.parser.add_argument('--up_ratio', default=1 / 3)
-            self.parser.add_argument('--down_ratio', default=2 / 3)
+            self.parser.add_argument('--up_ratio', default=1 / 3 / args.num_circles)
+            self.parser.add_argument('--down_ratio', default= 1 / 3 / args.num_circles)
         else:
             raise NameError('Scheduler {} not found'.format(args.lr_scheduler))
         return
@@ -122,7 +124,8 @@ class TrainParser(BaseParser):
             self.parser.add_argument('--split', default=1.0, type=float)
         elif args.train_mode == 'pru':
             self.parser.add_argument('--prune_eta', default=1, type=float)
-            self.parser.add_argument('--prune_every', default=20, type=float)
+            self.parser.add_argument('--prune_every', default=20, type=int)
+            self.parser.add_argument('--fine_tune', default=20, type=int)
             self.parser.add_argument('--method', default='Hard', type=str,
                                      choices=['L1Unstructured', 'RandomStructured', 'LnStructured',
                                               'RandomUnstructured', 'Hard'])
@@ -146,6 +149,8 @@ class TrainParser(BaseParser):
 
     def set_prune(self):
         args, _ = self.parser.parse_known_args(self.args)
+        milestone = list(range(args.prune_every, args.num_epoch - args.fine_tune + 1, args.prune_every))
+        self.parser.add_argument('--prune_milestone', default=milestone, type=list)
         if args.method == 'Hard':
             self.parser.set_defaults(prune_eta=0)
             self.parser.add_argument('--conv_pru_bound', default=0.1, type=float)

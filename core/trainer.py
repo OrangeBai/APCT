@@ -161,13 +161,13 @@ class PruneTrainer(BaseTrainer):
         self.model_hook = PruneHook(self.model, set_gamma(self.args.activation))
 
     def on_validation_epoch_start(self) -> None:
-        if not (self.current_epoch % self.args.prune_every == 0 and self.current_epoch > 0):
+        if self.current_epoch not in self.args.prune_milestone:
             return
         self.model_hook.set_up()
         return super().on_validation_epoch_start()
 
     def validation_epoch_end(self, validation_step_outputs):
-        if not (self.current_epoch % self.args.prune_every == 0 and self.current_epoch > 0):
+        if self.current_epoch not in self.args.prune_milestone:
             return
         info = {'step': self.global_step}
         res = self.model_hook.retrieve(reshape=False)
@@ -176,23 +176,25 @@ class PruneTrainer(BaseTrainer):
         # torch.nn.utils.prune.global_unstructured()
 
         for name, block in self.model.named_modules():
-            if not check_valid_block(block):
+            if not check_valid_block(block) or block == self.model.layers[-1]:
                 continue
             compute_params(block, res[name], parameters_to_prune, importance_dict, self.args.prune_eta)
 
         prune_model(parameters_to_prune, importance_dict, self.args)
 
-        pruned = 0
-        nele = 0
-
+        cur_pruned = []
+        cur_element = []
         for i, module in enumerate(importance_dict.keys()):
-            cur_pruned = torch.sum(module.weight == 0)
-            cur_element = module.weight.nelement()
-            print("Layer {0:d}: prune {1:d}, total {2:d}, sparsity: {3:.2f}%".format(i, cur_pruned, cur_element, cur_pruned / cur_element))
-            pruned += cur_pruned
-            nele += cur_element
-        print("Global sparsity: {:.2f}%".format(pruned/nele))
+            cur_pruned.append(torch.sum(module.weight == 0))
+            cur_element.append(module.weight.nelement())
+            print("Layer {0:d}: prune {1:d}, total {2:d}, "
+                  "sparsity: {3:.2f}%".format(i, cur_pruned[i], cur_element[i], cur_pruned[i] / cur_element[i]))
+
+        print("Global sparsity: {:.2f}%".format(sum(cur_pruned)/sum(cur_element)))
         self.model_hook.remove()
+        info['pruned'] = cur_pruned
+        info['elements'] = cur_element
+        info['sparsity'] = [i / j for i, j in zip(cur_pruned, cur_element)] + [sum(cur_pruned) / sum(cur_element),]
         wandb.log(info)
         return
 
