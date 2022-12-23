@@ -169,7 +169,7 @@ class PruneTrainer(BaseTrainer):
     def validation_epoch_end(self, validation_step_outputs):
         if self.current_epoch not in self.args.prune_milestone:
             return
-        info = {'step': self.global_step}
+        info = {'step': self.global_step, 'epoch': self.current_epoch}
         res = self.model_hook.retrieve(reshape=False)
         parameters_to_prune = []
         importance_dict = {}
