@@ -194,7 +194,8 @@ class PruneTrainer(BaseTrainer):
         self.model_hook.remove()
         info['pruned'] = cur_pruned
         info['elements'] = cur_element
-        info['sparsity'] = [i / j for i, j in zip(cur_pruned, cur_element)] + [sum(cur_pruned) / sum(cur_element),]
+        info['sparsity'] = [i / j for i, j in zip(cur_pruned, cur_element)]
+        info['global_sparsity'] = sum(cur_pruned) / sum(cur_element)
         wandb.log(info)
         return
 
