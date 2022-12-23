@@ -1,10 +1,6 @@
 import math
 
 from settings.base_parser import *
-import os
-import yaml
-
-from config import *
 
 
 class TrainParser(BaseParser):
@@ -59,7 +55,7 @@ class TrainParser(BaseParser):
             args, _ = self.parser.parse_known_args(self.args)
             self.parser.add_argument('--base_lr', default=0.0001 * args.lr)
             self.parser.add_argument('--up_ratio', default=1 / 3 / args.num_circles)
-            self.parser.add_argument('--down_ratio', default= 1 / 3 / args.num_circles)
+            self.parser.add_argument('--down_ratio', default=2 / 3 / args.num_circles)
         else:
             raise NameError('Scheduler {} not found'.format(args.lr_scheduler))
         return
@@ -84,11 +80,11 @@ class TrainParser(BaseParser):
         args, _ = self.parser.parse_known_args(self.args)
         if args.attack.lower() == 'fgsm':
             self.parser.add_argument('--ord', default='inf')
-            self.parser.add_argument('--eps', default=4/255, type=float)
+            self.parser.add_argument('--eps', default=4 / 255, type=float)
         elif args.attack.lower() == 'pgd':
             self.parser.add_argument('--ord', default='inf')
-            self.parser.add_argument('--alpha', default=2/255, type=float)
-            self.parser.add_argument('--eps', default=4/255, type=float)
+            self.parser.add_argument('--alpha', default=2 / 255, type=float)
+            self.parser.add_argument('--eps', default=4 / 255, type=float)
         elif args.attack.lower() == 'noise':
             self.parser.add_argument('--sigma', default=0.12, type=float)
         return
@@ -157,6 +153,5 @@ class TrainParser(BaseParser):
             self.parser.add_argument('--fc_pru_bound', default=0.1, type=float)
         else:
             prune_times = args.num_epoch // args.prune_every
-            amount = 1 - math.pow(1 - args.total_amount, 1/prune_times)
+            amount = 1 - math.pow(1 - args.total_amount, 1 / prune_times)
             self.parser.add_argument('--amount', default=amount, type=float)
-

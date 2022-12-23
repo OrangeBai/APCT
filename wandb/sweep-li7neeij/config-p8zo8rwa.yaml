@@ -1,0 +1,10 @@
+wandb_version: 1
+
+conv_pru_bound:
+  value: 0.06607364355786291
+fc_pru_bound:
+  value: 0.11497627268613034
+model_dir:
+  value: /storage/hpc/52/jiangz9/Experiments/TPAMI/cifar10/vgg16/prune
+prune_every:
+  value: 36

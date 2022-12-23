@@ -1,0 +1,66 @@
+wandb_version: 1
+
+activation:
+  value: ReLU
+base_lr:
+  value: 1.559750867007101e-05
+batch_norm:
+  value: 1
+batch_size:
+  value: 365
+conv_pru_bound:
+  value: 0.16892619933185127
+data_bn:
+  value: 1
+dataset:
+  value: cifar10
+down_ratio:
+  value: 0.05989725967551545
+fc_pru_bound:
+  value: 0.16125709433113228
+fine_tune:
+  value: 28
+lr:
+  value: 0.06533749205809583
+lr_scheduler:
+  value: cyclic
+method:
+  value: Hard
+model_dir:
+  value: /storage/hpc/52/jiangz9/Experiments/TPAMI/cifar10/vgg16/prune
+model_type:
+  value: mini
+momentum:
+  value: 0.8187857867707438
+name:
+  value: hard_0.01_0.15_10
+net:
+  value: vgg16
+npbar:
+  value: 'true'
+num_circles:
+  value: 5
+num_cls:
+  value: 20
+num_epoch:
+  value: 103
+num_step:
+  value: -1
+num_workers:
+  value: 5
+optimizer:
+  value: SGD
+project:
+  value: prune
+prune_every:
+  value: 7
+total_amount:
+  value: 0.8092663075894032
+train_mode:
+  value: pru
+up_ratio:
+  value: 0.13377157641021403
+val_epoch:
+  value: 2
+weight_decay:
+  value: 0.0004964453893532607

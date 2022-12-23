@@ -1,0 +1,29 @@
+2022-12-23 20:13:11 INFO Running runs: []
+2022-12-23 20:13:11 INFO Agent received command: run
+2022-12-23 20:13:11 INFO Agent starting run with config:
+	conv_pru_bound: 0.14205048142987203
+	fc_pru_bound: 0.14905476933181583
+	model_dir: /storage/hpc/52/jiangz9/Experiments/TPAMI/cifar10/vgg16/prune
+	prune_every: 17
+2022-12-23 20:13:11 INFO About to run command: /usr/bin/env python train.py --conv_pru_bound=0.14205048142987203 --fc_pru_bound=0.14905476933181583 --model_dir=/storage/hpc/52/jiangz9/Experiments/TPAMI/cifar10/vgg16/prune --prune_every=17
+2022-12-23 20:13:16 INFO Running runs: ['gxfe4pv6']
+2022-12-23 20:13:16 INFO Cleaning up finished run: gxfe4pv6
+2022-12-23 20:13:17 INFO Agent received command: run
+2022-12-23 20:13:17 INFO Agent starting run with config:
+	conv_pru_bound: 0.06607364355786291
+	fc_pru_bound: 0.11497627268613034
+	model_dir: /storage/hpc/52/jiangz9/Experiments/TPAMI/cifar10/vgg16/prune
+	prune_every: 36
+2022-12-23 20:13:17 INFO About to run command: /usr/bin/env python train.py --conv_pru_bound=0.06607364355786291 --fc_pru_bound=0.11497627268613034 --model_dir=/storage/hpc/52/jiangz9/Experiments/TPAMI/cifar10/vgg16/prune --prune_every=36
+2022-12-23 20:13:22 INFO Running runs: ['p8zo8rwa']
+2022-12-23 20:13:22 INFO Cleaning up finished run: p8zo8rwa
+2022-12-23 20:13:22 INFO Agent received command: run
+2022-12-23 20:13:22 INFO Agent starting run with config:
+	conv_pru_bound: 0.06472903035993792
+	fc_pru_bound: 0.10467349083958122
+	model_dir: /storage/hpc/52/jiangz9/Experiments/TPAMI/cifar10/vgg16/prune
+	prune_every: 34
+2022-12-23 20:13:22 INFO About to run command: /usr/bin/env python train.py --conv_pru_bound=0.06472903035993792 --fc_pru_bound=0.10467349083958122 --model_dir=/storage/hpc/52/jiangz9/Experiments/TPAMI/cifar10/vgg16/prune --prune_every=34
+2022-12-23 20:13:27 INFO Running runs: ['7lkgrvrb']
+2022-12-23 20:13:27 ERROR Detected 3 failed runs in the first 60 seconds, shutting down.
+2022-12-23 20:13:27 INFO To disable this check set WANDB_AGENT_DISABLE_FLAPPING=true

@@ -14,3 +14,4 @@ python train.py --dataset cifar10 --net vgg16 --project expressive --name split_
 # prune training
 python train.py --dataset cifar10 --net vgg16 --project prune --name prune --num_epoch 120 --train_mode pru\
         --lr_scheduler cyclic --num_circles 6 --method Hard --batch_size 128  --prune_every 10 --activation ReLU --npbar
+
