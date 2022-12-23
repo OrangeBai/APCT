@@ -13,5 +13,13 @@ python train.py --dataset cifar10 --net vgg16 --project expressive --name split_
 
 # prune training
 python train.py --dataset cifar10 --net vgg16 --project prune --name prune --num_epoch 120 --train_mode pru\
-        --lr_scheduler cyclic --num_circles 6 --method Hard --batch_size 128  --prune_every 10 --activation ReLU --npbar
+        --lr_scheduler cyclic --num_circles 4 --method Hard --batch_size 128  --prune_every 10 --activation ReLU --npbar
 
+python train.py --dataset cifar10 --net vgg16 --project prune --name prune --num_epoch 120 --train_mode pru\
+        --lr_scheduler cyclic --num_circles 4 --method RandomUnstructured --batch_size 128  --prune_every 10 --activation ReLU --npbar
+
+python train.py --dataset cifar10 --net vgg16 --project prune --name prune --num_epoch 120 --train_mode pru\
+        --lr_scheduler cyclic --num_circles 4 --method RandomUnstructured --prune_eta 0 --batch_size 128  --prune_every 10 --activation ReLU --npbar
+
+python train.py --dataset cifar10 --net vgg16 --project prune --name prune --num_epoch 120 --train_mode pru\
+        --lr_scheduler cyclic --num_circles 4 --method LnStructured --prune_eta 0 --batch_size 128  --prune_every 10 --activation ReLU --npbar
