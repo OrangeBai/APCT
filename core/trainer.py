@@ -187,15 +187,14 @@ class PruneTrainer(BaseTrainer):
         for i, module in enumerate(importance_dict.keys()):
             cur_pruned.append(torch.sum(module.weight == 0))
             cur_element.append(module.weight.nelement())
+            info['sparsity/layer_{}'.format(i)] = torch.sum(module.weight == 0) / module.weight.nelement()
             print("Layer {0:d}: prune {1:d}, total {2:d}, "
                   "sparsity: {3:.2f}%".format(i, cur_pruned[i], cur_element[i], cur_pruned[i] / cur_element[i]))
 
         print("Global sparsity: {:.2f}%".format(sum(cur_pruned)/sum(cur_element)))
         self.model_hook.remove()
-        info['pruned'] = cur_pruned
-        info['elements'] = cur_element
-        info['sparsity'] = [i / j for i, j in zip(cur_pruned, cur_element)]
-        info['global_sparsity'] = sum(cur_pruned) / sum(cur_element)
+
+        info['sparsity/global'] = [i / j for i, j in zip(cur_pruned, cur_element)]
         wandb.log(info)
         return
 
