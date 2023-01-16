@@ -1,8 +1,8 @@
 import datetime
 import os
-
-from core.SCRFP import SMRAP, Smooth, ApproximateAccuracy
-from dataloader import get_val
+import torch
+from core.SCRFP import SCRFP, Smooth, ApproximateAccuracy
+from core.dataloader import *
 
 
 def smooth_test(model, args):
@@ -18,7 +18,7 @@ def smooth_test(model, args):
 
 def smooth_pred(model, args):
     if args.method == 'SMRAP':
-        smoothed_classifier = SMRAP(model, args)
+        smoothed_classifier = SCRFP(model, args)
     else:
         smoothed_classifier = Smooth(model, args)
 

@@ -2,6 +2,7 @@ from models.blocks import *
 from models.net.resnet import Bottleneck
 import torch.nn.functional as F
 
+
 class DualNet(nn.Module):
     def __init__(self, net, args):
         super().__init__()

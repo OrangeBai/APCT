@@ -15,17 +15,6 @@ if __name__ == '__main__':
     # datamodule=DataModule(args)
     model = set_pl_model(args.train_mode)(args)
 
-    def compute_amount(epoch):
-        # the sum of all returned values need to be smaller than 1
-        # if epoch == 2:
-        #     return 0.5
-        #
-        # elif epoch == 50:
-        #     return 0.25
-        #
-        # elif 75 < epoch < 99:
-        #     return 0.01
-        return 0.5
     callbacks = [
         ModelCheckpoint(monitor='val/top1', save_top_k=1, mode="max", save_on_train_epoch_end=False,
                         dirpath=logtool.experiment.dir, filename="ckpt-best"),
@@ -35,7 +24,7 @@ if __name__ == '__main__':
                          precision=16,
                          amp_backend="native",
                          accelerator="cuda",
-                         strategy=DDPStrategy(find_unused_parameters=False),
+                         strategy=DDPStrategy(find_unused_parameters=False, process_group_backend="gloo"),
                          callbacks=callbacks,
                          max_epochs=args.num_epoch,
                          max_steps=args.num_step,

@@ -1,13 +1,25 @@
 from core.utils import *
 from models.blocks import LinearBlock, ConvBlock
 
+
 class BaseHook:
+    """
+    Base method for adding hooks of a network.
+    """
     def __init__(self, model):
+        """
+        Initialization method
+        :param model: The model to be added
+        """
         self.model = model
-        self.handles = []
-        self.features = {}
+        self.handles = []       # handles for registered hooks
+        self.features = {}      # recorder for computed attributes
 
     def set_up(self):
+        """
+        Remove all previous hooks and register hooks for each of t
+        :return:
+        """
         self.remove()
         for block_name, block in self.model.named_modules():
             if type(block) in [LinearBlock, ConvBlock]:
@@ -33,12 +45,28 @@ class BaseHook:
 
 
 class EntropyHook(BaseHook):
+    """
+    Entropy hook is a forward hood that computes the neuron entropy of the network.
+    """
     def __init__(self, model, Gamma):
+        """
+        Initialization method.
+        :param model: Pytorch model, which should be a sequential blocks
+        :param Gamma: The breakpoint for a given activation function, i.e.
+                        {0} separates ReLU and PReLU into two linear regions.
+                        {-0.5, 0.5} separates Sigmoid and tanH into 2 semi-constant region and 1 semi-linear region.
+        """
         super().__init__(model)
         self.Gamma = Gamma
         self.num_pattern = len(Gamma) + 1
 
     def hook(self, block_name, layer_name):
+        """
+
+        :param block_name:
+        :param layer_name:
+        :return:
+        """
         def fn(layer, input_var, output_var):
             """
             Count the frequency of each pattern
@@ -56,7 +84,6 @@ class EntropyHook(BaseHook):
         for block in self.features.values():
             for layer in block.values():
                 layer = layer.reshape(self.num_pattern, -1)
-
                 layer /= layer.sum(axis=0)
                 s = np.zeros(layer.shape[1:])
                 for j in range(self.num_pattern):

@@ -11,6 +11,11 @@ def check_valid_block(block):
 
 
 def get_block_weight(block):
+    """
+    Get the weight of a given block
+    :param block:
+    :return:
+    """
     if isinstance(block, ConvBlock):
         return getattr(block.Conv, 'weight')
     elif isinstance(block, LinearBlock):
@@ -20,9 +25,19 @@ def get_block_weight(block):
 
 
 def compute_importance(weight, channel_entropy, eta):
-    if eta is None:
-        importance_scores = None
-    elif eta == 0:
+    """
+    Compute the importance score based on weight and entropy of a channel
+    :param weight:  Weight of the module, shape as:
+                    ConvBlock: in_channels * out_channels * kernel_size_1 * kernel_size_2
+                    LinearBlock: in_channels * out_channels
+    :param channel_entropy: The averaged entropy of each channel, shape as in_channels * 1 * (1 * 1)
+    :param eta: the importance of entropy in pruning,
+                None:   prune without using weight
+                0:      prune by weight
+                else:   eta * channel_entropy * weight
+    :return:    The importance_scores
+    """
+    if eta == 0:
         importance_scores = weight
     else:
         importance_scores = eta * channel_entropy * weight
@@ -31,6 +46,14 @@ def compute_importance(weight, channel_entropy, eta):
 
 
 def compute_neuron_entropy(block, neuron_entropy):
+    """
+    Compute the channel entropy of a network
+    :param block: current block
+    :param neuron_entropy:  the entropy of the pre-activation, shape as:
+                            ConvBlock: out_channels * out_size * out * size
+                            LinearBlock: out_channels
+    :return: Averaged channel entropy
+    """
     if isinstance(block, ConvBlock):
         avg_axis = len(neuron_entropy[0].shape)
         filter_sim = neuron_entropy[0].mean(tuple(range(1, avg_axis)))
@@ -53,12 +76,22 @@ def get_pru_layer(block):
 
 
 def compute_params(block, block_entropy, parameters_to_prune, importance_dict, eta):
+    """
+    Update the parameters for prune.
+    :param block:
+    :param block_entropy:
+    :param parameters_to_prune:
+    :param importance_dict:
+    :param eta:
+    :return:
+    """
     weight = get_block_weight(block)
     channel_entropy = compute_neuron_entropy(block, block_entropy)
     importance = compute_importance(weight, channel_entropy, eta=eta)
     layer = get_pru_layer(block)
     parameters_to_prune.append((layer, 'weight'))
     importance_dict[layer] = importance
+    return
 
 
 def prune_model(parameters_to_prune, importance_dict, args):
@@ -103,11 +136,16 @@ def prune_model(parameters_to_prune, importance_dict, args):
                               importance_scores=importance_dict[cur_param])
 
 
-def monitor(importance_dict):
-    pruned = 0
-    nele = 0
+def monitor(importance_dict, info):
+    cur_pruned = []
+    cur_element = []
+    for i, module in enumerate(importance_dict.keys()):
+        cur_pruned.append(torch.sum(module.weight == 0))
+        cur_element.append(module.weight.nelement())
+        info['sparsity/layer_{}'.format(str(i).zfill(2))] = torch.sum(module.weight == 0) / module.weight.nelement()
+        print("Layer {0:d}: prune {1:d}, total {2:d}, "
+              "sparsity: {3:.2f}%".format(i, cur_pruned[i], cur_element[i], cur_pruned[i] / cur_element[i]))
 
-    for module in importance_dict.keys():
-        pruned += torch.sum(module.weight == 0)
-        nele += module.weight.nelement()
-    print("Global sparsity: {:.2f}%".format(pruned / nele))
+    print("Global sparsity: {:.2f}%".format(sum(cur_pruned) / sum(cur_element)))
+    info['sparsity/global'] = sum(cur_pruned) / sum(cur_element)
+    return

@@ -19,10 +19,6 @@ class TrainParser(BaseParser):
         self.parser.add_argument('--num_step', default=-1, type=int)
         self.parser.add_argument('--batch_size', default=128, type=int)
 
-        # model settings
-        self.parser.add_argument('--data_bn', type=int, default=1)
-        self.parser.add_argument('--batch_norm', default=1, type=int)
-        self.parser.add_argument('--activation', default='LeakyReLU', type=str)
         # scheduler and optimizer
         self.parser.add_argument('--lr_scheduler', default='milestones',
                                  choices=['static', 'milestones', 'exp', 'linear', 'cyclic'])
@@ -35,7 +31,6 @@ class TrainParser(BaseParser):
 
         self.lr_scheduler()
         self.optimizer()
-        self.dataset()
         self.train_mode()
         return self.parser
 
@@ -87,25 +82,6 @@ class TrainParser(BaseParser):
             self.parser.add_argument('--eps', default=4 / 255, type=float)
         elif args.attack.lower() == 'noise':
             self.parser.add_argument('--sigma', default=0.12, type=float)
-        return
-
-    def dataset(self):
-        args, _ = self.parser.parse_known_args(self.args)
-        if args.dataset.lower() == 'mnist':
-            self.parser.set_defaults(model_type='dnn')
-            self.parser.add_argument('--num_cls', default=10, type=int)
-            self.parser.add_argument('--input_size', default=784, type=int)
-            self.parser.add_argument('--width', default=1000, type=int)
-            self.parser.add_argument('--depth', default=9, type=int)
-        elif args.dataset.lower() == 'cifar10':
-            self.parser.add_argument('--num_cls', default=10, type=int)
-            self.parser.set_defaults(model_type='mini')
-        elif args.dataset.lower() == 'cifar100':
-            self.parser.add_argument('--num_cls', default=100, type=int)
-            self.parser.set_defaults(model_type='mini')
-        elif args.dataset.lower() == 'imagenet':
-            self.parser.set_defaults(model_type='net')
-            self.parser.add_argument('--num_cls', default=1000, type=int)
         return
 
     def train_mode(self):
