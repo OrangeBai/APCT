@@ -9,7 +9,6 @@ from matplotlib import pyplot as plt
 from scipy.stats import norm, binom_test
 from core.DualNet import DualNet
 from core.dataloader import set_mean_sed
-from core.smooth.smooth_core import *
 from statsmodels.stats.proportion import proportion_confint
 import seaborn as sns
 

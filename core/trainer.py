@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 from torch.nn.utils.prune import L1Unstructured, global_unstructured
 import torch.utils.data as data
+import os
 import wandb
 from core.prune import *
 from core.attack import set_attack
@@ -12,6 +13,11 @@ from models.base_model import build_model
 
 class BaseTrainer(pl.LightningModule):
     def __init__(self, arg):
+        """
+        init base trainer
+        :param arg: required name fields including:
+                    (dataset, net,  project, name,
+        """
         super().__init__()
         self.args = arg
         self.model = build_model(arg).cuda()
@@ -64,6 +70,20 @@ class BaseTrainer(pl.LightningModule):
 
     def forward(self, x):
         return self.model(x)
+
+    def save_model(self, save_dir):
+        ckpt_path = os.path.join(save_dir, 'best.ckpt')
+        if os.path.exists(ckpt_path):
+            ckpt = torch.load(ckpt_path)
+            self.model.load_weights(ckpt['state_dict'])
+        pth_path = os.path.join(save_dir, 'model.pth')
+        torch.save(self.model, pth_path)
+        return
+
+    def load_model(self, load_dir):
+        pth_path = os.path.join(load_dir, 'model.pth')
+        self.model = torch.load(pth_path)
+        return
 
 
 class AttackTrainer(BaseTrainer):

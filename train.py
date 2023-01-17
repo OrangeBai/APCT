@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     callbacks = [
         ModelCheckpoint(monitor='val/top1', save_top_k=1, mode="max", save_on_train_epoch_end=False,
-                        dirpath=logtool.experiment.dir, filename="ckpt-best"),
+                        dirpath=logtool.experiment.dir, filename="best"),
     ]
 
     trainer = pl.Trainer(devices="auto",
@@ -34,3 +34,5 @@ if __name__ == '__main__':
                          enable_progress_bar=args.npbar
                          )
     trainer.fit(model)
+    model.save_model(logtool.experiment.dir)
+

@@ -19,6 +19,7 @@ class BaseModel(nn.Module):
             model_path = os.path.join(path, 'weights.pth')
         else:
             model_path = os.path.join(path, 'weights_{}.pth'.format(name))
+        # torch.save(self.state_dict(), model_path)
         torch.save(self.state_dict(), model_path)
         return
 
