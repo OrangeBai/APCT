@@ -14,6 +14,7 @@ import seaborn as sns
 
 sns.set()
 
+
 class Smooth(object):
     """A smoothed classifier g """
 

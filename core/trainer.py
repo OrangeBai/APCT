@@ -9,6 +9,7 @@ from core.pattern import *
 from core.utils import *
 from core.dataloader import set_dataloader, set_dataset
 from models.base_model import build_model
+from core.DualNet import *
 
 
 class BaseTrainer(pl.LightningModule):
@@ -30,6 +31,15 @@ class BaseTrainer(pl.LightningModule):
             return
         else:
             return
+
+    @staticmethod
+    def check_valid_block(block):
+        if isinstance(block, ConvBlock) or isinstance(block, LinearBlock) or isinstance(block, Bottleneck):
+            return True
+        return False
+
+    def check_last_block(self, block):
+        return block == self.model.layers[-1]
 
     def train_dataloader(self):
         return self.train_loader
@@ -189,21 +199,27 @@ class PruneTrainer(BaseTrainer):
     def validation_epoch_end(self, validation_step_outputs):
         if self.current_epoch not in self.args.prune_milestone:
             return
-        info = {'step': self.global_step, 'epoch': self.current_epoch}
-        res = self.model_hook.retrieve(reshape=False)
-        parameters_to_prune = []
-        importance_dict = {}
-        for name, block in self.model.named_modules():
-            if not check_valid_block(block) or block == self.model.layers[-1]:
-                continue
-            compute_params(block, res[name], parameters_to_prune, importance_dict, self.args.prune_eta)
 
-        prune_model(parameters_to_prune, importance_dict, self.args)
-        monitor(importance_dict, info)
+        im_scores = {}
+        info = {'step': self.global_step, 'epoch': self.current_epoch}
+        global_entropy = self.model_hook.retrieve(reshape=False)
+        for name, block in self.model.named_modules():
+            if not self.check_last_block(block) and self.check_valid_block(block):
+                im_scores.update(prune_block(block, global_entropy[name], self.args.prune_eta))
+
+        params_to_prune = list(im_scores.keys())
+        prune_model(params_to_prune, im_scores, self.args)
+        monitor(im_scores, info)
         self.model_hook.remove()
 
         wandb.log(info)
         return
+
+
+class DualNetTrainer(BaseTrainer):
+    def __init__(self, arg):
+        super().__init__(arg)
+        self.dual_net = DualNet(self.model, arg)
 
 
 def set_pl_model(train_mode):

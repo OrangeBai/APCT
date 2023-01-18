@@ -1,27 +1,6 @@
 import torch
 from torch.nn.utils.prune import global_unstructured, L1Unstructured, random_structured, ln_structured, RandomStructured
-
 from models.blocks import ConvBlock, LinearBlock
-
-
-def check_valid_block(block):
-    if isinstance(block, ConvBlock) or isinstance(block, LinearBlock):
-        return True
-    return False
-
-
-def get_block_weight(block):
-    """
-    Get the weight of a given block
-    :param block:
-    :return:
-    """
-    if isinstance(block, ConvBlock):
-        return getattr(block.Conv, 'weight')
-    elif isinstance(block, LinearBlock):
-        return getattr(block.FC, 'weight')
-    else:
-        raise NameError("Invalid Block for pruning")
 
 
 def compute_importance(weight, channel_entropy, eta):
@@ -37,6 +16,9 @@ def compute_importance(weight, channel_entropy, eta):
                 else:   eta * channel_entropy * weight
     :return:    The importance_scores
     """
+    assert weight.shape[0] == channel_entropy.shape[0] and channel_entropy.ndim == 1
+    e_new_shape = (-1, ) + (1, ) * (weight.dim() - 1)
+    channel_entropy = torch.tensor(channel_entropy).view(e_new_shape)
     if eta == 0:
         importance_scores = weight
     else:
@@ -68,52 +50,44 @@ def compute_neuron_entropy(block, neuron_entropy):
         raise NameError("Invalid Block for pruning")
 
 
-def get_pru_layer(block):
-    if isinstance(block, ConvBlock):
-        return block.Conv
-    elif isinstance(block, LinearBlock):
-        return block.FC
+def prune_block(block, block_entropy, eta):
+    if isinstance(block, ConvBlock) or isinstance(block, LinearBlock):
+        return prune_linear_transform_block(block, block_entropy, eta)
+    # elif isinstance(block, LinearBlock):
+    #     return prune_linear_block(block, block_entropy, eta)
 
 
-def compute_params(block, block_entropy, parameters_to_prune, importance_dict, eta):
+def prune_linear_transform_block(block, block_entropy, eta):
     """
-    Update the parameters for prune.
-    :param block:
-    :param block_entropy:
-    :param parameters_to_prune:
-    :param importance_dict:
-    :param eta:
+    :param block: Conv block to be pruned
+    :param block_entropy: entropy of the block output (out_channels * H * W)
+    :param eta: hyper parameter.
     :return:
     """
-    weight = get_block_weight(block)
-    channel_entropy = compute_neuron_entropy(block, block_entropy)
-    importance = compute_importance(weight, channel_entropy, eta=eta)
-    layer = get_pru_layer(block)
-    parameters_to_prune.append((layer, 'weight'))
-    importance_dict[layer] = importance
-    return
+    weights = getattr(block.LT, 'weight').detach().cpu()
+    num_dim = len(block_entropy[0].shape)                               # num of dimensions
+    channel_entropy = block_entropy[0].mean(tuple(range(1, num_dim)))   # averaged entropy (out_channels, )
+    lt_im_score = compute_importance(weights, channel_entropy, eta)
+    bn_im_score = lt_im_score.mean(dim=tuple(range(1, weights.dim())))
+
+    im_dict = {
+        (block.LT, 'weight'): lt_im_score,
+        (block.BN, 'weight'): bn_im_score,
+        (block.BN, 'bias'): bn_im_score
+    }
+    return im_dict
+
+
+def prune_bottle_neck_block(block):
+    pass
 
 
 def prune_model(parameters_to_prune, importance_dict, args):
-    if args.method == 'L1Unstructured':
-        global_unstructured(
-            parameters_to_prune,
-            pruning_method=L1Unstructured,
-            amount=args.amount,
-            importance_scores=importance_dict
-        )
-    elif args.method == 'RandomStructured':
-        global_unstructured(
-            parameters_to_prune,
-            pruning_method=RandomStructured,
-            amount=args.amount,
-            importance_scores=importance_dict
-        )
-    elif args.method == 'LnStructured':
+    if args.method == 'LnStructured':
         for cur_param, cur_name in parameters_to_prune:
             ln_structured(cur_param, cur_name, args.amount, 2, dim=0,
                           importance_scores=importance_dict[cur_param])
-    elif args.method == 'RandomUnstructured':
+    elif args.method == 'RandomStructured':
         for cur_param, cur_name in parameters_to_prune:
             random_structured(cur_param, cur_name, args.amount, dim=0)
     elif args.method == 'Hard':
@@ -149,3 +123,29 @@ def monitor(importance_dict, info):
     print("Global sparsity: {:.2f}%".format(sum(cur_pruned) / sum(cur_element)))
     info['sparsity/global'] = sum(cur_pruned) / sum(cur_element)
     return
+
+
+def restructure(model):
+    """remove the zero filters"""
+    pass
+
+
+
+# def compute_params(block, block_entropy, parameters_to_prune, importance_dict, eta):
+#     """
+#     Update the parameters for prune.
+#     :param block:
+#     :param block_entropy:
+#     :param parameters_to_prune:
+#     :param importance_dict:
+#     :param eta:
+#     :return:
+#     """
+#     prune_block(block, block_entropy, eta)
+#     # weight = get_block_weight(block)
+#     # channel_entropy = compute_neuron_entropy(block, block_entropy)
+#     # importance = compute_importance(weight, channel_entropy, eta=eta)
+#     # layer = get_pru_layer(block)
+#     # parameters_to_prune.append((layer, 'weight'))
+#     # importance_dict[layer] = importance
+#     return prune_block(block, block_entropy, eta)

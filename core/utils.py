@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.distributed as dist
 import torch.nn as nn
+from torch import nn
 from torch.optim.lr_scheduler import *
 from torch.optim.lr_scheduler import _LRScheduler
 import math
@@ -314,3 +315,20 @@ def load_weight(model, state_dict):
     return model
 
 
+def set_activation(activation):
+    if activation is None:
+        return nn.Identity()
+    elif activation.lower() == 'relu':
+        return nn.ReLU(inplace=True)
+    elif activation.lower() == 'prelu':
+        return nn.PReLU()
+    elif activation.lower() == 'gelu':
+        return nn.GELU()
+    elif activation.lower() == 'leakyrelu':
+        return nn.LeakyReLU(0.1, inplace=True)
+    elif activation.lower() == 'sigmoid':
+        return nn.Sigmoid()
+    elif activation.lower() == 'relu6':
+        return nn.ReLU6()
+    elif activation.lower() == 'tanh':
+        return nn.Tanh()

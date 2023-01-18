@@ -16,6 +16,7 @@ class DualNet(nn.Module):
 
     @property
     def count_block_len(self):
+
         counter = 0
         for module in self.net.layers.children():
             if type(module) in [ConvBlock, LinearBlock, Bottleneck]:
@@ -84,6 +85,7 @@ class DualNet(nn.Module):
         return x
 
     def remove_handles(self):
+        """Remove all registered forward hook"""
         for h in self.handles:
             h.remove()
         self.handles.clear()
@@ -126,6 +128,7 @@ class DualNet(nn.Module):
 
     @staticmethod
     def x_mask(x, ratio, mask, balance=True):
+        """masked forward for a given data x"""
         if ratio == 0:
             return x * mask
         else:
@@ -136,10 +139,9 @@ class DualNet(nn.Module):
 
     @staticmethod
     def compute_pre_act(module, x):
-        if type(module) == ConvBlock:
-            return module.BN(module.Conv(x))
-        elif type(module) == LinearBlock:
-            return module.BN(module.FC(x))
+        """Compute the pre activation of a block"""
+        if type(module) == ConvBlock or type(module) == LinearBlock:
+            return module.BN(module.LT(x))
         elif type(module) == Bottleneck:
             out = module.bottle_net(x)
             identity = module.downsample(x)

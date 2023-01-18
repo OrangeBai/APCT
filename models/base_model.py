@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 
 from core.dataloader import set_mean_sed
+from models.blocks import NormalizeLayer
 
 
 class BaseModel(nn.Module):
@@ -63,27 +64,3 @@ def build_model(args):
     return model
 
 
-class NormalizeLayer(torch.nn.Module):
-    """Standardize the channels of a batch of images by subtracting the dataset mean
-      and dividing by the dataset standard deviation.
-
-      In order to certify radii in original coordinates rather than standardized coordinates, we
-      add the Gaussian noise _before_ standardizing, which is why we have standardization be the first
-      layer of the classifier rather than as a part of preprocessing as is typical.
-      """
-
-    def __init__(self, means, sds):
-        """
-        :param means: the channel means
-        :param sds: the channel standard deviations
-        """
-        super(NormalizeLayer, self).__init__()
-        self.means = torch.tensor(means)
-        self.sds = torch.tensor(sds)
-
-    def forward(self, x: torch.tensor):
-        device = x.device
-        (batch_size, num_channels, height, width) = x.shape
-        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
-        std = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
-        return (x - means.to(device=device)) / std.to(device=device)
