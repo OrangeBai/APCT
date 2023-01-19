@@ -82,10 +82,7 @@ class BaseTrainer(pl.LightningModule):
         return self.model(x)
 
     def save_model(self, save_dir):
-        ckpt_path = os.path.join(save_dir, 'best.ckpt')
-        if os.path.exists(ckpt_path):
-            ckpt = torch.load(ckpt_path)
-            self.model.load_weights(ckpt['state_dict'])
+        self.load_best(save_dir)
         pth_path = os.path.join(save_dir, 'model.pth')
         torch.save(self.model, pth_path)
         return
@@ -93,6 +90,13 @@ class BaseTrainer(pl.LightningModule):
     def load_model(self, load_dir):
         pth_path = os.path.join(load_dir, 'model.pth')
         self.model = torch.load(pth_path)
+        return
+
+    def load_best(self, load_dir):
+        ckpt_path = os.path.join(load_dir, 'best.ckpt')
+        if os.path.exists(ckpt_path):
+            ckpt = torch.load(ckpt_path)
+            self.model.load_weights(ckpt['state_dict'])
         return
 
 
@@ -207,13 +211,24 @@ class PruneTrainer(BaseTrainer):
             if not self.check_last_block(block) and self.check_valid_block(block):
                 im_scores.update(prune_block(block, global_entropy[name], self.args.prune_eta))
 
-        params_to_prune = list(im_scores.keys())
-        iteratively_prune(params_to_prune, im_scores, self.args)
+        iteratively_prune(im_scores, self.args)
         monitor(im_scores, info)
         self.model_hook.remove()
 
         wandb.log(info)
         return
+
+    def save_model(self, save_dir):
+        self.load_best(save_dir)
+        self.iteratively_remove()
+        pth_path = os.path.join(save_dir, 'model.pth')
+        torch.save(self.model, pth_path)
+        return
+
+    def iteratively_remove(self):
+        for name, module in self.named_modules():
+            if not self.check_last_block(module) and self.check_valid_block(module):
+                remove_block(module)
 
 
 class DualNetTrainer(BaseTrainer):

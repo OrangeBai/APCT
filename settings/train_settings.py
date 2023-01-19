@@ -95,7 +95,7 @@ class TrainParser(BaseParser):
         elif args.train_mode == 'exp':
             self.parser.add_argument('--split', default=1.0, type=float)
         elif args.train_mode == 'pru':
-            self.parser.add_argument('--prune_eta', default=1, type=float)
+            self.parser.add_argument('--prune_eta', default=-1, type=float)
             self.parser.add_argument('--prune_every', default=20, type=int)
             self.parser.add_argument('--fine_tune', default=20, type=int)
             self.parser.add_argument('--method', default='Hard', type=str,
@@ -124,7 +124,7 @@ class TrainParser(BaseParser):
         milestone = list(range(args.prune_every, args.num_epoch - args.fine_tune + 1, args.prune_every))
         self.parser.add_argument('--prune_milestone', default=milestone, type=list)
         if args.method == 'Hard':
-            self.parser.set_defaults(prune_eta=0)
+            self.parser.set_defaults(prune_eta=-1)
             self.parser.add_argument('--conv_pru_bound', default=0.1, type=float)
             self.parser.add_argument('--fc_pru_bound', default=0.1, type=float)
         else:

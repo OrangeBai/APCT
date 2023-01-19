@@ -1,7 +1,6 @@
 import torch
-from torch.nn.utils.prune import global_unstructured, L1Unstructured, random_structured, ln_structured, RandomStructured
+from torch.nn.utils.prune import l1_unstructured, random_structured, ln_structured, remove, identity, is_pruned
 from models.blocks import ConvBlock, LinearBlock
-
 
 def compute_importance(weight, channel_entropy, eta):
     """
@@ -11,7 +10,7 @@ def compute_importance(weight, channel_entropy, eta):
                     LinearBlock: in_channels * out_channels
     :param channel_entropy: The averaged entropy of each channel, shape as in_channels * 1 * (1 * 1)
     :param eta: the importance of entropy in pruning,
-                None:   prune without using weight
+                -1:     hard prune without using weight
                 0:      prune by weight
                 else:   eta * channel_entropy * weight
     :return:    The importance_scores
@@ -19,7 +18,9 @@ def compute_importance(weight, channel_entropy, eta):
     assert weight.shape[0] == channel_entropy.shape[0] and channel_entropy.ndim == 1
     e_new_shape = (-1, ) + (1, ) * (weight.dim() - 1)
     channel_entropy = torch.tensor(channel_entropy).view(e_new_shape)
-    if eta == 0:
+    if eta == -1:
+        importance_scores = channel_entropy * torch.ones_like(weight)
+    elif eta == 0:
         importance_scores = weight
     else:
         importance_scores = eta * channel_entropy * weight
@@ -70,10 +71,11 @@ def prune_linear_transform_block(block, block_entropy, eta):
     lt_im_score = compute_importance(weights, channel_entropy, eta)
     bn_im_score = lt_im_score.mean(dim=tuple(range(1, weights.dim())))
 
+    block_type = 'ConvBlock' if isinstance(block, ConvBlock) else 'LinearBlock'
     im_dict = {
-        (block.LT, 'weight'): lt_im_score,
-        (block.BN, 'weight'): bn_im_score,
-        (block.BN, 'bias'): bn_im_score
+        (block.LT, 'weight', block_type): lt_im_score,
+        (block.BN, 'weight', block_type): bn_im_score,
+        (block.BN, 'bias', block_type): bn_im_score
     }
     return im_dict
 
@@ -82,38 +84,56 @@ def prune_bottle_neck_block(block):
     pass
 
 
-def iteratively_prune(parameters_to_prune, im_dict, args):
-    for cur_param, cur_name in parameters_to_prune:
-        prune_module(cur_param, cur_name, im_dict[(cur_param, cur_name)], args)
+def remove_block(block):
+    if isinstance(block, ConvBlock) or isinstance(block, LinearBlock):
+        remove(block.LT, 'weight')
+        remove(block.BN, 'weight')
+        remove(block.BN, 'bias')
 
 
-def prune_module(cur_param, cur_name, im_score, args):
+def iteratively_prune(im_dict, args):
+    for param_to_prune, im_score in im_dict.items():
+        prune_module(param_to_prune, im_score, args)
+
+
+def prune_module(param_to_prune, im_score, args):
+    module, name, block = param_to_prune
     if args.method == 'LnStructured':
-        ln_structured(cur_param, cur_name, args.amount, 2, dim=0, importance_scores=im_score)
+        ln_structured(module, name, args.amount, 2, dim=0, importance_scores=im_score)
     elif args.method == 'RandomStructured':
-        random_structured(cur_param, cur_name, args.amount, dim=0)
+        random_structured(module, name, args.amount, dim=0)
     elif args.method == 'Hard':
-        n_dims = len(cur_param.weight.shape)
-        slc = [slice(None)] * n_dims
-        if hasattr(cur_param, 'weight_mask'):
-            keep_channel = cur_param.weight_mask.sum([d for d in range(n_dims) if d != 0]) != 0
+        cur_param = getattr(module, name)
+        num_dims = cur_param.dim()
+        slc = [slice(None)] * num_dims
+        if hasattr(module, name + '_mask'):
+            keep_channel = getattr(module, name + '_mask').sum(tuple(range(1, cur_param.dim()))) != 0
             slc[0] = keep_channel
+        tensor_to_pru = im_score[slc]
 
-            tensor_to_pru = im_score[slc]
-            if isinstance(cur_param, torch.nn.Conv2d):
-                num_filters = torch.sum(torch.as_tensor(tensor_to_pru[:, 0, 0, 0] < args.conv_pru_bound).to(torch.int))
-            elif isinstance(cur_param, torch.nn.Linear):
-                num_filters = torch.sum(torch.as_tensor(tensor_to_pru[:, 0] < args.conv_pru_bound).to(torch.int))
+        hard_ind = torch.Tensor(tensor_to_pru[(slice(None, ),) + (0,) * (num_dims - 1)])
+        if block == 'ConvBlock':
+            num_filters = torch.sum(hard_ind < args.conv_pru_bound).to(torch.int)
+        elif block == 'LinearBlock':
+            num_filters = torch.sum(hard_ind < args.fc_pru_bound).to(torch.int)
+        else:
+            raise NameError("Invalid Block for pruning")
+        if num_filters == 0:
+            identity(module, name)
+        elif 0 < num_filters < len(tensor_to_pru):
+            if num_dims > 1 :
+                ln_structured(module, name, int(num_filters), 2, dim=0, importance_scores=im_score.cuda())
             else:
-                raise NameError("Invalid Block for pruning")
-            if 0 < num_filters < len(tensor_to_pru):
-                ln_structured(cur_param, cur_name, int(num_filters), 2, dim=0, importance_scores=im_score)
+                l1_unstructured(module, name, int(num_filters), importance_scores=im_score.cuda())
+        else:
+            raise ValueError("Amount to prune should be less than number of params, "
+                             "got {0} and {1}".format(num_filters, len(tensor_to_pru)))
 
 
 def monitor(importance_dict, info):
     cur_pruned = []
     cur_element = []
-    for i, module in enumerate(importance_dict.keys()):
+    for i, (module, name, block) in enumerate(importance_dict.keys()):
         cur_pruned.append(torch.sum(module.weight == 0))
         cur_element.append(module.weight.nelement())
         info['sparsity/layer_{}'.format(str(i).zfill(2))] = torch.sum(module.weight == 0) / module.weight.nelement()
