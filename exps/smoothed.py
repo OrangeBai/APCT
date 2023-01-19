@@ -1,7 +1,7 @@
 import datetime
 import os
 import torch
-from core.SCRFP import SCRFP, Smooth, ApproximateAccuracy
+from core.scrfp import SCRFP, Smooth, ApproximateAccuracy
 from core.dataloader import *
 
 

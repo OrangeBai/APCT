@@ -1,6 +1,6 @@
 from plot.cfg import *
 
-from core.SCRFP import ApproximateAccuracy
+from core.scrfp import ApproximateAccuracy
 
 if __name__ == '__main__':
     files = [

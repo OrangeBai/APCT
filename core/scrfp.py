@@ -7,7 +7,7 @@ import pandas as pd
 import torch
 from matplotlib import pyplot as plt
 from scipy.stats import norm, binom_test
-from core.DualNet import DualNet
+from core.dual_net import DualNet
 from core.dataloader import set_mean_sed
 from statsmodels.stats.proportion import proportion_confint
 import seaborn as sns

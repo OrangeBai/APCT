@@ -9,7 +9,7 @@ from core.pattern import *
 from core.utils import *
 from core.dataloader import set_dataloader, set_dataset
 from models.base_model import build_model
-from core.DualNet import *
+from core.dual_net import *
 
 
 class BaseTrainer(pl.LightningModule):
@@ -208,7 +208,7 @@ class PruneTrainer(BaseTrainer):
                 im_scores.update(prune_block(block, global_entropy[name], self.args.prune_eta))
 
         params_to_prune = list(im_scores.keys())
-        prune_model(params_to_prune, im_scores, self.args)
+        iteratively_prune(params_to_prune, im_scores, self.args)
         monitor(im_scores, info)
         self.model_hook.remove()
 
