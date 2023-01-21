@@ -107,7 +107,7 @@ def prune_module(param_to_prune, im_score, args):
         num_dims = cur_param.dim()
         slc = [slice(None)] * num_dims
         if hasattr(module, name + '_mask'):
-            keep_channel = getattr(module, name + '_mask').sum(tuple(range(1, cur_param.dim()))) != 0
+            keep_channel = getattr(module, name + '_mask')[(slice(None, ),) + (0,) * (num_dims - 1)] != 0
             slc[0] = keep_channel
         tensor_to_pru = im_score[slc]
 
@@ -121,7 +121,7 @@ def prune_module(param_to_prune, im_score, args):
         if num_filters == 0:
             identity(module, name)
         elif 0 < num_filters < len(tensor_to_pru):
-            if num_dims > 1 :
+            if num_dims > 1:
                 ln_structured(module, name, int(num_filters), 2, dim=0, importance_scores=im_score.cuda())
             else:
                 l1_unstructured(module, name, int(num_filters), importance_scores=im_score.cuda())

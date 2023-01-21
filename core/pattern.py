@@ -1,5 +1,6 @@
 from core.utils import *
 from models.blocks import LinearBlock, ConvBlock
+from random import random
 
 
 class BaseHook:
@@ -48,7 +49,7 @@ class EntropyHook(BaseHook):
     """
     Entropy hook is a forward hood that computes the neuron entropy of the network.
     """
-    def __init__(self, model, Gamma):
+    def __init__(self, model, Gamma, ratio=1):
         """
         Initialization method.
         :param model: Pytorch model, which should be a sequential blocks
@@ -59,6 +60,7 @@ class EntropyHook(BaseHook):
         super().__init__(model)
         self.Gamma = Gamma
         self.num_pattern = len(Gamma) + 1
+        self.ratio = ratio
 
     def hook(self, block_name, layer_name):
         """
@@ -71,12 +73,13 @@ class EntropyHook(BaseHook):
             """
             Count the frequency of each pattern
             """
-            input_var = input_var[0]
-            pattern = get_pattern(input_var, self.Gamma)
-            if self.features[block_name][layer_name] is None:
-                self.features[block_name][layer_name] = np.zeros((self.num_pattern,) + pattern.shape[1:])
-            for i in range(1 + len(self.Gamma)):
-                self.features[block_name][layer_name][i] += (pattern == i).sum(axis=0)
+            if random() < self.ratio:
+                input_var = input_var[0]
+                pattern = get_pattern(input_var, self.Gamma)
+                if self.features[block_name][layer_name] is None:
+                    self.features[block_name][layer_name] = np.zeros((self.num_pattern,) + pattern.shape[1:])
+                for i in range(1 + len(self.Gamma)):
+                    self.features[block_name][layer_name][i] += (pattern == i).sum(axis=0)
         return fn
 
     def retrieve(self, reshape=True):
@@ -94,8 +97,8 @@ class EntropyHook(BaseHook):
 
 
 class PruneHook(EntropyHook):
-    def __init__(self, model, Gamma):
-        super().__init__(model, Gamma)
+    def __init__(self, model, Gamma, ratio=1):
+        super().__init__(model, Gamma, ratio)
 
     def retrieve(self, reshape=True):
         entropy = {}
@@ -104,7 +107,6 @@ class PruneHook(EntropyHook):
             for layer in block.values():
                 if reshape:
                     layer = layer.reshape(self.num_pattern, -1)
-
                 layer /= layer.sum(axis=0)
                 s = np.zeros(layer.shape[1:])
                 for j in range(self.num_pattern):
@@ -153,7 +155,7 @@ def get_pattern(input_var, Gamma):
     pattern = np.zeros(input_var.shape)
     num_of_pattern = len(Gamma)
 
-    pattern[to_numpy(input_var < Gamma[0])] = 0
+    pattern[to_numpy(input_var <= Gamma[0])] = 0
     pattern[to_numpy(input_var > Gamma[-1])] = num_of_pattern
     for i in range(1, num_of_pattern):
         valid = pattern > Gamma[i] * pattern < Gamma[i + 1]

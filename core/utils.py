@@ -319,13 +319,13 @@ def set_activation(activation):
     if activation is None:
         return nn.Identity()
     elif activation.lower() == 'relu':
-        return nn.ReLU(inplace=True)
+        return nn.ReLU(inplace=False)
     elif activation.lower() == 'prelu':
         return nn.PReLU()
     elif activation.lower() == 'gelu':
         return nn.GELU()
     elif activation.lower() == 'leakyrelu':
-        return nn.LeakyReLU(0.1, inplace=True)
+        return nn.LeakyReLU(0.1, inplace=False)
     elif activation.lower() == 'sigmoid':
         return nn.Sigmoid()
     elif activation.lower() == 'relu6':
