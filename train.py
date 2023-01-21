@@ -24,7 +24,7 @@ if __name__ == '__main__':
                          precision=16,
                          amp_backend="native",
                          accelerator="cuda",
-                         strategy=DDPStrategy(find_unused_parameters=False),
+                         strategy=DDPStrategy(find_unused_parameters=False, process_group_backend="gloo"),
                          callbacks=callbacks,
                          max_epochs=args.num_epoch,
                          max_steps=args.num_step,

@@ -2,6 +2,7 @@ import torch
 from torch.nn.utils.prune import l1_unstructured, random_structured, ln_structured, remove, identity, is_pruned
 from models.blocks import ConvBlock, LinearBlock
 
+
 def compute_importance(weight, channel_entropy, eta):
     """
     Compute the importance score based on weight and entropy of a channel
@@ -111,7 +112,7 @@ def prune_module(param_to_prune, im_score, args):
             slc[0] = keep_channel
         tensor_to_pru = im_score[slc]
 
-        hard_ind = torch.Tensor(tensor_to_pru[(slice(None, ),) + (0,) * (num_dims - 1)])
+        hard_ind = torch.tensor(tensor_to_pru[(slice(None, ),) + (0,) * (num_dims - 1)])
         if block == 'ConvBlock':
             num_filters = torch.sum(hard_ind < args.conv_pru_bound).to(torch.int)
         elif block == 'LinearBlock':
