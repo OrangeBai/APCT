@@ -112,7 +112,7 @@ def prune_module(param_to_prune, im_score, args):
             slc[0] = keep_channel
         tensor_to_pru = im_score[slc]
 
-        hard_ind = torch.tensor(tensor_to_pru[(slice(None, ),) + (0,) * (num_dims - 1)])
+        hard_ind = tensor_to_pru[(slice(None, ),) + (0,) * (num_dims - 1)]
         if block == 'ConvBlock':
             num_filters = torch.sum(hard_ind < args.conv_pru_bound).to(torch.int)
         elif block == 'LinearBlock':
