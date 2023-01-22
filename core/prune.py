@@ -127,8 +127,10 @@ def prune_module(param_to_prune, im_score, args):
             else:
                 l1_unstructured(module, name, int(num_filters), importance_scores=im_score.cuda())
         else:
-            raise ValueError("Amount to prune should be less than number of params, "
+            Warning("Amount to prune should be less than number of params, "
                              "got {0} and {1}".format(num_filters, len(tensor_to_pru)))
+            if not hasattr(module, name + '_mask'):
+                identity(module, name)
 
 
 def monitor(importance_dict, info):

@@ -203,8 +203,8 @@ class PruneTrainer(BaseTrainer):
     # def training_step(self, batch, batch_idx):
     #     super().training_step(batch, batch_idx)
 
-    # def on_train_end(self) -> None:
-    #     self.model_hook.remove()
+    def on_train_epoch_end(self) -> None:
+        self.model_hook.remove()
     # def on_validation_epoch_start(self) -> None:
     #     if self.current_epoch not in self.args.prune_milestone:
     #         return
@@ -224,7 +224,7 @@ class PruneTrainer(BaseTrainer):
 
         iteratively_prune(im_scores, self.args)
         monitor(im_scores, info)
-        self.model_hook.remove()
+        # self.model_hook.remove()
 
         wandb.log(info)
         return
