@@ -128,6 +128,6 @@ class TrainParser(BaseParser):
             self.parser.add_argument('--conv_pru_bound', default=0.1, type=float)
             self.parser.add_argument('--fc_pru_bound', default=0.1, type=float)
         else:
-            prune_times = args.num_epoch // args.prune_every
-            amount = 1 - math.pow(1 - args.total_amount, 1 / prune_times)
+            prune_times = len(milestone)
+            amount = args.total_amount / prune_times
             self.parser.add_argument('--amount', default=amount, type=float)
