@@ -39,10 +39,7 @@ def compute_importance(weight, channel_entropy, eta):
         normed_weight = (weight - weight.mean()) / weight.std()
         importance_scores = normed_entropy + normed_weight
     else:
-        entropy_max =
-
-
-        importance_scores =
+        raise ValueError()
 
     return importance_scores
 
