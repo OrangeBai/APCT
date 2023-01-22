@@ -19,7 +19,7 @@ def compute_importance(weight, channel_entropy, eta):
     """
     assert weight.shape[0] == channel_entropy.shape[0] and channel_entropy.ndim == 1
     e_new_shape = (-1, ) + (1, ) * (weight.dim() - 1)
-    channel_entropy = torch.tensor(channel_entropy).view(e_new_shape)
+    channel_entropy = torch.tensor(channel_entropy).view(e_new_shape).cuda()
     if eta == -1:
         importance_scores = channel_entropy * torch.ones_like(weight)
     elif eta == 0:
@@ -67,7 +67,7 @@ def prune_linear_transform_block(block, block_entropy, eta):
     :param eta: hyper parameter.
     :return:
     """
-    weights = getattr(block.LT, 'weight').detach().cpu()
+    weights = getattr(block.LT, 'weight').detach()
     num_dim = len(block_entropy[0].shape)                               # num of dimensions
     channel_entropy = block_entropy[0].mean(tuple(range(1, num_dim)))   # averaged entropy (out_channels, )
     lt_im_score = compute_importance(weights, channel_entropy, eta)
