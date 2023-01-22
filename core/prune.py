@@ -100,13 +100,16 @@ def iteratively_prune(im_dict, args):
 
 def prune_module(param_to_prune, im_score, args):
     module, name, block = param_to_prune
+    cur_param = getattr(module, name)
+    num_dims = cur_param.dim()
     if args.method == 'LnStructured':
-        ln_structured(module, name, args.amount, 2, dim=0, importance_scores=im_score)
+        if num_dims > 1:
+            ln_structured(module, name, args.amount, 2, dim=0, importance_scores=im_score.cuda())
+        else:
+            l1_unstructured(module, name, args.amount, importance_scores=im_score.cuda())
     elif args.method == 'RandomStructured':
         random_structured(module, name, args.amount, dim=0)
     elif args.method == 'Hard':
-        cur_param = getattr(module, name)
-        num_dims = cur_param.dim()
         slc = [slice(None)] * num_dims
         if hasattr(module, name + '_mask'):
             keep_channel = getattr(module, name + '_mask')[(slice(None, ),) + (0,) * (num_dims - 1)] != 0
