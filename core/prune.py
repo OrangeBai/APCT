@@ -24,8 +24,6 @@ def compute_importance(weight, channel_entropy, eta):
         importance_scores = channel_entropy * torch.ones_like(weight)
     elif eta == 0:
         importance_scores = abs(weight)
-    elif eta == 2:
-        importance_scores = channel_entropy
     else:
         importance_scores = channel_entropy * abs(weight)
 
