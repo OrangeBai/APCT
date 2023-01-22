@@ -14,18 +14,35 @@ def compute_importance(weight, channel_entropy, eta):
                 -1:     hard prune without using weight
                 0:      prune by weight
                 1:      prune by channel_entropy
+                2: weight * entropy
                 else:   eta * channel_entropy * weight
     :return:    The importance_scores
     """
     assert weight.shape[0] == channel_entropy.shape[0] and channel_entropy.ndim == 1
+    weight = abs(weight)
     e_new_shape = (-1, ) + (1, ) * (weight.dim() - 1)
     channel_entropy = torch.tensor(channel_entropy).view(e_new_shape).cuda()
     if eta == -1:
         importance_scores = channel_entropy * torch.ones_like(weight)
     elif eta == 0:
-        importance_scores = abs(weight)
+        importance_scores = weight
+    elif eta == 2:
+        importance_scores = channel_entropy * weight
+    elif eta == 3:
+        importance_scores =1 / (1 / (channel_entropy +1e-8) + 1 / (weight+ 1e-8))
+    elif eta == 4:
+        normed_entropy = (channel_entropy - channel_entropy.mean()) / channel_entropy.std()
+        normed_weight = (weight - weight.mean()) / weight.std()
+        importance_scores = normed_entropy * normed_weight
+    elif eta == 5:
+        normed_entropy = (channel_entropy - channel_entropy.mean()) / channel_entropy.std()
+        normed_weight = (weight - weight.mean()) / weight.std()
+        importance_scores = normed_entropy + normed_weight
     else:
-        importance_scores = channel_entropy * abs(weight)
+        entropy_max =
+
+
+        importance_scores =
 
     return importance_scores
 
