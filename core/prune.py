@@ -13,6 +13,7 @@ def compute_importance(weight, channel_entropy, eta):
     :param eta: the importance of entropy in pruning,
                 -1:     hard prune without using weight
                 0:      prune by weight
+                1:      prune by channel_entropy
                 else:   eta * channel_entropy * weight
     :return:    The importance_scores
     """
@@ -22,9 +23,11 @@ def compute_importance(weight, channel_entropy, eta):
     if eta == -1:
         importance_scores = channel_entropy * torch.ones_like(weight)
     elif eta == 0:
-        importance_scores = weight
+        importance_scores = abs(weight)
+    elif eta == 2:
+        importance_scores = channel_entropy
     else:
-        importance_scores = eta * channel_entropy * weight
+        importance_scores = channel_entropy * abs(weight)
 
     return importance_scores
 
