@@ -91,7 +91,6 @@ class EntropyHook(BaseHook):
                 s = np.zeros(layer.shape[1:])
                 for j in range(self.num_pattern):
                     s += -layer[j] * np.log(1e-8 + layer[j])
-
                 entropy.append(s)
         return entropy
 

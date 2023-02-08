@@ -126,17 +126,22 @@ def prune_module(param_to_prune, im_score, args):
     elif args.method == 'Hard':
         slc = [slice(None)] * num_dims
         if hasattr(module, name + '_mask'):
+            # how many channels remained to be pruned
             keep_channel = getattr(module, name + '_mask')[(slice(None, ),) + (0,) * (num_dims - 1)] != 0
             slc[0] = keep_channel
         tensor_to_pru = im_score[slc]
-
         hard_ind = tensor_to_pru[(slice(None, ),) + (0,) * (num_dims - 1)]
+
+        # set an upper bound for pruning
+        maximum_to_prune = max(len(tensor_to_pru) - 0.15 * len(im_score), 0)
+
         if block == 'ConvBlock':
-            num_filters = torch.sum(hard_ind < args.conv_pru_bound).to(torch.int)
+            num_filters = min(torch.sum(hard_ind < args.conv_pru_bound).to(torch.int), maximum_to_prune)
         elif block == 'LinearBlock':
-            num_filters = torch.sum(hard_ind < args.fc_pru_bound).to(torch.int)
+            num_filters = min(torch.sum(hard_ind < args.fc_pru_bound).to(torch.int), maximum_to_prune)
         else:
             raise NameError("Invalid Block for pruning")
+
         if num_filters == 0:
             identity(module, name)
         elif 0 < num_filters < len(tensor_to_pru):
@@ -144,11 +149,11 @@ def prune_module(param_to_prune, im_score, args):
                 ln_structured(module, name, int(num_filters), 2, dim=0, importance_scores=im_score.cuda())
             else:
                 l1_unstructured(module, name, int(num_filters), importance_scores=im_score.cuda())
-        else:
-            Warning("Amount to prune should be less than number of params, "
-                             "got {0} and {1}".format(num_filters, len(tensor_to_pru)))
-            if not hasattr(module, name + '_mask'):
-                identity(module, name)
+        # else:
+        #     Warning("Amount to prune should be less than number of params, "
+        #                      "got {0} and {1}".format(num_filters, len(tensor_to_pru)))
+        #     if not hasattr(module, name + '_mask'):
+        #         identity(module, name)
 
 
 def monitor(importance_dict, info):

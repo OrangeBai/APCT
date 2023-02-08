@@ -15,9 +15,12 @@ class BaseParser:
         self.parser.add_argument('--project', type=str, required=True)
         self.parser.add_argument('--name', type=str)
         # model settings
-        self.parser.add_argument('--data_bn', type=int, default=1)
         self.parser.add_argument('--batch_norm', default=1, type=int)
         self.parser.add_argument('--activation', default='LeakyReLU', type=str)
+
+        # data loader settings
+        self.parser.add_argument('--batch_size', default=128, type=int)
+        self.parser.add_argument('--num_workers', default=4, type=int)
 
         self.unknown_args = []
         if argv is None:
@@ -58,6 +61,19 @@ class BaseParser:
         elif args.dataset.lower() == 'imagenet':
             self.parser.set_defaults(model_type='net')
             self.parser.add_argument('--num_cls', default=1000, type=int)
+        return
+
+    def set_up_attack(self):
+        args, _ = self.parser.parse_known_args(self.args)
+        if args.attack.lower() == 'fgsm':
+            self.parser.add_argument('--ord', default='inf')
+            self.parser.add_argument('--eps', default=4 / 255, type=float)
+        elif args.attack.lower() == 'pgd':
+            self.parser.add_argument('--ord', default='inf')
+            self.parser.add_argument('--alpha', default=2 / 255, type=float)
+            self.parser.add_argument('--eps', default=4 / 255, type=float)
+        elif args.attack.lower() == 'noise':
+            self.parser.add_argument('--sigma', default=0.12, type=float)
         return
 
     def get_args(self):

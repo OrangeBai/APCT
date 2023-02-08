@@ -5,7 +5,7 @@ from settings.train_settings import *
 class TestParser(BaseParser):
     def __init__(self, argv=None):
         super(TestParser, self).__init__(argv)
-        self.parser.add_argument('--test_name', default='acc', type=str)
+        self.parser.add_argument('--test_mode', default='acc', type=str)
         # self.parser.add_argument('--data_size', default=160, type=int)
         # self.parser.add_argument('--crop_size', default=128, type=int)
         # args, _ = self.parser.parse_known_args(self.args)
@@ -17,7 +17,12 @@ class TestParser(BaseParser):
 
     def _set_up_test(self):
         args, _ = self.parser.parse_known_args(self.args)
-        if args.test_name == 'smoothed_certify':
+        if args.test_mode == 'acc':
+            pass
+        elif args.test_mode == 'adv':
+            self.parser.add_argument('--attack', default='fgsm')
+            self.set_up_attack()
+        elif args.test_mode == 'smoothed_certify':
             self.parser = smoothed_certify(self.parser)
 
 

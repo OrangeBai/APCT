@@ -46,6 +46,18 @@ class DualNet(nn.Module):
         self.remove_handles()
         return batch_x
 
+    def masked_predict(self, x, fixed_neurons, eta_fixed, eta_float):
+        self.counter = -1
+        batch_x = self.net.norm_layer(x)
+        for i, module in enumerate(list(self.net.layers)):
+            batch_x = self.compute_pre_act(module, batch_x)
+            if self.check_block(module) and i != len(list(self.net.layers)):
+                h = self.set_hook(fixed_neurons[i][1:], eta_fixed, eta_float, False)
+                self.handles += [module.Act.register_forward_pre_hook(h)]
+                batch_x = module.Act(batch_x)
+        self.remove_handles()
+        return batch_x
+
     def forward(self, x_1, x_2, eta_fixed, eta_float, balance=True):
         self.counter = -1
         fixed_neurons = []

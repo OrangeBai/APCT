@@ -26,7 +26,6 @@ class TrainParser(BaseParser):
         self.parser.add_argument('--lr', default=0.1, type=float)
 
         # training settings
-        self.parser.add_argument('--num_workers', default=4, type=int)
         self.parser.add_argument('--npbar', default=True, action='store_false')
 
         self.lr_scheduler()
@@ -71,19 +70,6 @@ class TrainParser(BaseParser):
             pass
         return
 
-    def set_up_attack(self):
-        args, _ = self.parser.parse_known_args(self.args)
-        if args.attack.lower() == 'fgsm':
-            self.parser.add_argument('--ord', default='inf')
-            self.parser.add_argument('--eps', default=4 / 255, type=float)
-        elif args.attack.lower() == 'pgd':
-            self.parser.add_argument('--ord', default='inf')
-            self.parser.add_argument('--alpha', default=2 / 255, type=float)
-            self.parser.add_argument('--eps', default=4 / 255, type=float)
-        elif args.attack.lower() == 'noise':
-            self.parser.add_argument('--sigma', default=0.12, type=float)
-        return
-
     def train_mode(self):
         args, _ = self.parser.parse_known_args(self.args)
         # Prune training
@@ -121,13 +107,13 @@ class TrainParser(BaseParser):
 
     def set_prune(self):
         args, _ = self.parser.parse_known_args(self.args)
-        milestone = list(range(args.prune_every, args.num_epoch - args.fine_tune + 1, args.prune_every))
-        self.parser.add_argument('--prune_milestone', default=milestone, type=list)
+        milestones = list(range(args.prune_every, args.num_epoch - args.fine_tune + 1, args.prune_every))
+        self.parser.add_argument('--prune_milestones', default=milestones, type=int, nargs='+')
         if args.method == 'Hard':
             self.parser.set_defaults(prune_eta=-1)
             self.parser.add_argument('--conv_pru_bound', default=0.1, type=float)
             self.parser.add_argument('--fc_pru_bound', default=0.1, type=float)
         else:
-            prune_times = len(milestone)
+            prune_times = len(milestones)
             amount = args.total_amount / prune_times
             self.parser.add_argument('--amount', default=amount, type=float)

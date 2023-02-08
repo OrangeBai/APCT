@@ -195,7 +195,7 @@ class PruneTrainer(BaseTrainer):
         self.model_hook = PruneHook(self.model, set_gamma(self.args.activation), 0.1)
 
     def on_train_epoch_start(self) -> None:
-        if self.current_epoch not in self.args.prune_milestone:
+        if self.current_epoch not in self.args.prune_milestones:
             return
         else:
             self.model_hook.set_up()
@@ -206,13 +206,13 @@ class PruneTrainer(BaseTrainer):
     def on_train_epoch_end(self) -> None:
         self.model_hook.remove()
     # def on_validation_epoch_start(self) -> None:
-    #     if self.current_epoch not in self.args.prune_milestone:
+    #     if self.current_epoch not in self.args.prune_milestones:
     #         return
     #     self.model_hook.set_up()
     #     return super().on_validation_epoch_start()
 
     def validation_epoch_end(self, validation_step_outputs):
-        if self.current_epoch not in self.args.prune_milestone:
+        if self.current_epoch not in self.args.prune_milestones:
             return
 
         im_scores = {}
