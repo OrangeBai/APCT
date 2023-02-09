@@ -1,3 +1,5 @@
+import torch
+
 from core.utils import *
 from core.dataloader import set_mean_sed
 
@@ -47,14 +49,13 @@ class FGSM(Attack):
         super(FGSM, self).__init__(model, args, **kwargs)
         self.eps = args.eps
 
+    @torch.enable_grad()
     def forward(self, images, labels):
 
-        loss = nn.CrossEntropyLoss()
-
         images.requires_grad = True
+        loss = nn.CrossEntropyLoss()
         outputs = self.model(images)  # from (0, 1) to normalized, and forward the emodel
         cost = loss(outputs, labels)
-
         grad = torch.autograd.grad(cost, images, retain_graph=False, create_graph=False)[0]
 
         if self.ord == 'inf':
@@ -79,45 +80,43 @@ class PGD(Attack):
 
     def forward(self, images, labels):
         loss_fn = nn.CrossEntropyLoss()
-
-        adv_images = images.clone().detach()
+        images = images.detach()
+        images.requires_grad = True
 
         if self.random_start:
             if self.ord == 'inf':
-                adv_images = adv_images + torch.randn_like(adv_images) * self.eps
-                adv_images = torch.clamp(adv_images, min=0, max=1).detach()
+                delta = torch.randn_like(images) * self.eps
             else:
-                delta = torch.randn_like(adv_images)
+                delta = torch.randn_like(images)
+                # batch_size * 1 * 1 * 1
                 delta_norm = delta.view(delta.shape[0], -1).norm(p=2, dim=-1).view(delta.shape[0], 1, 1, 1)
-                delta = delta / delta_norm * torch.rand(1).cuda()
-                adv_images = adv_images + delta
+                delta = delta / delta_norm * self.eps
+        else:
+            delta = torch.zeros_like(images)
 
+        delta.requires_grad = True
         for _ in range(self.steps):
-            adv_images.requires_grad = True
-            outputs = self.model(adv_images)
-
+            outputs = self.model(images + delta)
             cost = loss_fn(outputs, labels)
 
             # Update adversarial images
-            grad = torch.autograd.grad(cost, adv_images,
-                                       retain_graph=False, create_graph=False)[0]
+            grad = torch.autograd.grad(cost, delta, retain_graph=False, create_graph=False)[0]
 
             if self.ord == 'inf':
-                adv_images = adv_images.detach() + self.alpha * grad.sign()
-                delta = torch.clamp(adv_images - images, min=-self.eps, max=self.eps)
+                delta = delta + self.alpha * grad.sign()
+                delta = torch.clamp(delta, min=-self.eps, max=self.eps)
             else:
+                # TODO review this part
                 grad_norm = grad.view(grad.shape[0], -1).norm(2, dim=-1, keepdim=True)
                 grad = grad / grad_norm.view(grad_norm.shape[0], grad_norm.shape[1], 1, 1)
-                adv_images = adv_images.detach() + self.alpha * grad
+                delta += self.alpha * grad
 
-                delta = adv_images - images
+                # maks for each sample, whether greater than eps or not
                 mask = delta.view(delta.shape[0], -1).norm(2, dim=1) <= self.eps
-                scaling_factor = delta.view(delta.shape[0], -1).norm(2, dim=-1) + 1e-8
+                scaling_factor = delta.view(delta.shape[0], -1).norm(2, dim=-1) + 1e-8  # norm for each sample
                 scaling_factor[mask] = self.eps
-                delta = delta * self.eps / (scaling_factor.view(-1, 1, 1, 1))
-                adv_images = torch.clamp(images + delta, min=0, max=1).detach()
-        adv_images = self._norm(adv_images)
-        return adv_images
+                delta = delta / (scaling_factor.view(-1, 1, 1, 1)) * self.eps
+        return torch.clamp(images + delta, min=0, max=1).detach()
 
 
 def set_attack(model, args, **kwargs):

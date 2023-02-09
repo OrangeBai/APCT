@@ -6,7 +6,6 @@ from pytorch_lightning.strategies.ddp import DDPStrategy
 from core.trainer import set_pl_model
 import pytorch_lightning as pl
 
-
 if __name__ == '__main__':
     args = TrainParser().get_args()
 
@@ -31,8 +30,8 @@ if __name__ == '__main__':
                          check_val_every_n_epoch=args.val_epoch,
                          val_check_interval=args.val_step,
                          logger=logtool,
-                         enable_progress_bar=args.npbar
+                         enable_progress_bar=args.npbar,
+                         inference_mode=False
                          )
     trainer.fit(model)
     model.save_model(logtool.experiment.dir)
-
