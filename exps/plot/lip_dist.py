@@ -8,6 +8,7 @@ from core.trainer import set_pl_model
 from core.utils import *
 from settings.test_setting import TestParser
 
+
 if __name__ == '__main__':
     argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'adv_compare']
     args = TestParser(argsv).get_args()
