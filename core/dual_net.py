@@ -34,6 +34,10 @@ class DualNet(nn.Module):
             batch_x = self.compute_pre_act(module, batch_x)
             if self.check_block(module) and i != len(list(self.net.layers)):
                 fixed = self.compute_fix_single_batch(batch_x)
+                # computes fixed within a batch
+                # new_shape = (len(fixed),) + (1, ) * len(batch_x.shape[1:])
+                # fixed = fixed.all(dim=0, keepdim=True).repeat(new_shape)
+                # fixed[0] = True
                 fixed_neurons += [fixed]
 
                 h = self.set_hook(fixed, eta_fixed, eta_float, False)

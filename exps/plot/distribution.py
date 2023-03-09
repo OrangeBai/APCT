@@ -28,7 +28,7 @@ if __name__ == '__main__':
     train_df, val_df = pd.concat(train_df), pd.concat(val_df)
     fig, ax = plt.subplots(figsize=(16, 8))
     ax = sns.histplot(train_df, stat='probability', bins=60, x='layer', y='value', hue='dataset', multiple='layer',
-                      pthresh=0.03, cbar=True, weights='weight', legend=False, cbar_kws=dict(shrink=.75))
+                      pthresh=0.03, cbar=True, weights='weight', legend=False, cbar_kws=dict(shrink=.75), ax=ax)
     for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] + ax.get_xticklabels() + ax.get_yticklabels()):
         item.set_fontsize(18)
     ax.set_xlabel('Layer', fontsize=18)

@@ -122,7 +122,6 @@ class AttackTrainer(BaseTrainer):
         pred = self.model(adv_images)
         top1, top5 = accuracy(pred, labels)
         self.log('val/adv_top1', top1, sync_dist=True, on_epoch=True)
-
         return
 
 

@@ -2,11 +2,16 @@ import os
 import torch
 import wandb
 import numpy as np
-from core.dataloader import set_dataloader
+from numpy.linalg import norm as norm
+from core.dataloader import set_dataloader, set_dataset
 from core.dual_net import DualNet
 from core.utils import MetricLogger, accuracy
 from core.attack import set_attack
 from functools import wraps
+from torch.nn.functional import one_hot, cosine_similarity
+from core.pattern import FloatHook, set_gamma
+import pandas as pd
+import time
 
 
 # equals to save_and_load(name)(fun)(self, run_dir)
@@ -21,7 +26,9 @@ def save_and_load(name):
                 result = fun(self, run_dir)
                 self.save_test_result(result, result_path)
                 return result
+
         return wrapper
+
     return inner
 
 
@@ -55,7 +62,7 @@ class BaseTester:
         for run_name, run_dir in self.run_dirs.items():
             os.makedirs(os.path.join(run_dir, 'test'), exist_ok=True)
             self.results[run_name] = self.test_model(run_dir, restart)
-        return
+        return self.results
 
     @staticmethod
     def save_test_result(result, result_path):
@@ -85,12 +92,10 @@ class BaseTester:
 
 
 class DualTester(BaseTester):
-    def __init__(self, model, args):
-        super(DualTester, self).__init__(model, args)
-        self.model = model
-        self.dual_net = DualNet(model, args)
+    def __init__(self, run_dirs, args):
+        super(DualTester, self).__init__(run_dirs, args)
 
-    @save_and_load('decompose')
+    @save_and_load('noise_dist')
     def test_model(self, run_dir, restart=False):
         model = self.load_model(run_dir)
         metrics = MetricLogger()
@@ -102,7 +107,8 @@ class DualTester(BaseTester):
             images, labels = images.cuda(), labels.cuda()
             adv_images = attack.forward(images, labels).detach()
 
-            stacked_pred = torch.stack([self._decompose_path(dual_net, image, adv) for image, adv in zip(images, adv_images)])
+            stacked_pred = torch.stack(
+                [self._decompose_path(dual_net, image, adv) for image, adv in zip(images, adv_images)])
             adv_pred = model(adv_images)
             pred = torch.concat([stacked_pred.transpose(1, 0), adv_pred.unsqueeze(dim=0)])
 
@@ -128,3 +134,170 @@ class DualTester(BaseTester):
         masked_pred = dual_net.masked_predict(torch.unsqueeze(image, dim=0), dual_net.fixed_neurons, 0, -1)[0]
         return torch.stack([masked_pred, pred_std, pred_fix])
 
+    @staticmethod
+    def compute_fix_flt_diff(arrays):
+        adv_std_diff = arrays[3] - arrays[1]
+        fix_diff = arrays[2] - arrays[0]
+        flt_diff = adv_std_diff - fix_diff
+        return fix_diff, flt_diff
+
+    def _cal_dist_dist(self, val):
+        fix_diff, flt_diff = self.compute_fix_flt_diff(val['array'])
+        return pd.DataFrame({'fix': np.linalg.norm(fix_diff, axis=1, ord=2),
+                             'flt': np.linalg.norm(flt_diff, axis=1, ord=2)})
+
+    def cal_angle_dist(self, k, val, ground_truth):
+        fix_diff, flt_diff = self.compute_fix_flt_diff(val['array'])
+        sim_fix = cosine_similarity(torch.tensor(fix_diff).float(), ground_truth).numpy()
+        sim_flt = cosine_similarity(torch.tensor(flt_diff).float(), ground_truth).numpy()
+        ['fixed', ] * len(fix_diff) + ['float', ] * len(flt_diff)
+        return pd.DataFrame({'value': np.concatenate([sim_fix, sim_flt]),
+                             'path_type': ['fixed', ] * len(fix_diff) + ['float', ] * len(flt_diff),
+                             'name': [k, ] * len(fix_diff) + [k, ] * len(flt_diff)})
+
+    def format_angel_result(self, keys, legend_keys):
+        _, test_set = set_dataset(self.args)
+        ground = one_hot(torch.tensor(test_set.targets)).float()
+        return pd.concat([self.cal_angle_dist(k, self.results[k], ground) for k, legend_k in zip(keys, legend_keys)])
+
+    def format_dist_result(self, keys, legend_keys):
+        return {legend_k: self._cal_dist_dist(self.results[k]) for k, legend_k in zip(keys, legend_keys)}
+
+    def float_fixed_vulnerable(self, keys, legend_keys):
+        return {legend_k: self._flt_fix_vulnerable(self.results[k]) for k, legend_k in zip(keys, legend_keys)}
+
+    def _flt_fix_vulnerable(self, v):
+        _, test_set = set_dataset(self.args)
+        ground = one_hot(torch.tensor(test_set.targets)).float().numpy()
+        fix, flt = self.compute_fix_flt_diff(v['array'])
+        incorrect = (np.argmax(v['array'][3], axis=1) != test_set.targets) * (np.argmax(v['array'][1], axis=1) == test_set.targets)
+        fix_per, flt_per = (fix * ground).sum(axis=1), (flt * ground).sum(axis=1)
+        # return ((fix_per - flt_per)[incorrect] > 0).sum(axis=0), ((fix_per - flt_per)[incorrect] < 0).sum(axis=0)
+        return sum((fix_per - flt_per) > 0)
+
+
+class FltRatioTester(BaseTester):
+    def __init__(self, run_dirs, args):
+        super().__init__(run_dirs, args)
+
+    @save_and_load('flt_ratio')
+    def test_model(self, run_dir, restart=False):
+        model = self.load_model(run_dir)
+        model.eval()
+        hook = FloatHook(model, Gamma=set_gamma(self.args.activation))
+        hook.set_up()
+        _, test = set_dataset(self.args)
+        sigma = 8 / 255
+        float_ratio = []
+        t0 = time.time()
+        for i in range(500):
+            if i % 100 == 0 and i > 0:
+                print("Current {0}, avg time: {1}".format(i, (time.time() - t0) / i))
+            x = test[i][0].repeat(500, 1, 1, 1).cuda()
+            noise = torch.sign(torch.randn_like(x).to(x.device)) * sigma
+            model(x + noise)
+            float_ratio.append(hook.retrieve())
+        return np.array(float_ratio)
+
+
+class LipNormTester(BaseTester):
+    def __init__(self, run_dirs, args):
+        super().__init__(run_dirs, args)
+
+    @save_and_load('lip_vul')
+    def test_model(self, run_dir, restart=False):
+        model = self.load_model(run_dir)
+        _, val_loader = set_dataloader(self.args)
+        attack = set_attack(model, self.args).eval()
+        result = []
+        for idx, (images, labels) in enumerate(val_loader):
+            images, labels = images.cuda(), labels.cuda()
+            adv_images = attack.forward(images, labels).detach()
+            pred_std = model(images)
+            pred_adv = model(adv_images)
+            input_diff = adv_images - images
+            fixed_diff = (model(images + input_diff / 1e3) - pred_std) * 1e3
+            float_diff = pred_adv - fixed_diff
+            result.append(np.array([fixed_diff.detach().cpu().numpy(), float_diff.detach().cpu().numpy()]))
+            if idx > 100:
+                break
+        return result
+
+
+class AveragedFloatTester(BaseTester):
+    def __init__(self, run_dirs, args):
+        super().__init__(run_dirs, args)
+
+    @save_and_load('noise_dist')
+    def test_model(self, run_dir, restart=False):
+        model = self.load_model(run_dir)
+        dual_net = DualNet(model, self.args).eval()
+        _, test = set_dataset(self.args)
+        attack = set_attack(model, self.args).eval()
+        model = model.cuda()
+        model.eval()
+        total_pred_diff = []
+        for i in range(2):
+            x = test[i][0].repeat(1, 1, 1, 1).cuda()
+            y = torch.tensor(test[i][1]).repeat(1).cuda()
+            y_pred = model(x)
+            adv = attack.forward(x, y).detach()
+            adv = adv.repeat(256, 1, 1, 1).cuda()
+
+            pred_diff = []
+            for _ in range(10):
+                noise = torch.randn_like(adv).to(adv.device) * 0.125
+                noise[0] = 0
+                noised_adv = adv + noise
+                pred_diff.append([(y_pred - dual_net.predict(noised_adv, 0, -j * 0.05)).cpu().detach().numpy()[1:] for j in range(5)])
+                # norm(y_pred - dual_net.predict(noised_adv, 0, -0.5).detach().cpu().numpy(), ord=2, axis=1).mean()
+            cur_repressed = np.concatenate(pred_diff, axis=1)
+            # norm(cur_repressed, ord=2, axis=2).mean(1)
+            total_pred_diff.append(cur_repressed)
+        return np.array(total_pred_diff)
+
+    def compute_norm(self):
+        return {k: norm(v, axis=-1, ord=1).mean(axis=(0, 2)) for k, v in self.results.items()}
+
+class LipDistTester(BaseTester):
+    def __init__(self, run_dirs, args):
+        super().__init__(run_dirs, args)
+
+    @save_and_load('lip_dist')
+    def test_model(self, run_dir, restart=False):
+        model = self.load_model(run_dir)
+        model = model.cuda()
+        model.eval()
+        _, test = set_dataset(self.args)
+        sigma = 8 / 255
+        lip_point = []
+        dist = []
+        for i in range(10000):
+            x = test[i][0].repeat(256, 1, 1, 1).cuda()
+            y = torch.tensor(test[i][1]).repeat(256).cuda()
+            noise = torch.sign(torch.randn_like(x).to(x.device)) * sigma
+            noised_x = x + noise
+            noised_x.requires_grad = True
+            p = model(noised_x)
+            cost = torch.nn.CrossEntropyLoss()(p, y)
+            grad = torch.autograd.grad(cost, noised_x, retain_graph=False, create_graph=False)[0]
+
+            p2 = model(noised_x + grad)
+            lip_norm = grad.view(len(grad), -1).norm(p=2, dim=-1)
+            lip = (p2 - p).norm(p=2, dim=-1) / lip_norm
+            adv = torch.sign(grad) * sigma
+
+            p3 = model(noised_x + adv)
+
+            lip_point.append(lip.detach().cpu().numpy())
+            dist.append((p3 - p2).norm(p=2, dim=1).detach().cpu().numpy())
+
+        return {'all_lip': lip_point, 'all_dist': dist}
+
+    def get_mean_var(self, target):  # get desired variable
+        def v(x):
+            return np.array(x['all_lip']) if target == 'lip' else np.array(x['all_dist'])
+
+        mean = {k: np.array(v(val)).mean(axis=1) for k, val in self.results.items()}
+        var = {k: (v(val) / v(val)[:, 0][:, np.newaxis]).var(axis=1) for k, val in self.results.items()}
+        return mean, var
