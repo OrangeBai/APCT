@@ -16,12 +16,32 @@ class DualNet(nn.Module):
 
     @property
     def count_block_len(self):
-
         counter = 0
         for module in self.net.layers.children():
             if type(module) in [ConvBlock, LinearBlock, Bottleneck]:
                 counter += 1
         return counter - 1
+
+    def compute_fixed(self, x1, x2):
+        self.net.eval()
+        self.counter = -1
+        fixed_neurons = []
+        x1 = self.net.norm_layer(x1)
+        x2 = self.net.norm_layer(x2)
+        for i, module in enumerate(self.net.layers.children()):
+            x1 = self.compute_pre_act(module, x1)
+            x2 = self.compute_pre_act(module, x2)
+            if self.check_block(module) and i != len(self.net.layers) - 1:
+                fixed = self.compute_fix(x1, x2)
+                fixed_neurons += [fixed]
+                x1 = module.Act(x1)
+                x2 = module.Act(x2)
+            else:
+                fixed_neurons += [None]
+
+        self.fixed_neurons = fixed_neurons
+        self.net.train()
+        return fixed_neurons
 
     def predict(self, x, eta_fixed, eta_float):
         """
@@ -34,10 +54,6 @@ class DualNet(nn.Module):
             batch_x = self.compute_pre_act(module, batch_x)
             if self.check_block(module) and i != len(list(self.net.layers)):
                 fixed = self.compute_fix_single_batch(batch_x)
-                # computes fixed within a batch
-                # new_shape = (len(fixed),) + (1, ) * len(batch_x.shape[1:])
-                # fixed = fixed.all(dim=0, keepdim=True).repeat(new_shape)
-                # fixed[0] = True
                 fixed_neurons += [fixed]
 
                 h = self.set_hook(fixed, eta_fixed, eta_float, False)
@@ -50,55 +66,17 @@ class DualNet(nn.Module):
         self.remove_handles()
         return batch_x
 
-    def masked_predict(self, x, fixed_neurons, eta_fixed, eta_float):
+    def forward(self, x, fixed_neurons, eta_fixed, eta_float):
         self.counter = -1
         batch_x = self.net.norm_layer(x)
         for i, module in enumerate(list(self.net.layers)):
             batch_x = self.compute_pre_act(module, batch_x)
-            if self.check_block(module) and i != len(list(self.net.layers)):
-                h = self.set_hook(fixed_neurons[i][1:], eta_fixed, eta_float, False)
+            if self.check_block(module) and i != len(list(self.net.layers)) - 1:
+                h = self.set_hook(fixed_neurons[i], eta_fixed, eta_float, True)
                 self.handles += [module.Act.register_forward_pre_hook(h)]
                 batch_x = module.Act(batch_x)
         self.remove_handles()
         return batch_x
-
-    def forward(self, x_1, x_2, eta_fixed, eta_float, balance=True):
-        self.counter = -1
-        fixed_neurons = []
-        df = torch.tensor(1, dtype=torch.float).cuda()
-        for i, module in enumerate(self.net.layers.children()):
-            x_1 = self.compute_pre_act(module, x_1)
-            x_2 = self.compute_pre_act(module, x_2)
-            if self.check_block(module) and i != len(self.net.layers) - 1:
-                fixed = self.compute_fix(x_1, x_2)
-                fixed_neurons += [fixed]
-                if self.check_lip():
-                    df += (x_1 * fixed).abs().mean()
-
-                h = self.set_hook(fixed, eta_fixed, eta_float, balance)
-                self.handles += [module.Act.register_forward_pre_hook(h)]
-                x_1 = module.Act(x_1)
-                x_2 = module.Act(x_2)
-            else:
-                fixed_neurons += [None]
-
-        self.fixed_neurons = fixed_neurons
-        self.remove_handles()
-        return x_1, x_2, df
-
-    def mask_forward(self, x, eta_fixed, eta_float):
-        self.counter = -1
-        fixed_neurons = []
-        for i, (fixed, module) in enumerate(zip(self.fixed_neurons, self.net.layers.children())):
-            x = self.compute_pre_act(module, x)
-            if self.check_block(module) and i != len(self.net.layers) - 1:
-                fixed_neurons += [fixed]
-
-                h = self.set_hook(fixed, eta_fixed, eta_float)
-                self.handles += [module.Act.register_forward_pre_hook(h)]
-                x = module.Act(x)
-        self.remove_handles()
-        return x
 
     def remove_handles(self):
         """Remove all registered forward hook"""
@@ -107,7 +85,7 @@ class DualNet(nn.Module):
         self.handles.clear()
         return
 
-    def set_hook(self, fixed, eta_fixed, eta_float, balance=True):
+    def set_hook(self, fixed, eta_fixed, eta_float, balance=False):
         def forward_pre_hook(m, inputs):
             x = inputs[0]
             return self.x_mask(x, eta_fixed, fixed, balance) + self.x_mask(x, eta_float, ~fixed, balance)
@@ -167,7 +145,7 @@ class DualNet(nn.Module):
             return module(x)
 
     def compute_fix(self, x_1, x_2):
-        if len(self.gamma) == 0:
+        if len(self.gamma) == 1:
             return (x_1 - self.gamma[0]) * (x_2 - self.gamma[0]) > 0
         else:
             stacked = torch.stack([(x_1 - g) * (x_2 - g) > 0 for g in self.gamma])

@@ -47,7 +47,7 @@ class VGG(BaseModel):
                         pre_filters = layer
                     else:
                         layers += [LinearBlock(pre_filters, self.num_cls,
-                                               bn=self.args.batch_norm, act=self.args.activation)]
+                                               bn=self.args.batch_norm, act=None)]
         setattr(self, 'layers', nn.Sequential(*layers))
 
     def forward(self, x):

@@ -23,3 +23,9 @@ python train.py --dataset cifar10 --net vgg16 --project prune --name prune --num
 
 python train.py --dataset cifar10 --net vgg16 --project prune --name exp_1 --num_epoch 120 --train_mode pru \
                 --lr_scheduler cyclic --num_circles 4 --method LnStructured --prune_eta 0 --batch_size 128  --prune_every 10 --activation ReLU --npbar
+
+
+# DualNet training
+
+python train.py --dataset cifar10 --net vgg16 --project dual --name test --num_epoch 120 -- train_mode dual\
+          --lr_scheduler milestone --eta_float 0.1 --eta_fixed 0 --activation ReLU

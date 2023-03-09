@@ -249,6 +249,28 @@ class DualNetTrainer(BaseTrainer):
     def __init__(self, arg):
         super().__init__(arg)
         self.dual_net = DualNet(self.model, arg)
+        self.fgsm = set_attack(self.model, Namespace(dataset=self.args.dataset, attack='fgsm', eps=4 / 255))
+
+    def training_step(self, batch, batch_idx):
+        images, labels = batch[0], batch[1]
+        noised = images + torch.randn_like(images) * self.args.sigma
+        fixed_neurons = self.dual_net.compute_fixed(images, noised)
+        pred = self.dual_net(noised, fixed_neurons, self.args.eta_fixed, self.args.eta_float)
+        loss = self.loss_function(pred, labels)
+        top1, top5 = accuracy(pred, labels)
+        self.log('train/loss', loss, sync_dist=True)
+        self.log('train/top1', top1, sync_dist=True)
+        self.log('lr', self.lr, sync_dist=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        super().validation_step(batch, batch_idx)
+        images, labels = batch[0], batch[1]
+        adv_images = self.fgsm(images, labels)
+        pred = self.model(adv_images)
+        top1, top5 = accuracy(pred, labels)
+        self.log('val/adv_top1', top1, sync_dist=True, on_epoch=True)
+        return
 
 
 def set_pl_model(train_mode):
@@ -260,5 +282,7 @@ def set_pl_model(train_mode):
         return EntropyTrainer
     elif train_mode == 'pru':
         return PruneTrainer
+    elif train_mode == 'dual':
+        return DualNetTrainer
     else:
         raise NameError

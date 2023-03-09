@@ -1,5 +1,4 @@
 import math
-
 from settings.base_parser import *
 
 
@@ -87,7 +86,10 @@ class TrainParser(BaseParser):
                                               'RandomUnstructured', 'Hard'])
             self.parser.add_argument('--total_amount', default=0.5, type=float)
             self.set_prune()
-
+        elif args.train_mode == 'dual':
+            self.parser.add_argument('--sigma', default=0.125, type=float)
+            self.parser.add_argument('--eta_float', default=0, type=float)
+            self.parser.add_argument('--eta_fixed', default=0, type=float)
         return
 
     def check(self):
