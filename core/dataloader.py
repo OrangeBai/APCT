@@ -16,23 +16,23 @@ def set_dataloader(args, datasets=None):
     else:
         train_dataset, val_dataset = datasets
     train_loader = DataLoader(
-                dataset=train_dataset,
-                batch_size=args.batch_size,
-                shuffle=True,
-                num_workers=args.num_workers,
-                pin_memory=True,
-                drop_last=False,
-                prefetch_factor=4,
-                persistent_workers=True)
+        dataset=train_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.num_workers,
+        pin_memory=True,
+        drop_last=False,
+        prefetch_factor=4,
+        persistent_workers=True)
     val_loader = DataLoader(
-                dataset=val_dataset,
-                batch_size=args.batch_size,
-                shuffle=False,
-                num_workers=args.num_workers,
-                pin_memory=True,
-                drop_last=False,
-                prefetch_factor=4,
-                persistent_workers=True)
+        dataset=val_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers,
+        pin_memory=True,
+        drop_last=False,
+        prefetch_factor=4,
+        persistent_workers=True)
     return train_loader, val_loader
 
 
@@ -48,8 +48,8 @@ def set_dataset(args):
         train_dataset = CIFAR100(DATA_PATH, train=True, transform=train_transform, download=True)
         test_dataset = CIFAR100(DATA_PATH, train=False, transform=test_transform, download=True)
     elif args.dataset == 'imagenet':
-        train_dir = os.path.join(DATA_PATH, 'ImageNet-sz', str(args.data_size), 'train')
-        test_dir = os.path.join(DATA_PATH, 'ImageNet-sz', str(args.data_size), 'train')
+        train_dir = os.path.join(DATA_PATH, 'ImageNet-2012', 'train')
+        test_dir = os.path.join(DATA_PATH, 'ImageNet-2012', 'test')
         train_dataset = ImageFolder(train_dir, transform=train_transform)
         test_dataset = ImageFolder(test_dir, transform=test_transform)
     else:
@@ -65,8 +65,8 @@ def set_transforms(args):
         train_composed = [RandomCrop(32, padding=4), RandomHorizontalFlip(), ToTensor()]
         test_composed = [transforms.ToTensor()]
     elif args.dataset.lower() == 'imagenet':
-        train_composed = [ToTensor(), RandomResizedCrop((args.crop_size, args.crop_size)), RandomHorizontalFlip()]
-        test_composed = [ToTensor(), RandomResizedCrop((args.crop_size, args.crop_size))]
+        train_composed = [ToTensor(), RandomResizedCrop((224, 224)), RandomHorizontalFlip()]
+        test_composed = [ToTensor(), transforms.Resize(256), transforms.CenterCrop(224)]
     else:
         raise NameError('No dataset named' % args.dataset)
     return Compose(train_composed), Compose(test_composed)

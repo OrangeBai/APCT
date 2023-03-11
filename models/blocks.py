@@ -24,9 +24,7 @@ class ConvBlock(nn.Module):
                  **kwargs):
         super().__init__()
         self.LT = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size,
-                              padding=padding, stride=stride,
-                              bias=False, **kwargs
-                              )
+                            padding=padding, stride=stride, bias=False)
         self.BN = nn.BatchNorm2d(out_channels) if bn else nn.Identity()
         self.Act = set_activation(act)
 

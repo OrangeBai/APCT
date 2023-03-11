@@ -145,7 +145,7 @@ class ResNet(BaseModel):
         self.groups = groups
         self.base_width = width_per_group
 
-        self.conv1 = ConvBlock(3, self.inplanes, kernel_size=7, stride=2, padding=3, batch_norm=1, activation='relu')
+        self.conv1 = ConvBlock(3, self.inplanes, kernel_size=7, stride=2, padding=3, bn=1, act='relu')
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2,
@@ -158,7 +158,7 @@ class ResNet(BaseModel):
         self.flatten = nn.Flatten()
         self.fc = nn.Linear(512 * block.expansion, args.num_cls)
         self.layers = [self.conv1, self.maxpool, *list(self.layer1), *list(self.layer2), *list(self.layer3),
-                       *list(self.layer4), self.avgpool, self.flatten, self.fc]
+                       *list(self.layer4), self.avg_pool, self.flatten, self.fc]
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
