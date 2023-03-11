@@ -49,7 +49,7 @@ def set_dataset(args):
         test_dataset = CIFAR100(DATA_PATH, train=False, transform=test_transform, download=True)
     elif args.dataset == 'imagenet':
         train_dir = os.path.join(DATA_PATH, 'ImageNet-2012', 'train')
-        test_dir = os.path.join(DATA_PATH, 'ImageNet-2012', 'test')
+        test_dir = os.path.join(DATA_PATH, 'ImageNet-2012', 'val')
         train_dataset = ImageFolder(train_dir, transform=train_transform)
         test_dataset = ImageFolder(test_dir, transform=test_transform)
     else:
