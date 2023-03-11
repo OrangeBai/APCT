@@ -254,7 +254,7 @@ class DualNetTrainer(BaseTrainer):
     def training_step(self, batch, batch_idx):
         images, labels = batch[0], batch[1]
         noised = images + torch.randn_like(images) * self.args.sigma
-        fixed_neurons = self.dual_net.compute_fixed(images, noised)
+        fixed_neurons = self.dual_net.compute_fixed_2batch(images, noised)
         pred = self.dual_net(noised, fixed_neurons, self.args.eta_fixed, self.args.eta_float)
         loss = self.loss_function(pred, labels)
         top1, top5 = accuracy(pred, labels)

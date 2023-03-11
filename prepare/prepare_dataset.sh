@@ -41,7 +41,7 @@ cd $data_path/ImageNet-2012
 mkdir val
 tar --touch -xvf ILSVRC2012_img_val.tar -C val/
 # prepare val data
-cd $file_path/prepare
+cd $file_path
 bash val_prepare.sh $data_path/ImageNet-2012/val
 
 # resize dataset

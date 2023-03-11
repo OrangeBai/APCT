@@ -27,7 +27,7 @@ class Smooth(object):
         """
         self.base_classifier = base_classifier
         self.num_classes = args.num_cls
-        self.sigma = args.sigma_2
+        self.sigma = args.sigma
         self.args = args
         self.mean, self.std = [torch.tensor(d).view(len(d), 1, 1) for d in set_mean_sed(args)]
 
@@ -169,8 +169,8 @@ class SCRFP(Smooth):
                 batch = x.repeat((this_batch_size + 1, 1, 1, 1))
                 n = torch.randn_like(x).to(x.device) * self.sigma
                 n[0] = 0
-                # batch = self.reverse_noise(batch)
-                predictions = self.dual_net.predict(batch+n, 0.0, self.args.eta_float)[1:]
+                fixed = self.dual_net.compute_fixed_1batch(batch + n)
+                predictions = self.dual_net.predict(batch+n, fixed, 0.0, self.args.eta_float)[1:]
                 counts += self._count_arr(predictions.argmax(1).cpu().numpy(), self.num_classes)
             return counts
 

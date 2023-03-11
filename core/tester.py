@@ -7,12 +7,13 @@ from core.dataloader import set_dataloader, set_dataset
 from core.dual_net import DualNet
 from core.utils import MetricLogger, accuracy
 from core.attack import set_attack
-from functools import wraps
+from core.scrfp import Smooth, SCRFP, ApproximateAccuracy
+from shutil import rmtree
 from torch.nn.functional import one_hot, cosine_similarity
 from core.pattern import FloatHook, set_gamma
 import pandas as pd
 import time
-
+import datetime
 
 # equals to save_and_load(name)(fun)(self, run_dir)
 def save_and_load(name):
@@ -43,6 +44,10 @@ def restore_runs(args, filters=None):
             if not os.path.exists(os.path.join(root, file.name)):
                 wandb.restore(file.name, run_path=run_path, root=root)
         run_paths[run.name] = os.path.join(root, root)
+    ids = [run.id for run in runs]
+    remove_dirs = [d for d in os.listdir(args.model_dir) if d not in ids]
+    for d in remove_dirs:
+        rmtree(os.path.join(args.model_dir, d))
     return run_paths
 
 
@@ -301,3 +306,76 @@ class LipDistTester(BaseTester):
         mean = {k: np.array(v(val)).mean(axis=1) for k, val in self.results.items()}
         var = {k: (v(val) / v(val)[:, 0][:, np.newaxis]).var(axis=1) for k, val in self.results.items()}
         return mean, var
+
+
+class RobustnessTester(BaseTester):
+    def __init__(self, run_dirs, args, namespaces=None):
+        super().__init__(run_dirs, args)
+        self.namespaces = namespaces
+
+    @save_and_load('robust')
+    def test_model(self, run_dir, restart=False):
+        model = self.load_model(run_dir)
+        metrics = MetricLogger()
+        attacks = {name: set_attack(model, namespace) for name, namespace in self.namespaces.items()}
+
+        _, val_loader = set_dataloader(self.args)
+        for images, labels in val_loader:
+            images, labels = images.cuda(), labels.cuda()
+            with torch.no_grad():
+                pred = model(images)
+            top1, top5 = accuracy(pred, labels)
+            metrics.update(top1=(top1, len(images)), top5=(top5, len(images)))
+            for name, attack in attacks.items():
+                adv_images = attack.forward(images, labels).detach()
+                adv_pred = model(adv_images)
+                top1, top5 = accuracy(adv_pred, labels)
+                kwargs = {name + '_top1': (top1, len(images)), name + '_top5': (top5, len(images))}
+                metrics.update(**kwargs)
+        result = {meter: metrics.retrieve_meters(meter).global_avg for meter in metrics.meters}
+        return result
+
+
+class SmoothedTester(BaseTester):
+    def __init__(self, run_dirs, args):
+        super().__init__(run_dirs, args)
+
+    @save_and_load('smooth')
+    def test_model(self, run_dir, restart=False):
+        args = self.args
+        model = self.load_model(run_dir)
+        if args.smooth_model == 'smooth':
+            smoothed_classifier = Smooth(model, self.args)
+            file_path = os.path.join(run_dir, 'test', 'smooth.txt')
+        else:
+            smoothed_classifier = SCRFP(model, self.args)
+            file_path = os.path.join(run_dir, 'test', 'scrfp.txt')
+        # create the smooothed classifier g
+
+        # prepare output file
+        f = open(file_path, 'w')
+        print("idx\tlabel\tpredict\tradius\tcorrect\ttime", file=f, flush=True)
+
+        # iterate through the dataset
+        _, dataset = set_dataset(self.args)
+        for i in range(len(dataset)):
+
+            # only certify every args.skip examples, and stop after args.max examples
+            if i % self.args.skip != 0:
+                continue
+
+            (x, label) = dataset[i]
+
+            before_time = time.time()
+            # certify the prediction of g around x
+            x = x.cuda()
+            prediction, radius = smoothed_classifier.certify(x, args.N0, args.N, args.alpha, args.batch)
+            after_time = time.time()
+            correct = int(prediction == label)
+
+            time_elapsed = str(datetime.timedelta(seconds=(after_time - before_time)))
+            print("{}\t{}\t{}\t{:.3}\t{}\t{}".format(
+                i, label, prediction, radius, correct, time_elapsed), file=f, flush=True)
+
+        f.close()
+        return ApproximateAccuracy(file_path).at_radii(np.linspace(0, 2, 100))
