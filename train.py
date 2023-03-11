@@ -31,7 +31,8 @@ if __name__ == '__main__':
                          val_check_interval=args.val_step,
                          logger=logtool,
                          enable_progress_bar=args.npbar,
-                         inference_mode=False
+                         inference_mode=False,
+                         log_every_n_steps=100
                          )
     trainer.fit(model)
     model.save_model(logtool.experiment.dir)
