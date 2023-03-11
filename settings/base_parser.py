@@ -20,7 +20,7 @@ class BaseParser:
 
         # data loader settings
         self.parser.add_argument('--batch_size', default=128, type=int)
-        self.parser.add_argument('--num_workers', default=4, type=int)
+        self.parser.add_argument('--num_workers', default=8, type=int)
 
         self.unknown_args = []
         if argv is None:
