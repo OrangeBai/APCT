@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 from torch.nn.utils.prune import L1Unstructured, global_unstructured
 import torch.utils.data as data
+from pytorch_lightning.loggers import WandbLogger
 import os
 import wandb
 from core.prune import *
@@ -74,6 +75,13 @@ class BaseTrainer(pl.LightningModule):
         self.log('val/top1', top1, sync_dist=True, on_epoch=True)
         return
 
+    def on_validation_epoch_end(self) -> None:
+        logger = self.logger
+        if isinstance(logger, WandbLogger):
+            logger.experiment.save('best.ckpt', policy='live')
+        # exec('wandb --sync-all')
+        return
+
     @property
     def lr(self):
         return self.trainer.optimizers[0].param_groups[0]['lr']
@@ -123,7 +131,6 @@ class AttackTrainer(BaseTrainer):
         top1, top5 = accuracy(pred, labels)
         self.log('val/adv_top1', top1, sync_dist=True, on_epoch=True)
         return
-
 
 class EntropyTrainer(BaseTrainer):
     def __init__(self, args):

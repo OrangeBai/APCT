@@ -16,7 +16,8 @@ class TrainParser(BaseParser):
         # step-wise or epoch-wise
         self.parser.add_argument('--num_epoch', default=None, type=int)
         self.parser.add_argument('--num_step', default=-1, type=int)
-
+        self.parser.add_argument('--grad_accumulate', default=1, type=int)
+        self.parser.add_argument('--resume_id', default=None, type=str)
         # scheduler and optimizer
         self.parser.add_argument('--lr_scheduler', default='milestones',
                                  choices=['static', 'milestones', 'exp', 'linear', 'cyclic'])
