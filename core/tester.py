@@ -43,7 +43,7 @@ def restore_runs(args, filters=None):
         for file in run.files():
             if not os.path.exists(os.path.join(root, file.name)):
                 wandb.restore(file.name, run_path=run_path, root=root)
-        run_paths[run.name] = os.path.join(root, root)
+        run_paths[run.name] = root
     ids = [run.id for run in runs]
     remove_dirs = [d for d in os.listdir(args.model_dir) if d not in ids]
     for d in remove_dirs:

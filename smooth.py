@@ -1,6 +1,9 @@
+import itertools
 import os
 import pandas as pd
 import torch
+import wandb
+
 from settings.test_setting import TestParser
 from argparse import Namespace
 from core.tester import SmoothedTester, restore_runs
@@ -14,16 +17,16 @@ import numpy as np
 from copy import deepcopy
 
 if __name__ == '__main__':
-    load_argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual']
+    load_argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual_smooth']
     load_args = TestParser(load_argsv).get_args()
     run_dirs = restore_runs(load_args)
 
-    test_names = ['float_0.00', 'float_0.1', 'float_0.2',
-                  'fixed_0.00', 'fixed_-0.05', 'fixed_-0.1']
-    run_dirs = {name: run_dirs[name] for name in test_names}
     argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual', '--test_mode', 'smoothed_certify',
              '--smooth_model', 'smooth']
     args = TestParser(argsv).get_args()
+
+    test_names = [i.format(args.sigma) for i in ['flt_{}_0.05', 'fix_{}_-0.05', 'std_{}']]
+    run_dirs = {name: run_dirs[name] for name in test_names}
 
     tester = SmoothedTester(run_dirs, args)
     res1 = tester.test(restart=False)
@@ -32,5 +35,10 @@ if __name__ == '__main__':
              '--smooth_model', 'SCRFP', '--eta_float', '-0.1']
     args = TestParser(argsv).get_args()
     tester = SmoothedTester(run_dirs, args)
-    res2 = tester.test(restart=True)
+    res2 = tester.test(restart=False)
     print(1)
+    wandb.init()
+    api = wandb.Api()
+    a = api.runs(args.project)
+
+    wandb.init(project="preemptable", resume=True)

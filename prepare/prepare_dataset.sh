@@ -41,8 +41,9 @@ cd $data_path/ImageNet-2012
 mkdir val
 tar --touch -xvf ILSVRC2012_img_val.tar -C val/
 # prepare val data
-cd $file_path
-bash val_prepare.sh $data_path/ImageNet-2012/val
+cd "${file_path}"
+echo "now I am at $(pwd)"
+bash val_prepare.sh "${data_path}/ImageNet-2012/val"
 
-# resize dataset
-python $file_path/prepare/resize.py --data_path $data_path
+## resize dataset
+#python $file_path/prepare/resize.py --data_path $data_path
