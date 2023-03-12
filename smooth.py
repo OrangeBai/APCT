@@ -17,11 +17,11 @@ import numpy as np
 from copy import deepcopy
 
 if __name__ == '__main__':
-    load_argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual']
+    load_argsv = ['--dataset', 'cifar10', '--net', 'vgg16']
     load_args = TestParser(load_argsv).get_args()
     run_dirs = restore_runs(load_args)
 
-    argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual', '--test_mode', 'smoothed_certify',
+    argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--test_mode', 'smoothed_certify',
              '--smooth_model', 'smooth']
     args = TestParser(argsv).get_args()
 
@@ -29,13 +29,13 @@ if __name__ == '__main__':
     run_dirs = {name: run_dirs[name] for name in test_names}
 
     tester = SmoothedTester(run_dirs, args)
-    res1 = tester.test(restart=False)
+    res1 = tester.test(restart=True)
 
     argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual', '--test_mode', 'smoothed_certify',
              '--smooth_model', 'SCRFP', '--eta_float', '-0.1']
     args = TestParser(argsv).get_args()
     tester = SmoothedTester(run_dirs, args)
-    res2 = tester.test(restart=False)
+    res2 = tester.test(restart=True)
 
     api = wandb.Api(timeout=120)
     runs = api.runs(load_args.project)
