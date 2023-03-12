@@ -17,7 +17,7 @@ import numpy as np
 from copy import deepcopy
 
 if __name__ == '__main__':
-    load_argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual_smooth']
+    load_argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual']
     load_args = TestParser(load_argsv).get_args()
     run_dirs = restore_runs(load_args)
 
@@ -36,9 +36,12 @@ if __name__ == '__main__':
     args = TestParser(argsv).get_args()
     tester = SmoothedTester(run_dirs, args)
     res2 = tester.test(restart=False)
-    print(1)
-    wandb.init()
-    api = wandb.Api()
-    a = api.runs(args.project)
 
-    wandb.init(project="preemptable", resume=True)
+    api = wandb.Api(timeout=120)
+    runs = api.runs(load_args.project)
+    for run in runs:
+        os.chdir(os.path.join(load_args.model_dir, run.id))
+        test_dir = os.path.join(load_args.model_dir, run.id, 'test')
+        if os.path.exists(test_dir):
+            for file in os.listdir(test_dir):
+                run.upload_file(path=os.path.join(test_dir, file))
