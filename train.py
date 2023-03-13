@@ -37,7 +37,7 @@ if __name__ == '__main__':
                          accumulate_grad_batches=args.grad_accumulate,
                          )
     if args.resume_id:
-        logtool.experiment.restore('best.ckpt')
+        logtool.experiment.restore('best.ckpt', replace=True)
         ckpt_path = os.path.join(logtool.experiment.dir, 'best.ckpt')
     else:
         ckpt_path = None
