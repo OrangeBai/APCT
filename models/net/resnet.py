@@ -4,9 +4,8 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-from .. import conv1x1, BasicBlock, Bottleneck
-from ..base_model import BaseModel
-from ..blocks import ConvBlock
+from models.blocks import conv1x1, BasicBlock, Bottleneck, ConvBlock
+from models.base_model import BaseModel
 
 
 class ResNet(BaseModel):

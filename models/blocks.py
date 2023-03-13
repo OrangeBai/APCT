@@ -1,9 +1,7 @@
 from typing import Optional, Callable
 
 import torch
-import torch.nn as nn
 from torch import nn as nn, Tensor
-
 from core.utils import set_activation, set_gamma
 
 
