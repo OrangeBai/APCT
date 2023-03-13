@@ -8,70 +8,51 @@ class DualNet(nn.Module):
         super().__init__()
         self.net = net
         self.gamma = set_gamma(args.activation)
-
-        self.counter = -1
-
-        self.fixed_neurons = []
         self.handles = []
-
-    @property
-    def count_block_len(self):
-        counter = 0
-        for module in self.net.layers.children():
-            if type(module) in [ConvBlock, LinearBlock, Bottleneck]:
-                counter += 1
-        return counter - 1
 
     def compute_fixed_1batch(self, x):
         self.net.eval()
-        self.counter = -1
         fixed_neurons = []
         batch_x = self.net.norm_layer(x)
         for i, module in enumerate(list(self.net.layers)):
             batch_x = self.compute_pre_act(module, batch_x)
-            if self.check_block(module) and i != len(list(self.net.layers)) - 1:
+            if check_block(self.model, module):
                 fixed = self._fixed_1batch(batch_x)
                 fixed_neurons += [fixed]
                 batch_x = module.Act(batch_x)
             else:
                 fixed_neurons += [None]
-
-        self.fixed_neurons = fixed_neurons
         self.net.train()
         return fixed_neurons
 
     def compute_fixed_2batch(self, x1, x2):
         self.net.eval()
-        self.counter = -1
         fixed_neurons = []
         x1 = self.net.norm_layer(x1)
         x2 = self.net.norm_layer(x2)
         for i, module in enumerate(self.net.layers.children()):
             x1 = self.compute_pre_act(module, x1)
             x2 = self.compute_pre_act(module, x2)
-            if self.check_block(module) and i != len(self.net.layers) - 1:
+            if check_block(self.net, module):
                 fixed = self._fixed_2batch(x1, x2)
                 fixed_neurons += [fixed]
                 x1 = module.Act(x1)
                 x2 = module.Act(x2)
             else:
                 fixed_neurons += [None]
-
-        self.fixed_neurons = fixed_neurons
         self.net.train()
         return fixed_neurons
 
     def predict(self, x, fixed_neuron, eta_fixed, eta_float):
         self.net.eval()
-        return self.forward(x, fixed_neuron, eta_fixed, eta_float)
+        return self.forward(x, fixed_neuron, eta_fixed, eta_float, False)
 
-    def forward(self, x, fixed_neurons, eta_fixed, eta_float):
-        self.counter = -1
+    def forward(self, x, fixed_neurons, eta_fixed, eta_float, balance=True):
         batch_x = self.net.norm_layer(x)
         for i, module in enumerate(list(self.net.layers)):
             batch_x = self.compute_pre_act(module, batch_x)
-            if self.check_block(module) and i != len(list(self.net.layers)) - 1:
-                h = self.set_hook(fixed_neurons[i], eta_fixed, eta_float, False)
+            if check_block(self.net, module):
+                h = self.set_hook(fixed_neurons[i], eta_fixed, eta_float, balance)
                 self.handles += [module.Act.register_forward_pre_hook(h)]
                 batch_x = module.Act(batch_x)
         self.remove_handles()
@@ -90,13 +71,6 @@ class DualNet(nn.Module):
             return self.x_mask(x, eta_fixed, fixed, balance) + self.x_mask(x, eta_float, ~fixed, balance)
 
         return forward_pre_hook
-
-    def check_block(self, module):
-        if type(module) in [ConvBlock, LinearBlock, Bottleneck]:
-            self.counter += 1
-            return 1
-        else:
-            return 0
 
     @staticmethod
     def x_mask(x, ratio, mask, balance=True):
@@ -134,3 +108,7 @@ class DualNet(nn.Module):
         if len(self.gamma) == 1:
             x_0_pattern = (batch_x - self.gamma[0])[0].repeat((len(batch_x),) + (1,) * (dims - 1))
             return x_0_pattern * (batch_x - self.gamma[0]) > 0
+
+
+def check_block(model, module):
+    return type(module) in [ConvBlock, LinearBlock, Bottleneck] and module != model.layers[-1]
