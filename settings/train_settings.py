@@ -85,7 +85,8 @@ class TrainParser(BaseParser):
             self.parser.add_argument('--method', default='Hard', type=str,
                                      choices=['L1Unstructured', 'RandomStructured', 'LnStructured',
                                               'RandomUnstructured', 'Hard'])
-            self.parser.add_argument('--total_amount', default=0.5, type=float)
+            self.parser.add_argument('--conv_amount', default=0.5, type=float)
+            self.parser.add_argument('-fc_amount', default=0.5, type=float)
             self.set_prune()
         elif args.train_mode == 'dual':
             self.parser.add_argument('--sigma', default=0.125, type=float)
@@ -116,5 +117,5 @@ class TrainParser(BaseParser):
             self.parser.add_argument('--fc_pru_bound', default=0.1, type=float)
         else:
             prune_times = len(milestones)
-            amount = args.total_amount / prune_times
-            self.parser.add_argument('--amount', default=amount, type=float)
+            self.parser.add_argument('--conv_pru_amount', default=args.conv_amount / prune_times, type=float)
+            self.parser.add_argument('--fc_pru_amount', default=args.fc_amount / prune_times, type=float)

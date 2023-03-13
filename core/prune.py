@@ -1,5 +1,6 @@
 import torch
-from torch.nn.utils.prune import l1_unstructured, random_structured, ln_structured, remove, identity, is_pruned
+from torch.nn.utils.prune import global_unstructured, L1Unstructured, random_structured, \
+    ln_structured, remove, identity, is_pruned, l1_unstructured
 from models.blocks import ConvBlock, LinearBlock
 
 
@@ -15,12 +16,13 @@ def compute_importance(weight, channel_entropy, eta):
                 0:      prune by weight
                 1:      prune by channel_entropy
                 2: weight * entropy
+                3:
                 else:   eta * channel_entropy * weight
     :return:    The importance_scores
     """
     assert weight.shape[0] == channel_entropy.shape[0] and channel_entropy.ndim == 1
     weight = abs(weight)
-    e_new_shape = (-1, ) + (1, ) * (weight.dim() - 1)
+    e_new_shape = (-1,) + (1,) * (weight.dim() - 1)
     channel_entropy = torch.tensor(channel_entropy).view(e_new_shape).cuda()
     if eta == -1:
         importance_scores = channel_entropy * torch.ones_like(weight)
@@ -29,7 +31,7 @@ def compute_importance(weight, channel_entropy, eta):
     elif eta == 2:
         importance_scores = channel_entropy * weight
     elif eta == 3:
-        importance_scores =1 / (1 / (channel_entropy +1e-8) + 1 / (weight+ 1e-8))
+        importance_scores = 1 / (1 / (channel_entropy + 1e-8) + 1 / (weight + 1e-8))
     elif eta == 4:
         normed_entropy = (channel_entropy - channel_entropy.mean()) / channel_entropy.std()
         normed_weight = (weight - weight.mean()) / weight.std()
@@ -82,8 +84,8 @@ def prune_linear_transform_block(block, block_entropy, eta):
     :return:
     """
     weights = getattr(block.LT, 'weight').detach()
-    num_dim = len(block_entropy[0].shape)                               # num of dimensions
-    channel_entropy = block_entropy[0].mean(tuple(range(1, num_dim)))   # averaged entropy (out_channels, )
+    num_dim = len(block_entropy[0].shape)  # num of dimensions
+    channel_entropy = block_entropy[0].mean(tuple(range(1, num_dim)))  # averaged entropy (out_channels, )
     lt_im_score = compute_importance(weights, channel_entropy, eta)
     bn_im_score = lt_im_score.mean(dim=tuple(range(1, weights.dim())))
 
@@ -108,8 +110,17 @@ def remove_block(block):
 
 
 def iteratively_prune(im_dict, args):
-    for param_to_prune, im_score in im_dict.items():
-        prune_module(param_to_prune, im_score, args)
+    if args.method == 'L1Unstructured':
+        params = [(k[0], k[1]) for k in im_dict.keys() if 'conv' in k[2].lower()]
+        im_score = {(k[0], k[1]): v for k, v in im_dict.items() if 'conv' in k[2].lower()}
+        global_unstructured(params, L1Unstructured, im_score, amount=args.conv_pru_amount)
+
+        params = [(k[0], k[1]) for k in im_dict.keys() if 'conv' not in k[2].lower()]
+        im_score = {(k[0], k[1]): v for k, v in im_dict.items() if 'conv' not in k[2].lower()}
+        global_unstructured(params, L1Unstructured, im_score, amount=args.fc_pru_bound)
+    else:
+        for param_to_prune, im_score in im_dict.items():
+            prune_module(param_to_prune, im_score, args)
 
 
 def prune_module(param_to_prune, im_score, args):
@@ -117,10 +128,11 @@ def prune_module(param_to_prune, im_score, args):
     cur_param = getattr(module, name)
     num_dims = cur_param.dim()
     if args.method == 'LnStructured':
+        amount = args.conv_pru_amount if 'conv' in block.lower() else args.fc_pru_amount
         if num_dims > 1:
-            ln_structured(module, name, args.amount, 2, dim=0, importance_scores=im_score.cuda())
+            ln_structured(module, name, amount, 2, dim=0, importance_scores=im_score.cuda())
         else:
-            l1_unstructured(module, name, args.amount, importance_scores=im_score.cuda())
+            l1_unstructured(module, name, amount, importance_scores=im_score.cuda())
     elif args.method == 'RandomStructured':
         random_structured(module, name, args.amount, dim=0)
     elif args.method == 'Hard':
@@ -133,7 +145,7 @@ def prune_module(param_to_prune, im_score, args):
         hard_ind = tensor_to_pru[(slice(None, ),) + (0,) * (num_dims - 1)]
 
         # set an upper bound for pruning
-        maximum_to_prune = max(len(tensor_to_pru) - 0.15 * len(im_score), 0)
+        maximum_to_prune = max(len(tensor_to_pru) - 0.80 * len(im_score), 0)
 
         if block == 'ConvBlock':
             num_filters = min(torch.sum(hard_ind < args.conv_pru_bound).to(torch.int), maximum_to_prune)
@@ -174,8 +186,6 @@ def monitor(importance_dict, info):
 def restructure(model):
     """remove the zero filters"""
     pass
-
-
 
 # def compute_params(block, block_entropy, parameters_to_prune, importance_dict, eta):
 #     """

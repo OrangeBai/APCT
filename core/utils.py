@@ -1,10 +1,8 @@
 from collections import defaultdict, deque, OrderedDict
-
 import numpy as np
 import torch
 import torch.distributed as dist
 import torch.nn as nn
-from torch import nn
 from torch.optim.lr_scheduler import *
 from torch.optim.lr_scheduler import _LRScheduler
 import math
@@ -332,3 +330,4 @@ def set_activation(activation):
         return nn.ReLU6()
     elif activation.lower() == 'tanh':
         return nn.Tanh()
+

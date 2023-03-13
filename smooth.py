@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import torch
 import wandb
-
+from core.scrfp import ApproximateAccuracy
 from settings.test_setting import TestParser
 from argparse import Namespace
 from core.tester import SmoothedTester, restore_runs
@@ -19,29 +19,31 @@ from copy import deepcopy
 if __name__ == '__main__':
     load_argsv = ['--dataset', 'cifar10', '--net', 'vgg16']
     load_args = TestParser(load_argsv).get_args()
-    run_dirs = restore_runs(load_args)
+    runs = restore_runs(load_args)
 
     argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--test_mode', 'smoothed_certify',
              '--smooth_model', 'smooth']
     args = TestParser(argsv).get_args()
 
-    test_names = [i.format(args.sigma) for i in ['flt_{}_0.05', 'fix_{}_-0.05', 'std_{}']]
-    run_dirs = {name: run_dirs[name] for name in test_names}
+    test_names = [i.format(args.sigma) for i in ['flt_{}_0.10', 'fix_{}_-0.10', 'std_{}']]
+    run_dirs = {run: run_dir for run, run_dir in runs.items() if run.name in test_names}
 
     tester = SmoothedTester(run_dirs, args)
     res1 = tester.test(restart=True)
 
     argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual', '--test_mode', 'smoothed_certify',
-             '--smooth_model', 'SCRFP', '--eta_float', '-0.1']
+             '--smooth_model', 'SCRFP', '--eta_float', '-0.05']
     args = TestParser(argsv).get_args()
     tester = SmoothedTester(run_dirs, args)
     res2 = tester.test(restart=True)
 
-    api = wandb.Api(timeout=120)
-    runs = api.runs(load_args.project)
-    for run in runs:
-        os.chdir(os.path.join(load_args.model_dir, run.id))
-        test_dir = os.path.join(load_args.model_dir, run.id, 'test')
-        if os.path.exists(test_dir):
-            for file in os.listdir(test_dir):
-                run.upload_file(path=os.path.join(test_dir, file))
+
+
+
+    # smooth, scrfp = {}, {}
+    # for n, p in run_dirs.items():
+    #     smooth_path = os.path.join(p, 'test', 'smooth.txt')
+    #     scrfp_path = os.path.join(p, 'test', 'scrfp.txt')
+    #     smooth[n] = ApproximateAccuracy(smooth_path).at_radii(np.linspace(0, 2, 400))
+    #     scrfp[n] = ApproximateAccuracy(scrfp_path).at_radii(np.linspace(0, 2, 400))
+    # print(1)

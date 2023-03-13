@@ -1,6 +1,5 @@
 import torch
-
-from core.utils import *
+import torch.nn as nn
 from core.utils import set_activation
 
 
@@ -59,3 +58,16 @@ class NormalizeLayer(torch.nn.Module):
         means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
         std = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
         return (x - means.to(device=device)) / std.to(device=device)
+
+
+def check_block(model, block):
+    return check_valid_block(block) and not check_last_block(model, block)
+
+
+def check_last_block(model, block):
+    return block == model.layers[-1]
+
+def check_valid_block(block):
+    if isinstance(block, ConvBlock) or isinstance(block, LinearBlock) or isinstance(block, Bottleneck):
+        return True
+    return False

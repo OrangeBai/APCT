@@ -8,14 +8,17 @@ from core.dual_net import DualNet
 from core.utils import MetricLogger, accuracy
 from core.attack import set_attack
 from core.scrfp import Smooth, SCRFP, ApproximateAccuracy
+from models.blocks import check_block
 from shutil import rmtree
 from torch.nn.functional import one_hot, cosine_similarity
 from core.pattern import FloatHook, set_gamma
 import pandas as pd
 import time
 import datetime
-
+from core.pattern import PruneHook
+from core.prune import prune_block, iteratively_prune
 # equals to save_and_load(name)(fun)(self, run_dir)
+
 def save_and_load(name):
     def inner(fun):
         def wrapper(*args, **kwargs):
@@ -43,7 +46,7 @@ def restore_runs(args, filters=None):
         for file in run.files():
             if not os.path.exists(os.path.join(root, file.name)):
                 wandb.restore(file.name, run_path=run_path, root=root)
-        run_paths[run.name] = root
+        run_paths[run] = root
     ids = [run.id for run in runs]
     remove_dirs = [d for d in os.listdir(args.model_dir) if d not in ids]
     for d in remove_dirs:
@@ -64,10 +67,20 @@ class BaseTester:
         return model.cuda().eval()
 
     def test(self, restart=False):
-        for run_name, run_dir in self.run_dirs.items():
+        for run, run_dir in self.run_dirs.items():
             os.makedirs(os.path.join(run_dir, 'test'), exist_ok=True)
-            self.results[run_name] = self.test_model(run_dir, restart)
+            self.results[run.name] = self.test_model(run_dir, restart)
+            self.upload(run, run_dir)
         return self.results
+
+    @staticmethod
+    def upload(run, run_dir):
+        os.chdir(run_dir)
+        test_dir = os.path.join(run_dir, 'test')
+        if os.path.exists(test_dir):
+            for file in os.listdir(test_dir):
+                run.upload_file(path=os.path.join(test_dir, file))
+        return
 
     @staticmethod
     def save_test_result(result, result_path):
@@ -379,3 +392,34 @@ class SmoothedTester(BaseTester):
 
         f.close()
         return ApproximateAccuracy(file_path).at_radii(np.linspace(0, 2, 100))
+
+
+class PruneTester(BaseTester):
+    def __init__(self, run_dirs, args):
+        super().__init__(run_dirs, args)
+
+    @save_and_load('prune')
+    def test_model(self, run_dir, restart=False):
+        model = self.load_model(run_dir)
+        prune_hook = PruneHook(model, set_gamma(self.args.activation), 0.1)
+        train_loader, val_loader = set_dataloader(self.args)
+        for images, labels in train_loader:
+            images, labels = images.cuda(), labels.cuda()
+            _ = model(images)
+            global_entropy = prune_hook.retrieve(reshape=False)
+
+            im_scores = {}
+            for name, block in model.named_modules():
+                if check_block(model, block):
+                    im_scores.update(prune_block(block, global_entropy[name], self.args.prune_eta))
+            iteratively_prune(im_scores, self.args)
+
+        metrics = MetricLogger()
+        for images, labels in val_loader:
+            images, labels = images.cuda(), labels.cuda()
+            with torch.no_grad():
+                pred = model(images)
+            top1, top5 = accuracy(pred, labels)
+            metrics.update(top1=(top1, len(images)), top5=(top5, len(images)))
+        result = {meter: metrics.retrieve_meters(meter).avg for meter in metrics.meters}
+        return result
