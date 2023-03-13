@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from core.utils import set_activation
-
+from core.utils import set_activation, set_gamma
+from models.net.resnet import Bottleneck
 
 class LinearBlock(nn.Module):
     def __init__(self, in_channels, out_channels, bn=True, act='relu'):
@@ -66,6 +66,7 @@ def check_block(model, block):
 
 def check_last_block(model, block):
     return block == model.layers[-1]
+
 
 def check_valid_block(block):
     if isinstance(block, ConvBlock) or isinstance(block, LinearBlock) or isinstance(block, Bottleneck):
