@@ -1,5 +1,4 @@
 import pytorch_lightning as pl
-from torch.nn.utils.prune import L1Unstructured, global_unstructured
 import torch.utils.data as data
 from pytorch_lightning.loggers import WandbLogger
 import os

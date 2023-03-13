@@ -1,5 +1,5 @@
 from models.blocks import *
-from models.net.resnet import Bottleneck
+from models import Bottleneck
 import torch.nn.functional as F
 
 

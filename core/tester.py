@@ -8,7 +8,6 @@ from core.dual_net import DualNet
 from core.utils import MetricLogger, accuracy
 from core.attack import set_attack
 from core.scrfp import Smooth, SCRFP, ApproximateAccuracy
-from models.blocks import check_block
 from shutil import rmtree
 from torch.nn.functional import one_hot, cosine_similarity
 from core.pattern import FloatHook, set_gamma
@@ -398,28 +397,28 @@ class PruneTester(BaseTester):
     def __init__(self, run_dirs, args):
         super().__init__(run_dirs, args)
 
-    @save_and_load('prune')
-    def test_model(self, run_dir, restart=False):
-        model = self.load_model(run_dir)
-        prune_hook = PruneHook(model, set_gamma(self.args.activation), 0.1)
-        train_loader, val_loader = set_dataloader(self.args)
-        for images, labels in train_loader:
-            images, labels = images.cuda(), labels.cuda()
-            _ = model(images)
-            global_entropy = prune_hook.retrieve(reshape=False)
-
-            im_scores = {}
-            for name, block in model.named_modules():
-                if check_block(model, block):
-                    im_scores.update(prune_block(block, global_entropy[name], self.args.prune_eta))
-            iteratively_prune(im_scores, self.args)
-
-        metrics = MetricLogger()
-        for images, labels in val_loader:
-            images, labels = images.cuda(), labels.cuda()
-            with torch.no_grad():
-                pred = model(images)
-            top1, top5 = accuracy(pred, labels)
-            metrics.update(top1=(top1, len(images)), top5=(top5, len(images)))
-        result = {meter: metrics.retrieve_meters(meter).avg for meter in metrics.meters}
-        return result
+    # @save_and_load('prune')
+    # def test_model(self, run_dir, restart=False):
+    #     model = self.load_model(run_dir)
+    #     prune_hook = PruneHook(model, set_gamma(self.args.activation), 0.1)
+    #     train_loader, val_loader = set_dataloader(self.args)
+    #     for images, labels in train_loader:
+    #         images, labels = images.cuda(), labels.cuda()
+    #         _ = model(images)
+    #         global_entropy = prune_hook.retrieve(reshape=False)
+    #
+    #         im_scores = {}
+    #         for name, block in model.named_modules():
+    #             if check_block(model, block):
+    #                 im_scores.update(prune_block(block, global_entropy[name], self.args.prune_eta))
+    #         iteratively_prune(im_scores, self.args)
+    #
+    #     metrics = MetricLogger()
+    #     for images, labels in val_loader:
+    #         images, labels = images.cuda(), labels.cuda()
+    #         with torch.no_grad():
+    #             pred = model(images)
+    #         top1, top5 = accuracy(pred, labels)
+    #         metrics.update(top1=(top1, len(images)), top5=(top5, len(images)))
+    #     result = {meter: metrics.retrieve_meters(meter).avg for meter in metrics.meters}
+    #     return result
