@@ -131,6 +131,7 @@ class AttackTrainer(BaseTrainer):
         self.log('val/adv_top1', top1, sync_dist=True, on_epoch=True)
         return
 
+
 class EntropyTrainer(BaseTrainer):
     def __init__(self, args):
         super().__init__(args)
