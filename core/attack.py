@@ -41,7 +41,7 @@ class Noise(Attack):
 
     def forward(self, images, labels):
         n = images + torch.randn_like(images) * self.sigma
-        return n
+        return n.detach()
 
 
 class FGSM(Attack):
