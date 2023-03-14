@@ -25,7 +25,7 @@ if __name__ == '__main__':
              '--smooth_model', 'smooth']
     args = TestParser(argsv).get_args()
 
-    test_names = [i.format(args.sigma) for i in ['flt_{}_0.05', 'flt_{}_0.10', 'flt_{}_0.15', 'flt_{}_0.20', 'std_{}']]
+    test_names = [i.format(args.sigma) for i in ['flt_{}_0.01', 'flt_{}_0.02', 'flt_{}_0.05', 'flt_{}_0.10', 'std_{}']]
     run_dirs = {run: run_dir for run, run_dir in runs.items() if run.name in test_names}
 
     tester = SmoothedTester(run_dirs, args)
