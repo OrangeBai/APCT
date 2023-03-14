@@ -1,17 +1,9 @@
-import os
 import pandas as pd
-import torch
 from settings.test_setting import TestParser
 from argparse import Namespace
 from core.tester import RobustnessTester, restore_runs
 from exps.plot.plt_base import update_params, update_ax_font
-from numpy.linalg import norm
-from torch.nn.functional import one_hot, cosine_similarity
-from core.dataloader import set_dataset
 import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-from copy import deepcopy
 
 if __name__ == '__main__':
     load_argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual']

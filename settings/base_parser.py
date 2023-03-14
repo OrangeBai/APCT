@@ -16,7 +16,7 @@ class BaseParser:
         self.parser.add_argument('--name', type=str)
         # model settings
         self.parser.add_argument('--batch_norm', default=1, type=int)
-        self.parser.add_argument('--activation', default='LeakyReLU', type=str)
+        self.parser.add_argument('--activation', default='ReLU', type=str)
 
         # data loader settings
         self.parser.add_argument('--batch_size', default=128, type=int)
@@ -75,6 +75,19 @@ class BaseParser:
         elif args.attack.lower() == 'noise':
             self.parser.add_argument('--sigma', default=0.12, type=float)
         return
+
+    def set_prune(self):
+        args, _ = self.parser.parse_known_args(self.args)
+        milestones = list(range(args.prune_every, args.num_epoch - args.fine_tune + 1, args.prune_every))
+        self.parser.add_argument('--prune_milestones', default=milestones, type=int, nargs='+')
+        if args.method == 'Hard':
+            self.parser.set_defaults(prune_eta=-1)
+            self.parser.add_argument('--conv_bound', default=0.1, type=float)
+            self.parser.add_argument('--fc_bound', default=0.1, type=float)
+        else:
+            prune_times = len(milestones)
+            self.parser.add_argument('--conv_amount', default=args.conv_amount / prune_times, type=float)
+            self.parser.add_argument('--fc_amount', default=args.fc_amount / prune_times, type=float)
 
     def get_args(self):
         args = self.parser.parse_known_args(self.args)[0]

@@ -148,9 +148,9 @@ def prune_module(param_to_prune, im_score, args):
         maximum_to_prune = max(len(tensor_to_pru) - 0.80 * len(im_score), 0)
 
         if block == 'ConvBlock':
-            num_filters = min(torch.sum(hard_ind < args.conv_pru_bound).to(torch.int), maximum_to_prune)
+            num_filters = min(torch.sum(hard_ind < args.conv_bound).to(torch.int), maximum_to_prune)
         elif block == 'LinearBlock':
-            num_filters = min(torch.sum(hard_ind < args.fc_pru_bound).to(torch.int), maximum_to_prune)
+            num_filters = min(torch.sum(hard_ind < args.fc_bound).to(torch.int), maximum_to_prune)
         else:
             raise NameError("Invalid Block for pruning")
 

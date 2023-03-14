@@ -6,13 +6,6 @@ class TestParser(BaseParser):
     def __init__(self, argv=None):
         super(TestParser, self).__init__(argv)
         self.parser.add_argument('--test_mode', default='acc', type=str)
-        # self.parser.add_argument('--data_size', default=160, type=int)
-        # self.parser.add_argument('--crop_size', default=128, type=int)
-        # args, _ = self.parser.parse_known_args(self.args)
-        # exp_dir = os.path.join(args.model_dir, 'exp')
-        # os.makedirs(exp_dir, exist_ok=True)
-        # self.parser.add_argument('--exp_dir', default=os.path.join(args.model_dir, 'exp'))
-
         self._set_up_test()
 
     def _set_up_test(self):
@@ -24,6 +17,16 @@ class TestParser(BaseParser):
             self.set_up_attack()
         elif args.test_mode == 'smoothed_certify':
             self.parser = smoothed_certify(self.parser)
+        elif args.test_mode == 'prune':
+            args, _ = self.parser.parse_known_args(self.args)
+            self.parser.add_argument('--method', default='Hard', type=str)
+            self.parser.add_argument('--prune_eta', default=-1, type=int)
+
+            self.parser.add_argument('--conv_bound', default=0.1, type=float)
+            self.parser.add_argument('--fc_bound', default=0.1, type=float)
+
+            self.parser.add_argument('--conv_amount', default=0.2, type=float)
+            self.parser.add_argument('--fc_amount', default=0.2, type=float)
 
 
 #

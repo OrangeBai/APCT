@@ -1,23 +1,23 @@
 import os
+import time
 import torch
 import wandb
+import datetime
 import numpy as np
+import pandas as pd
+from shutil import rmtree
 from numpy.linalg import norm as norm
 from core.dataloader import set_dataloader, set_dataset
-from core.dual_net import DualNet
+from core.dual_net import DualNet, check_block
 from core.utils import MetricLogger, accuracy
 from core.attack import set_attack
 from core.scrfp import Smooth, SCRFP, ApproximateAccuracy
-from shutil import rmtree
 from torch.nn.functional import one_hot, cosine_similarity
-from core.pattern import FloatHook, set_gamma
-import pandas as pd
-import time
-import datetime
-from core.pattern import PruneHook
+from core.pattern import FloatHook, set_gamma, PruneHook
 from core.prune import prune_block, iteratively_prune
-# equals to save_and_load(name)(fun)(self, run_dir)
 
+
+# equals to save_and_load(name)(fun)(self, run_dir)
 def save_and_load(name):
     def inner(fun):
         def wrapper(*args, **kwargs):
@@ -401,17 +401,18 @@ class PruneTester(BaseTester):
     def test_model(self, run_dir, restart=False):
         model = self.load_model(run_dir)
         prune_hook = PruneHook(model, set_gamma(self.args.activation), 0.1)
+        prune_hook.set_up()
         train_loader, val_loader = set_dataloader(self.args)
         for images, labels in train_loader:
             images, labels = images.cuda(), labels.cuda()
             _ = model(images)
-            global_entropy = prune_hook.retrieve(reshape=False)
+        global_entropy = prune_hook.retrieve(reshape=False)
 
-            im_scores = {}
-            for name, block in model.named_modules():
-                if check_block(model, block):
-                    im_scores.update(prune_block(block, global_entropy[name], self.args.prune_eta))
-            iteratively_prune(im_scores, self.args)
+        im_scores = {}
+        for name, block in model.named_modules():
+            if check_block(model, block):
+                im_scores.update(prune_block(block, global_entropy[name], self.args.prune_eta))
+        iteratively_prune(im_scores, self.args)
 
         metrics = MetricLogger()
         for images, labels in val_loader:

@@ -107,15 +107,3 @@ class TrainParser(BaseParser):
             self.parser.add_argument('--val_epoch', default=None, type=int)
             self.parser.add_argument('--val_step', default=100, type=int)
 
-    def set_prune(self):
-        args, _ = self.parser.parse_known_args(self.args)
-        milestones = list(range(args.prune_every, args.num_epoch - args.fine_tune + 1, args.prune_every))
-        self.parser.add_argument('--prune_milestones', default=milestones, type=int, nargs='+')
-        if args.method == 'Hard':
-            self.parser.set_defaults(prune_eta=-1)
-            self.parser.add_argument('--conv_pru_bound', default=0.1, type=float)
-            self.parser.add_argument('--fc_pru_bound', default=0.1, type=float)
-        else:
-            prune_times = len(milestones)
-            self.parser.add_argument('--conv_pru_amount', default=args.conv_amount / prune_times, type=float)
-            self.parser.add_argument('--fc_pru_amount', default=args.fc_amount / prune_times, type=float)
