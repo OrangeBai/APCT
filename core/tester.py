@@ -40,6 +40,8 @@ def restore_runs(args, filters=None):
     runs = api.runs(args.project, filters=filters)
     run_paths = {}
     for run in runs:
+        if run.name != 'flt_0.5_0.10':
+            continue
         run_path = '/'.join(run.path)
         root = os.path.join(args.model_dir, run.id)
         for file in run.files():

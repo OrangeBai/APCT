@@ -16,7 +16,7 @@ class DualNet(nn.Module):
         batch_x = self.net.norm_layer(x)
         for i, module in enumerate(list(self.net.layers)):
             batch_x = self.compute_pre_act(module, batch_x)
-            if check_block(self.model, module):
+            if check_block(self.net, module):
                 fixed = self._fixed_1batch(batch_x)
                 fixed_neurons += [fixed]
                 batch_x = module.Act(batch_x)

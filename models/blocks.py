@@ -55,9 +55,10 @@ class NormalizeLayer(torch.nn.Module):
         self.sds = torch.tensor(sds).cuda()
 
     def forward(self, x: torch.tensor):
+        device = x.device
         (batch_size, num_channels, height, width) = x.shape
-        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
-        sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
+        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2).to(device)
+        sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2).to(device)
         return (x - means) / sds
 
 
