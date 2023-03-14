@@ -22,17 +22,15 @@ def set_dataloader(args, datasets=None):
         num_workers=args.num_workers,
         pin_memory=True,
         drop_last=False,
-        prefetch_factor=4,
-        persistent_workers=True)
+        prefetch_factor=8)
     val_loader = DataLoader(
         dataset=val_dataset,
         batch_size=args.batch_size,
         shuffle=False,
-        num_workers=4,
+        num_workers=args.num_workers,
         pin_memory=True,
         drop_last=False,
-        prefetch_factor=4,
-        persistent_workers=True)
+        prefetch_factor=8)
     return train_loader, val_loader
 
 
@@ -61,7 +59,7 @@ def set_transforms(args):
     if args.dataset.lower() == 'mnist':
         train_composed = [RandomCrop(32, padding=4), ToTensor()]
         test_composed = [ToTensor()]
-    elif args.dataset.lower() in ['cifar10', 'cifra100']:
+    elif args.dataset.lower() in ['cifar10', 'cifar100']:
         train_composed = [RandomCrop(32, padding=4), RandomHorizontalFlip(), ToTensor()]
         test_composed = [transforms.ToTensor()]
     elif args.dataset.lower() == 'imagenet':
