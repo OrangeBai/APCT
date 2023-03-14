@@ -118,7 +118,7 @@ class AttackTrainer(BaseTrainer):
 
     def training_step(self, batch, batch_idx):
         images, labels = batch[0], batch[1]
-        images = self.attack(images, labels)
+        images = self.attack(images, labels).detach()
         loss = super().training_step([images, labels], batch_idx)
         return loss
 

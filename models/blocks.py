@@ -50,7 +50,7 @@ class NormalizeLayer(torch.nn.Module):
         :param means: the channel means
         :param sds: the channel standard deviations
         """
-        super(NormalizeLayer, self).__init__()
+        super().__init__()
         self.means = torch.tensor(means)
         self.sds = torch.tensor(sds)
 
