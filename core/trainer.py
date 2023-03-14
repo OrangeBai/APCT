@@ -111,10 +111,6 @@ class AttackTrainer(BaseTrainer):
     def __init__(self, args):
         super().__init__(args)
         self.attack = set_attack(self.model, self.args)
-        self.fgsm = set_attack(self.model, Namespace(dataset=self.args.dataset, attack='fgsm', eps=8 / 255))
-
-    def forward(self, x):
-        return self.model(x)
 
     def training_step(self, batch, batch_idx):
         images, labels = batch[0], batch[1]
@@ -123,13 +119,7 @@ class AttackTrainer(BaseTrainer):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        super().validation_step(batch, batch_idx)
-        images, labels = batch[0], batch[1]
-        adv_images = self.fgsm(images, labels)
-        pred = self.model(adv_images)
-        top1, top5 = accuracy(pred, labels)
-        self.log('val/adv_top1', top1, sync_dist=True, on_epoch=True)
-        return
+        return super().validation_step(batch, batch_idx)
 
 
 class EntropyTrainer(BaseTrainer):
