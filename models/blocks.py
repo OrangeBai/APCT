@@ -50,16 +50,15 @@ class NormalizeLayer(torch.nn.Module):
         :param means: the channel means
         :param sds: the channel standard deviations
         """
-        super().__init__()
-        self.means = torch.tensor(means)
-        self.sds = torch.tensor(sds)
+        super(NormalizeLayer, self).__init__()
+        self.means = torch.tensor(means).cuda()
+        self.sds = torch.tensor(sds).cuda()
 
     def forward(self, x: torch.tensor):
-        device = x.device
         (batch_size, num_channels, height, width) = x.shape
         means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
-        std = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
-        return (x - means.to(device=device)) / std.to(device=device)
+        sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
+        return (x - means) / sds
 
 
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:

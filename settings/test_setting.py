@@ -22,10 +22,7 @@ class TestParser(BaseParser):
             self.parser.add_argument('--method', default='Hard', type=str)
             self.parser.add_argument('--prune_eta', default=-1, type=int)
 
-            self.parser.add_argument('--conv_bound', default=0.1, type=float)
-            self.parser.add_argument('--fc_bound', default=0.1, type=float)
-
-            self.parser.add_argument('--conv_amount', default=0.2, type=float)
+            self.parser.add_argument('--conv_amount', default=0.1, type=float)
             self.parser.add_argument('--fc_amount', default=0.2, type=float)
 
 

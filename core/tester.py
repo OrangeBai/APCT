@@ -14,7 +14,7 @@ from core.attack import set_attack
 from core.scrfp import Smooth, SCRFP, ApproximateAccuracy
 from torch.nn.functional import one_hot, cosine_similarity
 from core.pattern import FloatHook, set_gamma, PruneHook
-from core.prune import prune_block, iteratively_prune, monitor
+from core.prune import prune_block, iteratively_prune, monitor, prune_module
 
 
 # equals to save_and_load(name)(fun)(self, run_dir)
@@ -408,21 +408,31 @@ class PruneTester(BaseTester):
             _ = model(images)
         global_entropy = prune_hook.retrieve(reshape=False)
 
-        im_scores = {}
-        for name, block in model.named_modules():
-            if check_block(model, block):
-                im_scores.update(prune_block(block, global_entropy[name], self.args.prune_eta))
+        recorder = {}
+        for conv_bound in np.linspace(0, 0.8, 8):
+            for fc_bound in np.linspace(0, 0.8, 8):
+                self.args.conv_bound = conv_bound
+                self.args.fc_bound = fc_bound
 
-        model = self.load_model(run_dir)
-        iteratively_prune(im_scores, self.args)
-        monitor(im_scores, {})
+                model = self.load_model(run_dir)
+                im_scores = {}
+                for name, block in model.named_modules():
+                    if check_block(model, block):
+                        im_scores.update(prune_block(block, global_entropy[name], self.args.prune_eta))
+                iteratively_prune(im_scores, self.args)
 
+                sparsity = monitor(im_scores, {})['sparsity/global']
+                top1 = self.val_acc(model, val_loader)
+                recorder[(conv_bound, fc_bound)] = (sparsity, top1)
+        return None
+
+    @staticmethod
+    def val_acc(model, val_loader):
         metrics = MetricLogger()
         for images, labels in val_loader:
             images, labels = images.cuda(), labels.cuda()
             with torch.no_grad():
                 pred = model(images)
-            top1, top5 = accuracy(pred, labels)
-            metrics.update(top1=(top1, len(images)), top5=(top5, len(images)))
-        result = {meter: metrics.retrieve_meters(meter).avg for meter in metrics.meters}
-        return result
+            top1, _ = accuracy(pred, labels)
+            metrics.update(top1=(top1, len(images)))
+        return metrics.retrieve_meters('top1').global_avg

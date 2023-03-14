@@ -119,7 +119,9 @@ class AttackTrainer(BaseTrainer):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        return super().validation_step(batch, batch_idx)
+        images, labels = batch[0], batch[1]
+        images = self.attack(images, labels).detach()
+        return super().validation_step([images, labels], batch_idx)
 
 
 class EntropyTrainer(BaseTrainer):

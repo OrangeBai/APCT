@@ -12,7 +12,7 @@ if __name__ == '__main__':
     run_dirs = restore_runs(load_args)
 
     argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'prune_test',
-             '--test_mode', 'prune', '--method', 'Hard']
+             '--test_mode', 'prune', '--method', 'LnStructured', '--prune_eta', '2']
     args = TestParser(argsv).get_args()
 
     tester = PruneTester(run_dirs, args)
