@@ -16,5 +16,5 @@ if __name__ == '__main__':
     args = TestParser(argsv).get_args()
 
     tester = PruneTester(run_dirs, args)
-    tester.test(restart=False)
+    tester.test(restart=True)
     print(1)

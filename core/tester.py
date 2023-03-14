@@ -14,7 +14,7 @@ from core.attack import set_attack
 from core.scrfp import Smooth, SCRFP, ApproximateAccuracy
 from torch.nn.functional import one_hot, cosine_similarity
 from core.pattern import FloatHook, set_gamma, PruneHook
-from core.prune import prune_block, iteratively_prune
+from core.prune import prune_block, iteratively_prune, monitor
 
 
 # equals to save_and_load(name)(fun)(self, run_dir)
@@ -69,7 +69,7 @@ class BaseTester:
         for run, run_dir in self.run_dirs.items():
             os.makedirs(os.path.join(run_dir, 'test'), exist_ok=True)
             self.results[run.name] = self.test_model(run_dir, restart)
-            self.upload(run, run_dir)
+            # self.upload(run, run_dir)
         return self.results
 
     @staticmethod
@@ -412,7 +412,10 @@ class PruneTester(BaseTester):
         for name, block in model.named_modules():
             if check_block(model, block):
                 im_scores.update(prune_block(block, global_entropy[name], self.args.prune_eta))
+
+        model = self.load_model(run_dir)
         iteratively_prune(im_scores, self.args)
+        monitor(im_scores, {})
 
         metrics = MetricLogger()
         for images, labels in val_loader:
