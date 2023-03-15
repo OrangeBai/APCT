@@ -22,8 +22,7 @@ def set_dataloader(args, datasets=None):
         num_workers=args.num_workers,
         pin_memory=True,
         drop_last=False,
-        prefetch_factor=8,
-        persistent_workers=True)
+        prefetch_factor=4)
     val_loader = DataLoader(
         dataset=val_dataset,
         batch_size=args.batch_size,
@@ -31,7 +30,7 @@ def set_dataloader(args, datasets=None):
         num_workers=4,
         pin_memory=True,
         drop_last=False,
-        prefetch_factor=8)
+        prefetch_factor=4)
     return train_loader, val_loader
 
 

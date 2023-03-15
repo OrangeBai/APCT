@@ -39,7 +39,7 @@ class TrainParser(BaseParser):
         args, _ = self.parser.parse_known_args(self.args)
         if args.lr_scheduler == 'milestones':
             self.parser.add_argument('--gamma', default=0.1, type=float)
-            self.parser.add_argument('--milestones', default=[0.5, 0.75], nargs='+', type=float)  # for milestone
+            self.parser.add_argument('--milestones', default=[1/3, 2/3], nargs='+', type=float)  # for milestone
         elif args.lr_scheduler in ['exp', 'linear']:
             self.parser.add_argument('--lr_e', default=0.0001 * args.lr, type=float)  # for linear
         elif args.lr_scheduler == 'cyclic':
