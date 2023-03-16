@@ -31,7 +31,8 @@ def set_dataloader(args, datasets=None):
         num_workers=4,
         pin_memory=True,
         drop_last=False,
-        prefetch_factor=4)
+        prefetch_factor=4,
+        persistent_workers=True)
     return train_loader, val_loader
 
 
@@ -64,7 +65,7 @@ def set_transforms(args):
         train_composed = [RandomCrop(32, padding=4), RandomHorizontalFlip(), ToTensor()]
         test_composed = [transforms.ToTensor()]
     elif args.dataset.lower() == 'imagenet':
-        train_composed = [RandomResizedCrop(224), RandomHorizontalFlip(), ToTensor()]
+        train_composed = [transforms.Resize(256), transforms.CenterCrop(224), RandomHorizontalFlip(), ToTensor()]
         test_composed = [transforms.Resize(256), transforms.CenterCrop(224), ToTensor()]
     else:
         raise NameError('No dataset named' % args.dataset)
