@@ -26,21 +26,13 @@ if __name__ == '__main__':
     args = TestParser(argsv).get_args()
     test_names = [i.format(args.sigma) for i in ['flt_{}_0.01', 'flt_{}_0.02', 'flt_{}_0.05', 'flt_{}_0.10', 'std_{}']]
     run_dirs = {run: run_dir for run, run_dir in runs.items() if run.name in test_names}
-    #
-    #
-    # tester = SmoothedTester(run_dirs, args)
-    # res1 = tester.test(restart=False)
-    #
-    # argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual', '--test_mode', 'smoothed_certify',
-    #          '--smooth_model', 'SCRFP', '--eta_float', '-0.1']
-    # args = TestParser(argsv).get_args()
-    # tester = SmoothedTester(run_dirs, args)
-    # res2 = tester.test(restart=False)
 
-    smooth, scrfp = {}, {}
-    for n, p in run_dirs.items():
-        smooth_path = os.path.join(p, 'test', 'smooth.txt')
-        scrfp_path = os.path.join(p, 'test', 'scrfp.txt')
-        smooth[n.name] = ApproximateAccuracy(smooth_path).at_radii(np.linspace(0, 2, 400))
-        scrfp[n.name] = ApproximateAccuracy(scrfp_path).at_radii(np.linspace(0, 2, 400))
-    print(1)
+    tester = SmoothedTester(run_dirs, args)
+    res1 = tester.test(restart=False)
+
+    argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual', '--test_mode', 'smoothed_certify',
+             '--smooth_model', 'SCRFP', '--eta_float', '-0.05']
+    args = TestParser(argsv).get_args()
+    tester = SmoothedTester(run_dirs, args)
+    res2 = tester.test(restart=True)
+

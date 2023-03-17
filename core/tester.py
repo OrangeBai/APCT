@@ -361,7 +361,7 @@ class SmoothedTester(BaseTester):
             file_path = os.path.join(run_dir, 'test', 'smooth.txt')
         else:
             smoothed_classifier = SCRFP(model, self.args)
-            file_path = os.path.join(run_dir, 'test', 'scrfp.txt')
+            file_path = os.path.join(run_dir, 'test', 'scrfp' + str(self.args.eta_float) + '.txt')
         # create the smooothed classifier g
 
         # prepare output file
