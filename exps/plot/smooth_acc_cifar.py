@@ -47,6 +47,7 @@ if __name__ == '__main__':
     ax.plot(np.linspace(0, 0.5, 20), scrfp['flt_0.125_0.02'], label='SCRFP-2(0.02, -0.1)', linestyle='-.', color='b')
     
     ax.legend()
+    ax.set_xlim([0, 0.5])
     ax.set_ylim([0.55, 0.85])
     plt.show()
     print(1)
@@ -77,6 +78,7 @@ if __name__ == '__main__':
 
     ax.legend()
     ax.set_ylim([0.35, 0.8])
+    ax.set_xlim([0, 0.9])
     plt.show()
 
     # Plot 0.5
@@ -104,5 +106,6 @@ if __name__ == '__main__':
     ax.plot(np.linspace(0, 1.5, 40), scrfp['flt_0.5_0.02'], label='SCRFP-2(0.02, -0.1)', linestyle='-.', color='b')
 
     ax.legend()
-    # ax.set_ylim([0.35, 0.8])
+    ax.set_ylim([0.35, 0.8])
+    ax.set_xlim([0, 1.4])
     plt.show()

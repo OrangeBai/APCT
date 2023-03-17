@@ -22,7 +22,7 @@ if __name__ == '__main__':
     ]
 
     trainer = pl.Trainer(devices="auto",
-                         precision=16,
+                         precision=32,
                          amp_backend="native",
                          accelerator="cuda",
                          strategy='dp',
