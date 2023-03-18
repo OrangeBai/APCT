@@ -49,7 +49,7 @@ class BaseTrainer(pl.LightningModule):
 
     def configure_optimizers(self, ):
         if self.args.num_step == -1:
-            self.args.num_step = self.args.num_epoch * len(self.train_loader)
+            self.args.num_step = self.args.num_epoch * len(self.train_loader) / self.args.grad_accumulate
         optimizer = init_optimizer(self.args, self.model)
 
         lr_scheduler = init_scheduler(self.args, optimizer=optimizer)

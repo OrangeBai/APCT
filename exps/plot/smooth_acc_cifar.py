@@ -35,21 +35,25 @@ if __name__ == '__main__':
         smooth[n.name] = ApproximateAccuracy(smooth_path).at_radii(np.linspace(0, 0.5, 20))
         scrfp[n.name] = ApproximateAccuracy(scrfp_path).at_radii(np.linspace(0, 0.5, 20))
 
-    plt = update_params(plt, {'legend.fontsize': 12})
+    plt = update_params(plt, {'legend.fontsize': 22, 'axes.labelsize': 22,
+                              'xtick.labelsize': 22,
+                              'ytick.labelsize': 22, })
     fig, ax = plt.subplots(figsize=(16, 10))
 
     ax.plot(np.linspace(0, 0.5, 20), smooth['std_0.125'], label='STD', linestyle='-', color='r')
     ax.plot(np.linspace(0, 0.5, 20), smooth['flt_0.125_0.01'], label='SCRFP-2(0.01, 0)', linestyle='-', color='g')
     ax.plot(np.linspace(0, 0.5, 20), smooth['flt_0.125_0.02'], label='SCRFP-2(0.02, 0)', linestyle='-', color='b')
-    
+
     ax.plot(np.linspace(0, 0.5, 20), scrfp['std_0.125'], label='SCRFP-2(0, -0.1)', linestyle='-.', color='r')
     ax.plot(np.linspace(0, 0.5, 20), scrfp['flt_0.125_0.01'], label='SCRFP-2(0.01, -0.1)', linestyle='-.', color='g')
     ax.plot(np.linspace(0, 0.5, 20), scrfp['flt_0.125_0.02'], label='SCRFP-2(0.02, -0.1)', linestyle='-.', color='b')
-    
+
     ax.legend()
     ax.set_xlim([0, 0.5])
-    ax.set_ylim([0.55, 0.85])
-    plt.show()
+    ax.set_ylim([0.5, 0.9])
+    ax.set_xlabel('Radius')
+    ax.set_ylabel('Accuracy')
+    plt.savefig('figs/cifar10_0.125.png', bbox_inches='tight')
     print(1)
 
     # Plot 0.25
@@ -65,7 +69,8 @@ if __name__ == '__main__':
         smooth[n.name] = ApproximateAccuracy(smooth_path).at_radii(np.linspace(0, 1, 40))
         scrfp[n.name] = ApproximateAccuracy(scrfp_path).at_radii(np.linspace(0, 1, 40))
 
-    plt = update_params(plt, {'legend.fontsize': 12})
+    plt = update_params(plt, {'legend.fontsize': 22, 'axes.labelsize': 22,
+                              'xtick.labelsize': 22, 'ytick.labelsize': 22})
     fig, ax = plt.subplots(figsize=(16, 10))
 
     ax.plot(np.linspace(0, 1, 40), smooth['std_0.25'], label='STD', linestyle='-', color='r')
@@ -79,7 +84,10 @@ if __name__ == '__main__':
     ax.legend()
     ax.set_ylim([0.35, 0.8])
     ax.set_xlim([0, 0.9])
-    plt.show()
+    ax.set_xlabel('Radius')
+    ax.set_ylabel('Accuracy')
+    # plt.show()
+    plt.savefig('figs/cifar10_0.25.png', bbox_inches='tight')
 
     # Plot 0.5
     argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--test_mode', 'smoothed_certify',
@@ -91,21 +99,26 @@ if __name__ == '__main__':
     for n, p in run_dirs.items():
         smooth_path = os.path.join(p, 'test', 'smooth.txt')
         scrfp_path = os.path.join(p, 'test', 'scrfp.txt')
-        smooth[n.name] = ApproximateAccuracy(smooth_path).at_radii(np.linspace(0, 1.5, 40))
-        scrfp[n.name] = ApproximateAccuracy(scrfp_path).at_radii(np.linspace(0, 1.5, 40))
+        smooth[n.name] = ApproximateAccuracy(smooth_path).at_radii(np.linspace(0, 1.75, 40))
+        scrfp[n.name] = ApproximateAccuracy(scrfp_path).at_radii(np.linspace(0, 1.75, 40))
 
-    plt = update_params(plt, {'legend.fontsize': 12})
+    plt = update_params(plt, {'legend.fontsize': 22, 'axes.labelsize': 22,
+                              'xtick.labelsize': 22,
+                              'ytick.labelsize': 22, })
     fig, ax = plt.subplots(figsize=(16, 10))
 
-    ax.plot(np.linspace(0, 1.5, 40), smooth['std_0.5'], label='STD', linestyle='-', color='r')
-    ax.plot(np.linspace(0, 1.5, 40), smooth['flt_0.5_0.01'], label='SCRFP-2(0.01, 0)', linestyle='-', color='g')
-    ax.plot(np.linspace(0, 1.5, 40), smooth['flt_0.5_0.02'], label='SCRFP-2(0.02, 0)', linestyle='-', color='b')
+    ax.plot(np.linspace(0, 1.75, 40), smooth['std_0.5'], label='STD', linestyle='-', color='r')
+    ax.plot(np.linspace(0, 1.75, 40), smooth['flt_0.5_0.01'], label='SCRFP-2(0.01, 0)', linestyle='-', color='g')
+    ax.plot(np.linspace(0, 1.75, 40), smooth['flt_0.5_0.02'], label='SCRFP-2(0.02, 0)', linestyle='-', color='b')
 
-    ax.plot(np.linspace(0, 1.5, 40), scrfp['std_0.5'], label='SCRFP-2(0, -0.1)', linestyle='-.', color='r')
-    ax.plot(np.linspace(0, 1.5, 40), scrfp['flt_0.5_0.01'], label='SCRFP-2(0.01, -0.1)', linestyle='-.', color='g')
-    ax.plot(np.linspace(0, 1.5, 40), scrfp['flt_0.5_0.02'], label='SCRFP-2(0.02, -0.1)', linestyle='-.', color='b')
+    ax.plot(np.linspace(0, 1.75, 40), scrfp['std_0.5'], label='SCRFP-2(0, -0.1)', linestyle='-.', color='r')
+    ax.plot(np.linspace(0, 1.75, 40), scrfp['flt_0.5_0.01'], label='SCRFP-2(0.01, -0.1)', linestyle='-.', color='g')
+    ax.plot(np.linspace(0, 1.75, 40), scrfp['flt_0.5_0.02'], label='SCRFP-2(0.02, -0.1)', linestyle='-.', color='b')
 
     ax.legend()
-    ax.set_ylim([0.35, 0.8])
-    ax.set_xlim([0, 1.4])
-    plt.show()
+    ax.set_xlabel('Radius')
+    ax.set_ylabel('Accuracy')
+    ax.set_ylim([0, 0.65])
+    ax.set_xlim([0, 1.75])
+    # plt.show()
+    plt.savefig('figs/cifar10_0.5.png', bbox_inches='tight')

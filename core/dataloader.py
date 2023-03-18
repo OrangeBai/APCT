@@ -65,7 +65,7 @@ def set_transforms(args):
         train_composed = [RandomCrop(32, padding=4), RandomHorizontalFlip(), ToTensor()]
         test_composed = [transforms.ToTensor()]
     elif args.dataset.lower() == 'imagenet':
-        train_composed = [transforms.Resize(256), transforms.CenterCrop(224), RandomHorizontalFlip(), ToTensor()]
+        train_composed = [RandomResizedCrop(224), RandomHorizontalFlip(), ToTensor()]
         test_composed = [transforms.Resize(256), transforms.CenterCrop(224), ToTensor()]
     else:
         raise NameError('No dataset named' % args.dataset)
