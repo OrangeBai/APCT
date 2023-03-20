@@ -35,7 +35,7 @@ def save_and_load(name):
     return inner
 
 
-def restore_runs(args, filters=None):
+def restore_runs(args, filters=None, download=True):
     api = wandb.Api(timeout=120)
     runs = api.runs(args.project, filters=filters)
     run_paths = {}
