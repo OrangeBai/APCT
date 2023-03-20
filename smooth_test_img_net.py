@@ -18,7 +18,7 @@ import datetime
 
 if __name__ == '__main__':
     argsv = ['--dataset', 'imagenet', '--net', 'resnet50', '--test_mode', 'smoothed_certify',
-             '--smooth_model', 'SCRFP', '--project', 'test']
+             '--project', 'test']
     args = TestParser(argsv).get_args()
     model = build_model(args)
 
