@@ -81,7 +81,6 @@ def smoothed_certify(parser):
     parser.add_argument("--N", type=int, default=10000, help="number of samples to use")
     parser.add_argument("--alpha", type=float, default=0.001, help="failure probability")
     parser.add_argument('--method', default='Smooth', type=str)
-    parser.add_argument('--batch', default=256, type=int)
     parser.add_argument('--eta_fixed', default=0.00, type=float)
     parser.add_argument('--eta_float', default=0.00, type=float)
     parser.add_argument('--path', default='', type=str)

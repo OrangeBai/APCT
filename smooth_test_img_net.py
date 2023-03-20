@@ -18,7 +18,7 @@ import datetime
 
 if __name__ == '__main__':
     argsv = ['--dataset', 'imagenet', '--net', 'resnet50', '--test_mode', 'smoothed_certify',
-             '--smooth_model', 'smooth', '--project', 'test']
+             '--smooth_model', 'SCRFP', '--project', 'test']
     args = TestParser(argsv).get_args()
     model = build_model(args)
 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     for i in range(len(dataset)):
 
         # only certify every args.skip examples, and stop after args.max examples
-        if i % 100 != 0:
+        if i % 25 != 0:
             continue
 
         (x, label) = dataset[i]
@@ -52,7 +52,7 @@ if __name__ == '__main__':
         before_time = time.time()
         # certify the prediction of g around x
         x = x.cuda()
-        prediction, radius = smoothed_classifier.certify(x, args.N0, args.N, args.alpha, args.batch)
+        prediction, radius = smoothed_classifier.certify(x, args.N0, args.N, args.alpha, args.batch_size)
         after_time = time.time()
         correct = int(prediction == label)
 

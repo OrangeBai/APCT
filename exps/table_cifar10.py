@@ -28,7 +28,7 @@ if __name__ == '__main__':
         argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--test_mode', 'smoothed_certify',
                  '--smooth_model', 'smooth', '--sigma', sigma]
         args = TestParser(argsv).get_args()
-        test_names = [i.format(args.sigma) for i in ['flt_{}_0.01', 'flt_{}_0.02', 'std_{}']]
+        test_names = [i.format(args.sigma) for i in ['flt_{}_0.01', 'flt_{}_0.02',  'flt_{}_0.05', 'flt_{}_0.10', 'std_{}']]
         run_dirs = {run: run_dir for run, run_dir in runs.items() if run.name in test_names}
         for n, p in run_dirs.items():
             smooth_path = os.path.join(p, 'test', 'smooth.txt')
@@ -38,5 +38,4 @@ if __name__ == '__main__':
 
     res = {k: res[k] for k in sorted(res)}
     res = pd.DataFrame(res).T
-    res.to_latex()
-    print(1)
+    print((100*res).to_latex(float_format="%.2f"))
