@@ -167,7 +167,7 @@ class SCRFP(Smooth):
                 num -= this_batch_size
 
                 batch = x.repeat((this_batch_size + 1, 1, 1, 1))
-                n = torch.randn_like(x).to(x.device) * self.sigma
+                n = torch.randn_like(batch).to(x.device) * self.sigma
                 n[0] = 0
                 fixed = self.dual_net.compute_fixed_1batch(batch + n)
                 predictions = self.dual_net.predict(batch+n, fixed, 0.0, self.args.eta_float)[1:]
