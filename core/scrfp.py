@@ -35,7 +35,6 @@ class Smooth(object):
         """ Monte Carlo algorithm for certifying that g's prediction around x is constant within some L2 radius.
         With probability at least 1 - alpha, the class returned by this method will equal g(x), and g's prediction will
         robust within a L2 ball of radius R around x.
-
         :param x: the input [channel x height x width]
         :param n0: the number of Monte Carlo samples to use for selection
         :param n: the number of Monte Carlo samples to use for estimation
@@ -100,8 +99,8 @@ class Smooth(object):
                 batch = x.repeat((this_batch_size, 1, 1, 1))
 
                 # batch = self.reverse_noise(batch)
-                n = torch.randn_like(x).to(x.device) * self.sigma
-                predictions= self.base_classifier(batch + n)
+                n = torch.randn_like(batch).to(x.device) * self.sigma
+                predictions = self.base_classifier(batch + n)
                 counts += self._count_arr(predictions.argmax(1).cpu().numpy(), self.num_classes)
             return counts
 
