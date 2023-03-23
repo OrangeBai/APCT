@@ -28,7 +28,7 @@ if __name__ == '__main__':
     run_dirs = {run: run_dir for run, run_dir in runs.items() if run.name in test_names}
 
     tester = SmoothedTester(run_dirs, args)
-    res1 = tester.test(restart=False)
+    res1 = tester.test(restart=True)
 
     argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual', '--test_mode', 'smoothed_certify',
              '--smooth_model', 'SCRFP', '--eta_float', '-0.10']
