@@ -17,7 +17,7 @@ import numpy as np
 from copy import deepcopy
 
 if __name__ == '__main__':
-    base_path = r'E:\Experiments\imagenet\benchmark\imagenet\resnet50\noise_0.25'
+    base_path = r'E:\Experiments\imagenet\benchmark\imagenet\resnet50\noise_0.50'
     scrfp_10_path = os.path.join(base_path, 'scrfp-0.1.txt')
     # scrfp_05_path = os.path.join(base_path, 'scrfp-0.05.txt')
     # scrfp_25_path = os.path.join(base_path, 'scrfp-0.25.txt')
