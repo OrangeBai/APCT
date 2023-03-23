@@ -24,13 +24,13 @@ if __name__ == '__main__':
     _, dataset = set_dataset(args)
 
     _, dataloader = set_dataloader(args)
-    metric = MetricLogger()
-    for x, y in dataloader:
-        x, y = x.cuda(), y.cuda()
-        pred = model(x)
-        top1, _ = accuracy(pred, y)
-        metric.update(top1={top1, len(x)})
-        print(top1)
+    # metric = MetricLogger()
+    # for x, y in dataloader:
+    #     x, y = x.cuda(), y.cuda()
+    #     pred = model(x)
+    #     top1, _ = accuracy(pred, y)
+    #     metric.update(top1={top1, len(x)})
+    #     print(top1)
 
     if args.smooth_model == 'smooth':
         smoothed_classifier = Smooth(model, args)

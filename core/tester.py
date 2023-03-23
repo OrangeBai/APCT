@@ -381,7 +381,7 @@ class SmoothedTester(BaseTester):
             before_time = time.time()
             # certify the prediction of g around x
             x = x.cuda()
-            prediction, radius = smoothed_classifier.certify(x, args.N0, args.N, args.alpha, args.batch)
+            prediction, radius = smoothed_classifier.certify(x, args.N0, args.N, args.alpha, args.batch_size)
             after_time = time.time()
             correct = int(prediction == label)
 
