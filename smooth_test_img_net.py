@@ -2,38 +2,34 @@ import itertools
 import os
 import pandas as pd
 import torch
-import wandb
 from core.scrfp import ApproximateAccuracy
 from settings.test_setting import TestParser
 from core.utils import MetricLogger, accuracy
 from core.dataloader import set_dataset, set_dataloader
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-from copy import deepcopy
 import time
 from core.scrfp import Smooth, SCRFP
 from models.base_model import build_model
 import datetime
 
 if __name__ == '__main__':
-    argsv = ['--dataset', 'imagenet', '--net', 'resnet50', '--test_mode', 'smoothed_certify',
-             '--project', 'test']
+    argsv = ['--dataset', 'imagenet', '--net', 'resnet50', '--test_mode', 'smoothed_certify', '--project', 'test']
     args = TestParser(argsv).get_args()
     model = build_model(args)
 
-    model_path = os.path.join(args.path, str(int(100 * args.sigma)))
-    model.load_weights(torch.load(os.path.join(model_path, 'model.pth.tar'))['state_dict'])
+    model_path = os.path.join(args.path, 'noise_{0:.2f}'.format(args.sigma))
+    model.load_weights(torch.load(os.path.join(model_path, 'checkpoint.pth.tar'))['state_dict'])
 
     model = model.cuda()
     model.eval()
     _, dataset = set_dataset(args)
 
-    # _, dataloader = set_dataloader(args)
+    _, dataloader = set_dataloader(args)
+    metric = MetricLogger()
     # for x, y in dataloader:
     #     x, y = x.cuda(), y.cuda()
     #     pred = model(x)
     #     top1, _ = accuracy(pred, y)
+    #     metric.update(top1={top1, len(x)})
     #     print(top1)
 
     if args.smooth_model == 'smooth':
@@ -42,7 +38,7 @@ if __name__ == '__main__':
     else:
         smoothed_classifier = SCRFP(model, args)
         file_path = os.path.join(model_path, 'scrfp' + str(args.eta_float) + '.txt')
-    # create the smooothed classifier g
+    # create the smooth classifier g
 
     # prepare output file
     f = open(file_path, 'w')
@@ -68,7 +64,6 @@ if __name__ == '__main__':
             i, label, prediction, radius, correct, time_elapsed), file=f, flush=True)
 
     f.close()
-
     print(1)
 
 
