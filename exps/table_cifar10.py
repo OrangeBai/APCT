@@ -32,7 +32,7 @@ if __name__ == '__main__':
         run_dirs = {run: run_dir for run, run_dir in runs.items() if run.name in test_names}
         for n, p in run_dirs.items():
             smooth_path = os.path.join(p, 'test', 'smooth.txt')
-            scrfp_path = os.path.join(p, 'test', 'scrfp.txt')
+            scrfp_path = os.path.join(p, 'test', 'scrfp-0.1.txt')
             res['smooth_' + n.name] = ApproximateAccuracy(smooth_path).at_radii(np.linspace(0, 2, 9))
             res['scrfp_' + n.name] = ApproximateAccuracy(scrfp_path).at_radii(np.linspace(0, 2, 9))
 

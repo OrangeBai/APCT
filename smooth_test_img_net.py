@@ -23,7 +23,7 @@ if __name__ == '__main__':
     model.eval()
     _, dataset = set_dataset(args)
 
-    _, dataloader = set_dataloader(args)
+    # _, dataloader = set_dataloader(args)
     # metric = MetricLogger()
     # for x, y in dataloader:
     #     x, y = x.cuda(), y.cuda()
