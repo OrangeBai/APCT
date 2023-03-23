@@ -57,9 +57,32 @@ class NormalizeLayer(torch.nn.Module):
     def forward(self, x: torch.tensor):
         device = x.device
         (batch_size, num_channels, height, width) = x.shape
+        # means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2).to(device)
+        # sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2).to(device)
         means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2).to(device)
         sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2).to(device)
         return (x - means) / sds
+
+
+class InputCenterLayer(torch.nn.Module):
+    """Centers the channels of a batch of images by subtracting the dataset mean.
+      In order to certify radii in original coordinates rather than standardized coordinates, we
+      add the Gaussian noise _before_ standardizing, which is why we have standardization be the first
+      layer of the classifier rather than as a part of preprocessing as is typical.
+      """
+
+    def __init__(self, means):
+        """
+        :param means: the channel means
+        :param sds: the channel standard deviations
+        """
+        super(InputCenterLayer, self).__init__()
+        self.means = torch.tensor(means).cuda()
+
+    def forward(self, input: torch.tensor):
+        (batch_size, num_channels, height, width) = input.shape
+        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
+        return input - means
 
 
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:

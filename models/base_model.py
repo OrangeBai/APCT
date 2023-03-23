@@ -6,14 +6,15 @@ import torch
 import torch.nn as nn
 
 from core.dataloader import set_mean_sed
-from models.blocks import NormalizeLayer
+from models.blocks import NormalizeLayer, InputCenterLayer
 
 
 class BaseModel(nn.Module):
     # TODO Record epoch info
     def __init__(self, args):
         super(BaseModel, self).__init__()
-        self.norm_layer = NormalizeLayer(*set_mean_sed(args))
+        # self.norm_layer = NormalizeLayer(*set_mean_sed(args))
+        self.norm_layer = InputCenterLayer(set_mean_sed(args)[0])
 
     def save_model(self, path, name=None):
         if not name:
