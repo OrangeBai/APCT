@@ -31,7 +31,7 @@ if __name__ == '__main__':
     res1 = tester.test(restart=False)
 
     argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--project', 'dual', '--test_mode', 'smoothed_certify',
-             '--smooth_model', 'SCRFP', '--eta_float', '-0.05']
+             '--smooth_model', 'SCRFP', '--eta_float', '-0.10']
     args = TestParser(argsv).get_args()
     tester = SmoothedTester(run_dirs, args)
     res2 = tester.test(restart=True)
