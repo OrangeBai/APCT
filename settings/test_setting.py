@@ -6,6 +6,7 @@ class TestParser(BaseParser):
     def __init__(self, argv=None):
         super(TestParser, self).__init__(argv)
         self.parser.add_argument('--test_mode', default='acc', type=str)
+        self.parser.add_argument('--test_name', default='*', type=str)
         self._set_up_test()
 
     def _set_up_test(self):

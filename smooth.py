@@ -19,13 +19,15 @@ from copy import deepcopy
 if __name__ == '__main__':
     load_argsv = ['--dataset', 'cifar10', '--net', 'vgg16']
     load_args = TestParser(load_argsv).get_args()
-    runs = restore_runs(load_args)
+    runs = restore_runs(load_args,
+                        filters={"config.name": {"$regex": load_args.test_name}}
+                        )
 
     argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--test_mode', 'smoothed_certify',
              '--smooth_model', 'smooth']
     args = TestParser(argsv).get_args()
-    test_names = [i.format(args.sigma) for i in ['flt_{}_0.01', 'flt_{}_0.02', 'flt_{}_0.05', 'flt_{}_0.10', 'std_{}']]
-    run_dirs = {run: run_dir for run, run_dir in runs.items() if run.name in test_names}
+    # test_names = [i.format(args.sigma) for i in ['flt_{}_0.01', 'flt_{}_0.02', 'flt_{}_0.05', 'flt_{}_0.10', 'std_{}']]
+    run_dirs = {run: run_dir for run, run_dir in runs.items()}
 
     tester = SmoothedTester(run_dirs, args)
     res1 = tester.test(restart=True)
