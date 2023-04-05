@@ -7,7 +7,7 @@ from core.scrfp import ApproximateAccuracy
 from settings.test_setting import TestParser
 from argparse import Namespace
 from core.tester import SmoothedTester, restore_runs
-from exps.plot.plt_base import update_params, update_ax_font
+from exps.plt_base import update_params, update_ax_font
 from numpy.linalg import norm
 from torch.nn.functional import one_hot, cosine_similarity
 from core.dataloader import set_dataset

@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 from settings.test_setting import TestParser
 from core.tester import BaseTester, DualTester, AveragedFloatTester, FltRatioTester, LipDistTester, restore_runs, LipNormTester
-from exps.plot.plt_base import update_params, update_ax_font
+from exps import update_params, update_ax_font
 from numpy.linalg import norm
 from torch.nn.functional import one_hot, cosine_similarity
 from core.dataloader import set_dataset

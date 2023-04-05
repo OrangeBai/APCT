@@ -7,7 +7,7 @@ from core.scrfp import ApproximateAccuracy
 from settings.test_setting import TestParser
 from argparse import Namespace
 from core.tester import SmoothedTester, restore_runs
-from exps.plot.plt_base import update_params, update_ax_font
+from exps.plt_base import update_params, update_ax_font
 from numpy.linalg import norm
 from torch.nn.functional import one_hot, cosine_similarity
 from core.dataloader import set_dataset
@@ -40,25 +40,20 @@ if __name__ == '__main__':
                               'ytick.labelsize': 22, })
     fig, ax = plt.subplots(figsize=(16, 10))
 
-    ax.plot(np.linspace(0, 1, 60), smooth['std_0.125'], label='STD', linestyle='-', color='r')
-    ax.plot(np.linspace(0, 1, 60), smooth['flt_0.125_0.01'], label='SCRFP-2(0.01, 0)', linestyle='-', color='g')
-    ax.plot(np.linspace(0, 1, 60), smooth['flt_0.125_0.02'], label='SCRFP-2(0.02, 0)', linestyle='-', color='b')
-    # ax.plot(np.linspace(0, 1, 60), smooth['flt_0.125_0.05'], label='SCRFP-2(0.05, 0)', linestyle='-', color='y')
-    # ax.plot(np.linspace(0, 1, 60), smooth['flt_0.125_0.10'], label='SCRFP-2(0.10, 0)', linestyle='-', color='orange')
+    ax.plot(np.linspace(0, 0.5, 60), smooth['std_0.125'], label='STD', linestyle='-', color='r')
+    ax.plot(np.linspace(0, 0.5, 60), smooth['flt_0.125_0.01'], label='SCRFP-2(0.01, 0)', linestyle='-', color='g')
+    ax.plot(np.linspace(0, 0.5, 60), smooth['flt_0.125_0.02'], label='SCRFP-2(0.02, 0)', linestyle='-', color='b')
 
-    ax.plot(np.linspace(0, 1, 60), scrfp['std_0.125'], label='SCRFP-2(0, -0.1)', linestyle='-.', color='r')
-    ax.plot(np.linspace(0, 1, 60), scrfp['flt_0.125_0.01'], label='SCRFP-2(0.01, -0.1)', linestyle='-.', color='g')
-    ax.plot(np.linspace(0, 1, 60), scrfp['flt_0.125_0.02'], label='SCRFP-2(0.02, -0.1)', linestyle='-.', color='b')
-    # ax.plot(np.linspace(0, 1, 60), scrfp['flt_0.125_0.05'], label='SCRFP-2(0.05, -0.1)', linestyle='-.', color='y')
-    # ax.plot(np.linspace(0, 1, 60), scrfp['flt_0.125_0.10'], label='SCRFP-2(0.10, -0.1)', linestyle='-.', color='orange')
-
+    ax.plot(np.linspace(0, 0.5, 60), scrfp['std_0.125'], label='SCRFP-2(0, -0.1)', linestyle='-.', color='r')
+    ax.plot(np.linspace(0, 0.5, 60), scrfp['flt_0.125_0.01'], label='SCRFP-2(0.01, -0.1)', linestyle='-.', color='g')
+    ax.plot(np.linspace(0, 0.5, 60), scrfp['flt_0.125_0.02'], label='SCRFP-2(0.02, -0.1)', linestyle='-.', color='b')
     ax.legend()
     # ax.set_xlim([0, 0.5])
     # ax.set_ylim([0.5, 0.9])
     ax.set_xlabel('Radius')
     ax.set_ylabel('Accuracy')
-    plt.show()
-    # plt.savefig('figs/cifar10_0.125.png', bbox_inches='tight')
+    # plt.show()
+    plt.savefig('figs/cifar10_0.125.png', bbox_inches='tight')
     print(1)
 
     # Plot 0.25
@@ -90,8 +85,8 @@ if __name__ == '__main__':
     # ax.set_xlim([0, 0.9])
     ax.set_xlabel('Radius')
     ax.set_ylabel('Accuracy')
-    plt.show()
-    # plt.savefig('figs/cifar10_0.25.png', bbox_inches='tight')
+    # plt.show()
+    plt.savefig('figs/cifar10_0.25.png', bbox_inches='tight')
 
     # Plot 0.5
     argsv = ['--dataset', 'cifar10', '--net', 'vgg16', '--test_mode', 'smoothed_certify',
@@ -124,5 +119,5 @@ if __name__ == '__main__':
     ax.set_ylabel('Accuracy')
     # ax.set_ylim([0, 0.65])
     # ax.set_xlim([0, 1.75])
-    plt.show()
-    # plt.savefig('figs/cifar10_0.5.png', bbox_inches='tight')
+    # plt.show()
+    plt.savefig('figs/cifar10_0.5.png', bbox_inches='tight')

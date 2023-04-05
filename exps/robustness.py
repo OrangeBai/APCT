@@ -2,7 +2,7 @@ import pandas as pd
 from settings.test_setting import TestParser
 from argparse import Namespace
 from core.tester import RobustnessTester, restore_runs
-from exps.plot.plt_base import update_params, update_ax_font
+from exps import update_params, update_ax_font
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
