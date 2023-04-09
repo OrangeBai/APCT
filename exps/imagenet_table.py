@@ -27,13 +27,23 @@ def _update_res(res, base_path, base_name):
     return res
 
 
+def _print_acr(res, i, base_path):
+    names = {'smooth.txt': 'Benchmark',
+             'scrfp-0.01.txt': 'SCRFP-2(0, 0.01)',
+             'scrfp-0.05.txt': 'SCRFP-2(0, 0.05)',
+             'scrfp-0.1.txt': 'SCRFP-2(0, 0.10)'}
+    acr = {v: ApproximateAccuracy(os.path.join(base_path, k)).acr() for k, v in names.items()}
+    res[i] = acr
+    return
+
+
 if __name__ == '__main__':
     table_dict = {}
     _update_res(table_dict, r"E:\Experiments\SCRFP\imagenet\benchmark\noise_0.25", 'Smooth Classifer')
     _update_res(table_dict, r"E:\Experiments\SCRFP\imagenet\SmoothAdv\noise_0.25", 'SmoothAdv')
     df = 100 * pd.DataFrame(table_dict).T
-    df = df[list(range(1, 13)) + [0]]
-    df.columns = (list(np.linspace(0.25, 3, 12)) + ['Clean'])
+    df = df[list(range(1, 13)) + [0, 13]]
+    df.columns = (list(np.linspace(0.25, 3, 12)) + ['Clean', 'ACR'])
     print(df.to_latex(float_format="%.1f"))
 
     table_dict = {}
@@ -41,8 +51,8 @@ if __name__ == '__main__':
     _update_res(table_dict, r"E:\Experiments\SCRFP\imagenet\SmoothAdv\noise_0.50", 'SmoothAdv')
     _update_res(table_dict, r"E:\Experiments\SCRFP\imagenet\mix\noise_0.50", 'SmoothMix')
     df = 100 * pd.DataFrame(table_dict).T
-    df = df[list(range(1, 13)) + [0]]
-    df.columns = (list(np.linspace(0.25, 3, 12)) + ['Clean'])
+    df = df[list(range(1, 13)) + [0, 13]]
+    df.columns = (list(np.linspace(0.25, 3, 12)) + ['Clean', 'ACR'])
     print(df.to_latex(float_format="%.1f"))
 
     table_dict = {}
@@ -50,6 +60,21 @@ if __name__ == '__main__':
     _update_res(table_dict, r"E:\Experiments\SCRFP\imagenet\SmoothAdv\noise_1.00", 'SmoothAdv')
     _update_res(table_dict, r"E:\Experiments\SCRFP\imagenet\mix\noise_1.00", 'SmoothMix')
     df = 100 * pd.DataFrame(table_dict).T
-    df = df[list(range(1, 13)) + [0]]
-    df.columns = (list(np.linspace(0.25, 3, 12)) + ['Clean'])
+    df = df[list(range(1, 13)) + [0, 13]]
+    df.columns = (list(np.linspace(0.25, 3, 12)) + ['Clean', 'ACR'])
     print(df.to_latex(float_format="%.1f"))
+
+    acr_dict = {}
+    _print_acr(acr_dict, 0, r"E:\Experiments\SCRFP\imagenet\benchmark\noise_0.25")
+    _print_acr(acr_dict, 1, r"E:\Experiments\SCRFP\imagenet\benchmark\noise_0.50")
+    _print_acr(acr_dict, 2, r"E:\Experiments\SCRFP\imagenet\benchmark\noise_1.00")
+
+    _print_acr(acr_dict, 3, r"E:\Experiments\SCRFP\imagenet\SmoothAdv\noise_0.25")
+    _print_acr(acr_dict, 4, r"E:\Experiments\SCRFP\imagenet\SmoothAdv\noise_0.50")
+    _print_acr(acr_dict, 5, r"E:\Experiments\SCRFP\imagenet\SmoothAdv\noise_1.00")
+
+    _print_acr(acr_dict, 6, r"E:\Experiments\SCRFP\imagenet\mix\noise_0.50")
+    _print_acr(acr_dict, 7, r"E:\Experiments\SCRFP\imagenet\mix\noise_1.00")
+    df = pd.DataFrame(acr_dict)
+    print(df.to_latex(float_format='%.3f'))
+    print(1)

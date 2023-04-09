@@ -166,7 +166,7 @@ class SCRFP(Smooth):
                 n = torch.randn_like(batch).to(x.device) * self.sigma
                 n[0] = 0
                 fixed = self.dual_net.compute_fixed_1batch(batch + n)
-                predictions = self.dual_net.predict(batch+n, fixed, 0.0, self.args.eta_float)[1:]
+                predictions = self.dual_net.predict(batch + n, fixed, 0.0, self.args.eta_float)[1:]
                 counts += self._count_arr(predictions.argmax(1).cpu().numpy(), self.num_classes)
             return counts
 
@@ -186,6 +186,10 @@ class ApproximateAccuracy(Accuracy):
 
     def at_radius(self, df: pd.DataFrame, radius: float):
         return (df["correct"] & (df["radius"] >= radius)).mean()
+
+    def acr(self):
+        df = pd.read_csv(self.data_file_path, delimiter="\t")
+        return (df['correct'] * df['radius']).mean()
 
 
 class HighProbAccuracy(Accuracy):

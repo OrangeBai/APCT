@@ -79,7 +79,7 @@ class TrainParser(BaseParser):
         elif args.train_mode == 'exp':
             self.parser.add_argument('--split', default=1.0, type=float)
         elif args.train_mode == 'pru':
-            self.parser.add_argument('--prune_eta', default=-1, type=float)
+            self.parser.add_argument('--prune_eta', default=0, type=float)
             self.parser.add_argument('--prune_every', default=20, type=int)
             self.parser.add_argument('--fine_tune', default=20, type=int)
             self.parser.add_argument('--method', default='Hard', type=str,

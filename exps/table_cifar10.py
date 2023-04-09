@@ -26,7 +26,7 @@ if __name__ == '__main__':
         for n, p in run_dirs.items():
             smooth_path = os.path.join(p, 'test', 'smooth.txt')
             scrfp_path = os.path.join(p, 'test', 'scrfp-0.1.txt')
-            res['smooth_' + n.name] = ApproximateAccuracy(smooth_path).at_radii(np.linspace(0, 2, 9))
+            res['smooth_' + n.name] = list(ApproximateAccuracy(smooth_path).at_radii(np.linspace(0, 2, 9)))
             res['scrfp_' + n.name] = ApproximateAccuracy(scrfp_path).at_radii(np.linspace(0, 2, 9))
         res = {k: res[k] for k in sorted(res)}
         res = pd.DataFrame(res).T

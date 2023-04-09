@@ -4,6 +4,88 @@ from torch.nn.utils.prune import global_unstructured, L1Unstructured, random_str
 from models.blocks import ConvBlock, LinearBlock
 
 
+def prune_model(args, im_scores, channel_entropy):
+    if args.method == 'L1Unstructured':
+        l1_unstructured_prune(args, im_scores, channel_entropy)
+    elif args.method == 'LnStructured':
+        ln_structured_prune(args, im_scores, channel_entropy)
+    elif args.method == 'Hard':
+        hard_prune(args, im_scores, channel_entropy)
+    else:
+        raise NameError()
+
+
+def compute_im_score(block, block_entropy, eta):
+    if isinstance(block, ConvBlock) or isinstance(block, LinearBlock):
+        return compute_linear_im_score(block, block_entropy, eta)
+    # elif isinstance(block, LinearBlock):
+    #     return prune_linear_block(block, block_entropy, eta)
+
+
+def compute_linear_im_score(block, block_entropy, eta):
+    """
+    :param block: Conv block to be pruned
+    :param block_entropy: entropy of the block output (out_channels * H * W)
+    :param eta: hyper parameter.
+    :return:
+    """
+    weights = getattr(block.LT, 'weight').detach()
+    num_dim = len(block_entropy[0].shape)  # num of dimensions
+    channel_entropy = block_entropy[0].mean(tuple(range(1, num_dim)))  # averaged entropy (out_channels, )
+    lt_im_score = compute_importance(weights, channel_entropy, eta)
+    bn_im_score = lt_im_score.mean(dim=tuple(range(1, weights.dim())))
+
+    block_type = 'ConvBlock' if isinstance(block, ConvBlock) else 'LinearBlock'
+    im_dict = {
+        (block.LT, 'weight', block_type): lt_im_score,
+        (block.BN, 'weight', block_type): bn_im_score,
+        (block.BN, 'bias', block_type): bn_im_score
+    }
+    return im_dict
+
+
+def avg_im_score(im_dict):
+    return [v.mean() for k, v in im_dict.items()]
+
+
+def prune_bottle_neck_block(block):
+    pass
+
+
+def remove_block(block):
+    if isinstance(block, ConvBlock) or isinstance(block, LinearBlock):
+        remove(block.LT, 'weight')
+        remove(block.BN, 'weight')
+        remove(block.BN, 'bias')
+
+
+# def iteratively_prune(im_dict, args):
+#     if args.method == 'L1Unstructured':
+#         l1_unstructured_prune(im_dict, args)
+#     elif args.method == 'LnStructured':
+#         ln_structured_prune(im_dict, args)
+#     elif args.method == 'Hard':
+#         hard_prune(im_dict, args)
+#     else:
+#         raise NameError()
+
+
+def l1_unstructured_prune(args, im_scores, channel_entropy):
+    params = [(k[0], k[1]) for k in im_scores.keys() if 'conv' in k[2].lower()]
+    im_score = {(k[0], k[1]): v for k, v in im_scores.items() if 'conv' in k[2].lower()}
+    global_unstructured(params, L1Unstructured, im_score, amount=args.conv_amount)
+
+
+def ln_structured_prune(args, im_scores, channel_entropy):
+    im_mean = avg_im_score
+    for ((module, name, block), im) in im_scores.values():
+        num_dims = getattr(module, name).dim()
+        if num_dims > 1:
+            ln_structured(module, name, args.amount, 2, dim=0, importance_scores=im.cuda())
+        else:
+            l1_unstructured(module, name, args.amount, importance_scores=im.cuda())
+    return
+
 def compute_importance(weight, channel_entropy, eta):
     """
     Compute the importance score based on weight and entropy of a channel
@@ -68,73 +150,68 @@ def compute_neuron_entropy(block, neuron_entropy):
         raise NameError("Invalid Block for pruning")
 
 
-def prune_block(block, block_entropy, eta):
-    if isinstance(block, ConvBlock) or isinstance(block, LinearBlock):
-        return prune_linear_transform_block(block, block_entropy, eta)
-    # elif isinstance(block, LinearBlock):
-    #     return prune_linear_block(block, block_entropy, eta)
+# def prune_module(param_to_prune, im_score, args):
+#     module, name, block = param_to_prune
+#     cur_param = getattr(module, name)
+#     num_dims = cur_param.dim()
+#     elif args.method == 'RandomStructured':
+#         random_structured(module, name, args.amount, dim=0)
+#     elif args.method == 'Hard':
+#         cur_param = getattr(module, name)
+#         num_dims = cur_param.dim()
+#         slc = [slice(None)] * num_dims
+#         if hasattr(module, name + '_mask'):
+#             keep_channel = getattr(module, name + '_mask').sum(tuple(range(1, cur_param.dim()))) != 0
+#             slc[0] = keep_channel
+#         tensor_to_pru = im_score[slc]
+#
+#         hard_ind = torch.Tensor(tensor_to_pru[(slice(None, ),) + (0,) * (num_dims - 1)])
+#         if block == 'ConvBlock':
+#             num_filters = torch.sum(hard_ind < args.conv_pru_bound).to(torch.int)
+#         elif block == 'LinearBlock':
+#             num_filters = torch.sum(hard_ind < args.fc_pru_bound).to(torch.int)
+#         else:
+#             raise NameError("Invalid Block for pruning")
+#         if num_filters == 0:
+#             identity(module, name)
+#         elif 0 < num_filters < len(tensor_to_pru):
+#             if num_dims > 1 :
+#                 ln_structured(module, name, int(num_filters), 2, dim=0, importance_scores=im_score.cuda())
+#             else:
+#                 l1_unstructured(module, name, int(num_filters), importance_scores=im_score.cuda())
+#         else:
+#             raise ValueError("Amount to prune should be less than number of params, "
+#                              "got {0} and {1}".format(num_filters, len(tensor_to_pru)))
 
-
-def prune_linear_transform_block(block, block_entropy, eta):
-    """
-    :param block: Conv block to be pruned
-    :param block_entropy: entropy of the block output (out_channels * H * W)
-    :param eta: hyper parameter.
-    :return:
-    """
-    weights = getattr(block.LT, 'weight').detach()
-    num_dim = len(block_entropy[0].shape)  # num of dimensions
-    channel_entropy = block_entropy[0].mean(tuple(range(1, num_dim)))  # averaged entropy (out_channels, )
-    lt_im_score = compute_importance(weights, channel_entropy, eta)
-    bn_im_score = lt_im_score.mean(dim=tuple(range(1, weights.dim())))
-
-    block_type = 'ConvBlock' if isinstance(block, ConvBlock) else 'LinearBlock'
-    im_dict = {
-        (block.LT, 'weight', block_type): lt_im_score,
-        (block.BN, 'weight', block_type): bn_im_score,
-        (block.BN, 'bias', block_type): bn_im_score
-    }
-    return im_dict
-
-
-def prune_bottle_neck_block(block):
+def hard_prune(im_dict, args):
     pass
+        #
+        # cur_param = getattr(module, name)
+        # num_dims = cur_param.dim()
+        # slc = [slice(None)] * num_dims
+        # if hasattr(module, name + '_mask'):
+        #     keep_channel = getattr(module, name + '_mask').sum(tuple(range(1, cur_param.dim()))) != 0
+        #     slc[0] = keep_channel
+        # tensor_to_pru = im_score[slc]
+        #
+        # hard_ind = torch.Tensor(tensor_to_pru[(slice(None, ),) + (0,) * (num_dims - 1)])
+        # if block == 'ConvBlock':
+        #     num_filters = torch.sum(hard_ind < args.conv_pru_bound).to(torch.int)
+        # elif block == 'LinearBlock':
+        #     num_filters = torch.sum(hard_ind < args.fc_pru_bound).to(torch.int)
+        # else:
+        #     raise NameError("Invalid Block for pruning")
+        # if num_filters == 0:
+        #     identity(module, name)
+        # elif 0 < num_filters < len(tensor_to_pru):
+        #     if num_dims > 1 :
+        #         ln_structured(module, name, int(num_filters), 2, dim=0, importance_scores=im_score.cuda())
+        #     else:
+        #         l1_unstructured(module, name, int(num_filters), importance_scores=im_score.cuda())
+        # else:
+        #     raise ValueError("Amount to prune should be less than number of params, "
+        #                      "got {0} and {1}".format(num_filters, len(tensor_to_pru)))
 
-
-def remove_block(block):
-    if isinstance(block, ConvBlock) or isinstance(block, LinearBlock):
-        remove(block.LT, 'weight')
-        remove(block.BN, 'weight')
-        remove(block.BN, 'bias')
-
-
-def iteratively_prune(im_dict, args):
-    if args.method == 'L1Unstructured':
-        params = [(k[0], k[1]) for k in im_dict.keys() if 'conv' in k[2].lower()]
-        im_score = {(k[0], k[1]): v for k, v in im_dict.items() if 'conv' in k[2].lower()}
-        global_unstructured(params, L1Unstructured, im_score, amount=args.conv_amount)
-
-        params = [(k[0], k[1]) for k in im_dict.keys() if 'conv' not in k[2].lower()]
-        im_score = {(k[0], k[1]): v for k, v in im_dict.items() if 'conv' not in k[2].lower()}
-        global_unstructured(params, L1Unstructured, im_score, amount=args.fc_amount)
-    else:
-        for param_to_prune, im_score in im_dict.items():
-            # print(im_score.mean())
-            prune_module(param_to_prune, im_score, args)
-
-
-def prune_module(param_to_prune, im_score, args):
-    module, name, block = param_to_prune
-    cur_param = getattr(module, name)
-    num_dims = cur_param.dim()
-    if args.method == 'LnStructured':
-        amount = args.conv_amount if im_score.mean() > 0.35 else args.fc_amount
-        if num_dims > 1:
-            ln_structured(module, name, amount, 2, dim=0, importance_scores=im_score.cuda())
-        else:
-            l1_unstructured(module, name, amount, importance_scores=im_score.cuda())
-    elif args.method == 'RandomStructured':
-        random_structured(module, name, args.amount, dim=0)
 
 
 def monitor(importance_dict, info):
@@ -156,21 +233,3 @@ def restructure(model):
     """remove the zero filters"""
     pass
 
-# def compute_params(block, block_entropy, parameters_to_prune, importance_dict, eta):
-#     """
-#     Update the parameters for prune.
-#     :param block:
-#     :param block_entropy:
-#     :param parameters_to_prune:
-#     :param importance_dict:
-#     :param eta:
-#     :return:
-#     """
-#     prune_block(block, block_entropy, eta)
-#     # weight = get_block_weight(block)
-#     # channel_entropy = compute_neuron_entropy(block, block_entropy)
-#     # importance = compute_importance(weight, channel_entropy, eta=eta)
-#     # layer = get_pru_layer(block)
-#     # parameters_to_prune.append((layer, 'weight'))
-#     # importance_dict[layer] = importance
-#     return prune_block(block, block_entropy, eta)

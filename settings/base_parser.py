@@ -86,8 +86,8 @@ class BaseParser:
             self.parser.add_argument('--fc_bound', default=0.1, type=float)
         else:
             prune_times = len(milestones)
-            self.parser.add_argument('--conv_amount', default=args.conv_amount / prune_times, type=float)
-            self.parser.add_argument('--fc_amount', default=args.fc_amount / prune_times, type=float)
+            self.parser.set_defaults(conv_amount=args.conv_amount / prune_times)
+            self.parser.set_defaults(fc_amount=args.fc_amount / prune_times)
 
     def get_args(self):
         args = self.parser.parse_known_args(self.args)[0]
