@@ -1,5 +1,5 @@
-from models.base_model import BaseModel
-from models.blocks import *
+from ..base_model import BaseModel
+from ..blocks import *
 
 cfgs = {
     'vgg11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M', 4096, 4096, None],

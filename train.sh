@@ -1,9 +1,31 @@
-# python imagenet_to_hdf5.py --mode clean
+# basic usage
+python train.py --dataset cifar10 --net vgg16 --project test --name test --num_epoch 60
 
-CUDA_VISIBLE_DEVICES=0 python train.py  --world_size 1 --dataset imagenet --attack noise --sigma 0.10 --exp_id noise_010 --resume 1 --num_epoch 30 --net resnet50 --print_every 10 --phase_path imagenet_cfg/phase_res.yml 
-CUDA_VISIBLE_DEVICES=1 python train.py  --world_size 1 --dataset imagenet --attack noise --sigma 0.0 --exp_id std --resume 1 --num_epoch 30 --net resnet50 --print_every 10 --phase_path imagenet_cfg/phase_res.yml 
-# CUDA_VISIBLE_DEVICES=2 python train.py  --world_size 1 --dataset imagenet --attack noise --sigma 0.10 --exp_id noise_010 --resume 0  --num_epoch 15 --net vgg13 --print_every 50
-# CUDA_VISIBLE_DEVICES=3 python train.py  --world_size 1 --dataset imagenet --attack noise --sigma 0.0 --exp_id std --resume 0 --num_epoch 15 --net vgg13 --print_every 5
+# adv training
+python train.py --dataset cifar10 --net vgg16 --project test --name test --num_epoch 60 --train_mode adv --attack noise --sigma 0.125
+
+python train.py --dataset cifar10 --net vgg16 --project test --name test --num_epoch 2 --train_mode adv --attack fgsm --ord inf --eps 0.3
 
 
-CUDA_VISIBLE_DEVICES=2,3 python train.py  --world_size 2 --dataset imagenet --attack noise --sigma 0.0 --exp_id std --resume 1 --num_epoch 33 --net resnet50 --print_every 100 --phase_path imagenet_cfg/phase_res.yml
+# test neuron entropy
+python train.py --dataset cifar10 --net vgg16 --project expressive --name split_0.1 --num_step 240 --val_step 120\
+                --train_mode exp --split 0.1
+
+# prune training
+python train.py --dataset cifar10 --net vgg16 --project prune --name prune --num_epoch 120 --train_mode pru\
+        --lr_scheduler cyclic --num_circles 4 --method Hard --batch_size 128  --prune_every 10 --activation ReLU --npbar
+
+python train.py --dataset cifar10 --net vgg16 --project prune --name prune --num_epoch 120 --train_mode pru\
+        --lr_scheduler cyclic --num_circles 4 --method RandomUnstructured --batch_size 128  --prune_every 10 --activation ReLU --npbar
+
+python train.py --dataset cifar10 --net vgg16 --project prune --name prune --num_epoch 120 --train_mode pru\
+        --lr_scheduler cyclic --num_circles 4 --method RandomUnstructured --prune_eta 0 --batch_size 128  --prune_every 10 --activation ReLU --npbar
+
+python train.py --dataset cifar10 --net vgg16 --project prune --name exp_1 --num_epoch 120 --train_mode pru \
+                --lr_scheduler cyclic --num_circles 4 --method LnStructured --prune_eta 0 --batch_size 128  --prune_every 10 --activation ReLU --npbar
+
+
+# DualNet training
+
+python train.py --dataset cifar10 --net vgg16 --project dual --name test --num_epoch 120 -- train_mode dual\
+          --lr_scheduler milestone --eta_float 0.1 --eta_fixed 0 --activation ReLU

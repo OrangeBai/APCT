@@ -6,6 +6,7 @@ from functools import partial
 from PIL import Image
 import argparse
 
+
 def resize_folder(src_folder, dst_folders, sizes):
     [os.makedirs(dst_folder, exist_ok=True) for dst_folder in dst_folders]
     img_names = os.listdir(src_folder)
@@ -44,7 +45,7 @@ if __name__ == '__main__':
     SRC = os.path.join(args.data_path, 'ImageNet-2012')
     DST = os.path.join(args.data_path, 'ImageNet-2012-sz')
     SIZE = [160, 256, 352]
-    
+
     num_cpus = multiprocessing.cpu_count()
     train_src = os.path.join(SRC, 'train')
     val_src = os.path.join(SRC, 'val')

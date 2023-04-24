@@ -5,21 +5,26 @@ from settings.train_settings import *
 class TestParser(BaseParser):
     def __init__(self, argv=None):
         super(TestParser, self).__init__(argv)
-        self.load()
-        self.parser.add_argument('--test_name', default='acc', type=str)
-        self.parser.add_argument('--data_size', default=160, type=int)
-        self.parser.add_argument('--crop_size', default=128, type=int)
-        args, _ = self.parser.parse_known_args(self.args)
-        exp_dir = os.path.join(args.model_dir, 'exp')
-        os.makedirs(exp_dir, exist_ok=True)
-        self.parser.add_argument('--exp_dir', default=os.path.join(args.model_dir, 'exp'))
-
+        self.parser.add_argument('--test_mode', default='acc', type=str)
+        self.parser.add_argument('--test_name', default='*', type=str)
         self._set_up_test()
 
     def _set_up_test(self):
         args, _ = self.parser.parse_known_args(self.args)
-        if args.test_name == 'smoothed_certify':
+        if args.test_mode == 'acc':
+            pass
+        elif args.test_mode == 'adv':
+            self.parser.add_argument('--attack', default='fgsm')
+            self.set_up_attack()
+        elif args.test_mode == 'smoothed_certify':
             self.parser = smoothed_certify(self.parser)
+        elif args.test_mode == 'prune':
+            args, _ = self.parser.parse_known_args(self.args)
+            self.parser.add_argument('--method', default='Hard', type=str)
+            self.parser.add_argument('--prune_eta', default=-1, type=int)
+
+            self.parser.add_argument('--conv_amount', default=0.1, type=float)
+            self.parser.add_argument('--fc_amount', default=0.2, type=float)
 
 
 #
@@ -70,12 +75,16 @@ def non_ret(parser):
 
 
 def smoothed_certify(parser):
-    parser.add_argument("--sigma_2", type=float, help="noise hyperparameter", default=0.1)
+    parser.add_argument('--smooth_model', default='smooth', type=str)
+    parser.add_argument("--sigma", type=float, help="noise hyperparameter", default=0.125)
     parser.add_argument("--N0", type=int, default=100)
-    parser.add_argument('--skip', type=int, default=1)
+    parser.add_argument('--skip', type=int, default=25)
     parser.add_argument("--N", type=int, default=10000, help="number of samples to use")
-    parser.add_argument("--smooth_alpha", type=float, default=0.001, help="failure probability")
-    parser.add_argument('--method', default='SMRAP', type=str)
+    parser.add_argument("--alpha", type=float, default=0.001, help="failure probability")
+    parser.add_argument('--method', default='Smooth', type=str)
+    parser.add_argument('--eta_fixed', default=0.00, type=float)
+    parser.add_argument('--eta_float', default=0.00, type=float)
+    parser.add_argument('--path', default='', type=str)
     return parser
 
 

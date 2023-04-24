@@ -1,4 +1,6 @@
 **/.idea
 **/__pycache__
 **/.vscode
+**/lightning_logs
+**/wandb
 debug.log
