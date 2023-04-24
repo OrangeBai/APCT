@@ -221,9 +221,11 @@ class PruneTrainer(BaseTrainer):
         global_entropy = self.model_hook.retrieve(reshape=False)
 
         im_scores = {}
+        channel_entropy = {}
         for name, block in self.model.named_modules():
             if not self.check_last_block(block) and self.check_valid_block(block):
                 im_scores.update(compute_im_score(block, global_entropy[name], self.args.prune_eta))
+                channel_entropy.update(compute_im_score(block, global_entropy[name], 1))
 
         prune_model(self.args, im_scores, global_entropy)
         monitor(im_scores, info)

@@ -2,7 +2,7 @@ import torch
 from torch.nn.utils.prune import global_unstructured, L1Unstructured, random_structured, \
     ln_structured, remove, identity, is_pruned, l1_unstructured
 from models.blocks import ConvBlock, LinearBlock
-
+import torch.nn as nn
 
 def prune_model(args, im_scores, channel_entropy):
     if args.method == 'L1Unstructured':
@@ -77,9 +77,12 @@ def l1_unstructured_prune(args, im_scores, channel_entropy):
 
 
 def ln_structured_prune(args, im_scores, channel_entropy):
-    im_mean = avg_im_score
-    for ((module, name, block), im) in im_scores.values():
+    im_mean = [1 / v[0].mean() for v in channel_entropy.values() if len(v) > 0]
+    cur_ratio = 0
+    for ((module, name, block), im) in zip(im_scores.values(), channel_entropy.values()):
         num_dims = getattr(module, name).dim()
+        if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
+            ratio = sum(im_mean)
         if num_dims > 1:
             ln_structured(module, name, args.amount, 2, dim=0, importance_scores=im.cuda())
         else:
@@ -96,13 +99,12 @@ def compute_importance(weight, channel_entropy, eta):
     :param eta: the importance of entropy in pruning,
                 0:      prune by weight
                 1:      prune by channel_entropy
-                2: weight * entropy
+                2:      prune by weight * entropy
                 3:
                 else:   eta * channel_entropy * weight
     :return:    The importance_scores
     """
     assert weight.shape[0] == channel_entropy.shape[0] and channel_entropy.ndim == 1
-    weight = abs(weight)
     e_new_shape = (-1,) + (1,) * (weight.dim() - 1)
     channel_entropy = torch.tensor(channel_entropy).view(e_new_shape).cuda()
     if eta == 0:
@@ -112,7 +114,7 @@ def compute_importance(weight, channel_entropy, eta):
     elif eta == 2:
         importance_scores = channel_entropy * weight
     elif eta == 3:
-        importance_scores = 1 / (1 / (channel_entropy + 1e-8) + 1 / (weight + 1e-8))
+        importance_scores = 1 / (1 / (channel_entropy + 1e-8) + 1 / (weight + 1e-4))
     elif eta == 4:
         normed_entropy = (channel_entropy - channel_entropy.mean()) / channel_entropy.std()
         normed_weight = (weight - weight.mean()) / weight.std()
