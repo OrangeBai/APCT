@@ -1,3 +1,5 @@
+import torch
+
 from core.utils import *
 from models.blocks import LinearBlock, ConvBlock
 from random import random
@@ -78,8 +80,8 @@ class EntropyHook(BaseHook):
                 pattern = get_pattern(input_var, self.Gamma)
                 if self.features[block_name][layer_name] is None:
                     self.features[block_name][layer_name] = np.zeros((self.num_pattern,) + pattern.shape[1:])
-                for i in range(1 + len(self.Gamma)):
-                    self.features[block_name][layer_name][i] += (pattern == i).sum(axis=0)
+                freq = np.array([(pattern == i).sum(axis=0) for i in range(self.num_pattern)])
+                self.features[block_name][layer_name] += freq
         return fn
 
     def retrieve(self, reshape=True):
@@ -151,15 +153,8 @@ class FloatHook(BaseHook):
 
 
 def get_pattern(input_var, Gamma):
-    pattern = -1 * np.ones(input_var.shape)
-    num_of_pattern = len(Gamma)
-
-    pattern[to_numpy(input_var < Gamma[0])] = 0
-    pattern[to_numpy(input_var > Gamma[-1])] = num_of_pattern
-    for i in range(1, num_of_pattern):
-        valid = pattern > Gamma[i] * pattern < Gamma[i + 1]
-        pattern[to_numpy(valid)] = i
-    return pattern
+    boundaries = torch.tensor(Gamma)
+    return torch.bucketize(input_var.cpu(), boundaries).numpy()
 
 
 def min_max_pattern(pattern, mode='min'):

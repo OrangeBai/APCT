@@ -78,16 +78,19 @@ def l1_unstructured_prune(args, im_scores, channel_entropy):
 
 
 def ln_structured_prune(args, im_scores, channel_entropy):
-    im_mean = [1 / v[0].mean() for v in channel_entropy.values() if len(v) > 0]
+    im_mean = sum([1 / torch.sqrt(v.mean()) for v in channel_entropy.values() if len(v) > 0]) / len(channel_entropy)
     cur_ratio = 0
-    for ((module, name, block), im) in im_scores.items():
+    for k, im in im_scores.items():
+        module, name, block = k
         num_dims = getattr(module, name).dim()
         if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
-            cur_ratio = 1 / channel_entropy[(module, name, block)][0].mean() / sum(im_mean)
+            cur_ratio = (1 / torch.sqrt(channel_entropy[k].mean())) / im_mean
         if num_dims > 1:
-            ln_structured(module, name, cur_ratio / args.amount, 2, dim=0, importance_scores=im.cuda())
+            num_filters < len(tensor_to_pru)
+            ln_structured(module, name, cur_ratio.item() * args.conv_amount, 2, dim=0, importance_scores=im.cuda())
+
         else:
-            l1_unstructured(module, name, args.amount, importance_scores=im.cuda())
+            l1_unstructured(module, name, cur_ratio.item() * args.conv_amount, importance_scores=im.cuda())
     return
 
 
