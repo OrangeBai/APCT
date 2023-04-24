@@ -193,7 +193,7 @@ class EntropyTrainer(BaseTrainer):
 class PruneTrainer(BaseTrainer):
     def __init__(self, args):
         super().__init__(args)
-        self.model_hook = PruneHook(self.model, set_gamma(self.args.activation), 0.1)
+        self.model_hook = PruneHook(self.model, set_gamma(self.args.activation), 0.25)
 
     def on_train_epoch_start(self) -> None:
         if self.current_epoch not in self.args.prune_milestones:
@@ -227,7 +227,7 @@ class PruneTrainer(BaseTrainer):
                 im_scores.update(compute_im_score(block, global_entropy[name], self.args.prune_eta))
                 channel_entropy.update(compute_im_score(block, global_entropy[name], 1))
 
-        prune_model(self.args, im_scores, global_entropy)
+        prune_model(self.args, im_scores, channel_entropy)
         monitor(im_scores, info)
         # self.model_hook.remove()
 

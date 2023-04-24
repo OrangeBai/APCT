@@ -4,6 +4,7 @@ from torch.nn.utils.prune import global_unstructured, L1Unstructured, random_str
 from models.blocks import ConvBlock, LinearBlock
 import torch.nn as nn
 
+
 def prune_model(args, im_scores, channel_entropy):
     if args.method == 'L1Unstructured':
         l1_unstructured_prune(args, im_scores, channel_entropy)
@@ -79,15 +80,16 @@ def l1_unstructured_prune(args, im_scores, channel_entropy):
 def ln_structured_prune(args, im_scores, channel_entropy):
     im_mean = [1 / v[0].mean() for v in channel_entropy.values() if len(v) > 0]
     cur_ratio = 0
-    for ((module, name, block), im) in zip(im_scores.values(), channel_entropy.values()):
+    for ((module, name, block), im) in im_scores.items():
         num_dims = getattr(module, name).dim()
         if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
-            ratio = sum(im_mean)
+            cur_ratio = 1 / channel_entropy[(module, name, block)][0].mean() / sum(im_mean)
         if num_dims > 1:
-            ln_structured(module, name, args.amount, 2, dim=0, importance_scores=im.cuda())
+            ln_structured(module, name, cur_ratio / args.amount, 2, dim=0, importance_scores=im.cuda())
         else:
             l1_unstructured(module, name, args.amount, importance_scores=im.cuda())
     return
+
 
 def compute_importance(weight, channel_entropy, eta):
     """
@@ -187,33 +189,32 @@ def compute_neuron_entropy(block, neuron_entropy):
 
 def hard_prune(im_dict, args):
     pass
-        #
-        # cur_param = getattr(module, name)
-        # num_dims = cur_param.dim()
-        # slc = [slice(None)] * num_dims
-        # if hasattr(module, name + '_mask'):
-        #     keep_channel = getattr(module, name + '_mask').sum(tuple(range(1, cur_param.dim()))) != 0
-        #     slc[0] = keep_channel
-        # tensor_to_pru = im_score[slc]
-        #
-        # hard_ind = torch.Tensor(tensor_to_pru[(slice(None, ),) + (0,) * (num_dims - 1)])
-        # if block == 'ConvBlock':
-        #     num_filters = torch.sum(hard_ind < args.conv_pru_bound).to(torch.int)
-        # elif block == 'LinearBlock':
-        #     num_filters = torch.sum(hard_ind < args.fc_pru_bound).to(torch.int)
-        # else:
-        #     raise NameError("Invalid Block for pruning")
-        # if num_filters == 0:
-        #     identity(module, name)
-        # elif 0 < num_filters < len(tensor_to_pru):
-        #     if num_dims > 1 :
-        #         ln_structured(module, name, int(num_filters), 2, dim=0, importance_scores=im_score.cuda())
-        #     else:
-        #         l1_unstructured(module, name, int(num_filters), importance_scores=im_score.cuda())
-        # else:
-        #     raise ValueError("Amount to prune should be less than number of params, "
-        #                      "got {0} and {1}".format(num_filters, len(tensor_to_pru)))
-
+    #
+    # cur_param = getattr(module, name)
+    # num_dims = cur_param.dim()
+    # slc = [slice(None)] * num_dims
+    # if hasattr(module, name + '_mask'):
+    #     keep_channel = getattr(module, name + '_mask').sum(tuple(range(1, cur_param.dim()))) != 0
+    #     slc[0] = keep_channel
+    # tensor_to_pru = im_score[slc]
+    #
+    # hard_ind = torch.Tensor(tensor_to_pru[(slice(None, ),) + (0,) * (num_dims - 1)])
+    # if block == 'ConvBlock':
+    #     num_filters = torch.sum(hard_ind < args.conv_pru_bound).to(torch.int)
+    # elif block == 'LinearBlock':
+    #     num_filters = torch.sum(hard_ind < args.fc_pru_bound).to(torch.int)
+    # else:
+    #     raise NameError("Invalid Block for pruning")
+    # if num_filters == 0:
+    #     identity(module, name)
+    # elif 0 < num_filters < len(tensor_to_pru):
+    #     if num_dims > 1 :
+    #         ln_structured(module, name, int(num_filters), 2, dim=0, importance_scores=im_score.cuda())
+    #     else:
+    #         l1_unstructured(module, name, int(num_filters), importance_scores=im_score.cuda())
+    # else:
+    #     raise ValueError("Amount to prune should be less than number of params, "
+    #                      "got {0} and {1}".format(num_filters, len(tensor_to_pru)))
 
 
 def monitor(importance_dict, info):
@@ -234,4 +235,3 @@ def monitor(importance_dict, info):
 def restructure(model):
     """remove the zero filters"""
     pass
-
