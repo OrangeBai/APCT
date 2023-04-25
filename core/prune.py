@@ -72,9 +72,19 @@ def remove_block(block):
 
 
 def l1_unstructured_prune(args, im_scores, channel_entropy):
-    params = [(k[0], k[1]) for k in im_scores.keys() if 'conv' in k[2].lower()]
-    im_score = {(k[0], k[1]): v for k, v in im_scores.items() if 'conv' in k[2].lower()}
-    global_unstructured(params, L1Unstructured, im_score, amount=args.conv_amount)
+    params = [(k[0], k[1]) for k in im_scores.keys()]
+    im_score = {(k[0], k[1]): v for k, v in im_scores.items()}
+    pru_params, pru_im = [], {}
+    n_pru = int(args.conv_amount / 5 * 100)
+    for _ in range(n_pru):
+        for i, (param, (im_k, im_v)) in enumerate(zip(params, im_scores.items())):
+            param_to_prune = getattr(param[0], param[1])
+            sparsity = torch.sum(param_to_prune == 0) / param_to_prune.nelement()
+            if sparsity < 0.85:
+                pru_params.append(param)
+                pru_im[im_k] = im_v
+
+        global_unstructured(params, L1Unstructured, im_score, amount=args.conv_amount / n_pru)
 
 
 def ln_structured_prune(args, im_scores, channel_entropy):
