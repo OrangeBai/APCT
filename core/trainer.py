@@ -70,8 +70,8 @@ class BaseTrainer(pl.LightningModule):
         pred = self.model(images)
         top1, top5 = accuracy(pred, labels)
         loss = self.loss_function(pred, labels)
-        self.log('val/loss', loss, sync_dist=True, on_epoch=True)
-        self.log('val/top1', top1, sync_dist=True, on_epoch=True)
+        self.log('val/loss', loss, sync_dist=True, on_step=False, on_epoch=True)
+        self.log('val/top1', top1, sync_dist=True, on_step=False, on_epoch=True)
         return
 
     def on_validation_epoch_end(self) -> None:
@@ -236,15 +236,14 @@ class PruneTrainer(BaseTrainer):
 
     def save_model(self, save_dir):
         self.load_best(save_dir)
-        self.iteratively_remove()
         pth_path = os.path.join(save_dir, 'model.pth')
         torch.save(self.model, pth_path)
         return
 
-    def iteratively_remove(self):
-        for name, module in self.named_modules():
-            if not self.check_last_block(module) and self.check_valid_block(module):
-                remove_block(module)
+    # def iteratively_remove(self):
+    #     for name, module in self.named_modules():
+    #         if not self.check_last_block(module) and self.check_valid_block(module):
+    #             remove_block(module)
 
 
 class DualNetTrainer(BaseTrainer):

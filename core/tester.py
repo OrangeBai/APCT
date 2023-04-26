@@ -14,7 +14,6 @@ from core.attack import set_attack
 from core.scrfp import Smooth, SCRFP, ApproximateAccuracy
 from torch.nn.functional import one_hot, cosine_similarity
 from core.pattern import FloatHook, set_gamma, PruneHook
-from core.prune import compute_im_score, iteratively_prune, monitor
 
 
 # equals to save_and_load(name)(fun)(self, run_dir)
