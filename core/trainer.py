@@ -237,6 +237,10 @@ class PruneTrainer(BaseTrainer):
     def save_model(self, save_dir):
         self.load_best(save_dir)
         pth_path = os.path.join(save_dir, 'model.pth')
+        try:
+            exec('rm {0}'.format(os.path.join(save_dir, 'best.ckpt')))
+        except:
+            pass
         torch.save(self.model, pth_path)
         return
 
