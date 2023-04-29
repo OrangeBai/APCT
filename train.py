@@ -3,6 +3,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, ModelPruning
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.strategies.ddp import DDPStrategy
 import os
+import torch
 from core.trainer import set_pl_model
 import pytorch_lightning as pl
 
@@ -13,6 +14,7 @@ if __name__ == '__main__':
     logtool = WandbLogger(name=args.name, save_dir=args.model_dir, project=args.project, config=args,
                           version=args.resume_id)
 
+    ckpt = torch.load(r"E:\Experiments\cifar10\vgg16\prune_ln\wandb\run-20230429_182003-5km2w1wu\files\best.ckpt")
     # datamodule=DataModule(args)
     model = set_pl_model(args.train_mode)(args)
 
