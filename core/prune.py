@@ -77,7 +77,7 @@ def l1_unstructured_prune(args, im_scores, channel_entropy):
     for i, (param, (im_k, im_v)) in enumerate(zip(params, im_scores.items())):
         param_to_prune = getattr(param[0], param[1])
         sparsity = torch.sum(param_to_prune == 0) / param_to_prune.nelement()
-        if sparsity < 0.80:
+        if sparsity < 0.95:
             pru_params.append(param)
             pru_im[im_k] = im_v
 

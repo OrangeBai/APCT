@@ -3,7 +3,7 @@ import os
 import sys
 
 import yaml
-
+import math
 from config import *
 
 
@@ -86,8 +86,10 @@ class BaseParser:
             self.parser.add_argument('--fc_bound', default=0.1, type=float)
         else:
             prune_times = len(milestones)
-            self.parser.set_defaults(conv_amount=args.total_amount / prune_times)
-            self.parser.set_defaults(fc_amount=args.fc_amount / prune_times)
+            single_time = math.pow(1 - args.total_amount, 1 / prune_times)
+            self.parser.set_defaults(conv_amount=single_time)
+            # self.parser.set_defaults(conv_amount=args.total_amount / prune_times)
+            # self.parser.set_defaults(fc_amount=args.fc_amount / prune_times)
 
     def get_args(self):
         args = self.parser.parse_known_args(self.args)[0]
