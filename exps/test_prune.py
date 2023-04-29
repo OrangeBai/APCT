@@ -7,6 +7,7 @@ from core.scrfp import ApproximateAccuracy
 from core.trainer import BaseTrainer
 from settings.test_setting import TestParser
 from core.utils import MetricLogger, accuracy
+from torch.nn.utils.prune import remove
 from argparse import Namespace
 from core.tester import SmoothedTester, restore_runs
 from exps.plt_base import update_params, update_ax_font
@@ -28,8 +29,14 @@ if __name__ == '__main__':
     args = TestParser(argsv).get_args()
     # runs = restore_runs(load_args)
     # tt = BaseTrainer(args).load_best(r"E:\Experiments\cifar10\vgg16\prune_l1\2sjfaiyv")
-    model = torch.load(r"E:\Experiments\cifar10\vgg16\adv_compare\3k5q9z58\model.pth").cuda()
+    model = torch.load(r"E:\Experiments\cifar10\vgg16\prune_ln\wandb\run-20230429_190305-oslenomu\files\model.pth").cuda()
 
+    for n, m in model.named_modules():
+        try:
+            remove(m, 'weight')
+            remove(m, 'bias')
+        except:
+            pass
     model.eval()
     metrics = MetricLogger()
     _, val_loader = set_dataloader(args)
